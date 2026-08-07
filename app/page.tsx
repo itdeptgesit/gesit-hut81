@@ -8,15 +8,15 @@ import TeamSection from "@/components/TeamSection";
 import WinnersSection from "@/components/WinnersSection";
 import Footer from "@/components/Footer";
 import Link from "next/link";
-import {
   ArrowRight,
   ChevronDown,
   CheckCircle2,
   Users,
   Trophy,
-  Utensils,
+  ConciergeBell,
   Shirt,
-  Mic2,
+  Megaphone,
+  PartyPopper,
 } from "lucide-react";
 
 // Reusable section label
@@ -168,8 +168,8 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {/* Yel-Yel */}
             <div className="bg-background border border-border rounded-3xl p-6 flex flex-col gap-4 hover:shadow-md transition-shadow">
-              <div className="w-12 h-12 bg-primary/10 text-primary rounded-2xl flex items-center justify-center">
-                <Mic2 size={24} />
+              <div className="w-12 h-12 bg-red-100 text-red-500 rounded-2xl flex items-center justify-center">
+                <Megaphone size={24} />
               </div>
               <div>
                 <h3 className="font-heading font-bold text-lg text-foreground mb-2">
@@ -183,8 +183,8 @@ export default function Home() {
 
             {/* Fun Games */}
             <div className="bg-background border border-border rounded-3xl p-6 flex flex-col gap-4 hover:shadow-md transition-shadow">
-              <div className="w-12 h-12 bg-green-500/10 text-green-600 rounded-2xl flex items-center justify-center">
-                <Users size={24} />
+              <div className="w-12 h-12 bg-emerald-100 text-emerald-500 rounded-2xl flex items-center justify-center">
+                <PartyPopper size={24} />
               </div>
               <div>
                 <h3 className="font-heading font-bold text-lg text-foreground mb-2">
@@ -198,8 +198,8 @@ export default function Home() {
 
             {/* Potluck */}
             <div className="bg-background border border-border rounded-3xl p-6 flex flex-col gap-4 hover:shadow-md transition-shadow">
-              <div className="w-12 h-12 bg-primary/10 text-primary rounded-2xl flex items-center justify-center">
-                <Utensils size={24} />
+              <div className="w-12 h-12 bg-red-100 text-red-500 rounded-2xl flex items-center justify-center">
+                <ConciergeBell size={24} />
               </div>
               <div>
                 <h3 className="font-heading font-bold text-lg text-foreground mb-2">
@@ -214,7 +214,7 @@ export default function Home() {
 
             {/* Best Costume */}
             <div className="bg-background border border-border rounded-3xl p-6 flex flex-col gap-4 hover:shadow-md transition-shadow">
-              <div className="w-12 h-12 bg-navy/10 text-navy rounded-2xl flex items-center justify-center">
+              <div className="w-12 h-12 bg-slate-100 text-slate-500 rounded-2xl flex items-center justify-center">
                 <Shirt size={24} />
               </div>
               <div>
