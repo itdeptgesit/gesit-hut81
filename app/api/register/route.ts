@@ -6,7 +6,7 @@ export async function POST(request: Request) {
     const body = await request.json();
 
     // ── Validation ──
-    if (!body.name || !body.department || !body.event || !body.floor) {
+    if (!body.name || !body.event || !body.floor) {
       return NextResponse.json({ error: "Semua field wajib wajib diisi." }, { status: 400 });
     }
 
@@ -74,7 +74,7 @@ export async function POST(request: Request) {
       registration_id,
       timestamp,
       body.name,
-      body.department,
+      "-", // department removed
       body.floor,
       "-", // email removed
       "-", // phone removed
@@ -91,7 +91,6 @@ export async function POST(request: Request) {
       registration_id,
       participant: {
         name: body.name,
-        department: body.department,
         floor: body.floor,
         event: body.event,
         category: body.category || null,

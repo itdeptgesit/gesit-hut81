@@ -81,7 +81,7 @@ export default function BadmintonSchedule() {
   return (
     <div className="w-full">
       {/* PIC Info */}
-      <div className="flex flex-wrap gap-4 mb-10">
+      <div className="flex flex-col sm:flex-row gap-4 mb-10">
         {pics.map((p) => (
           <div
             key={p.label}
@@ -151,7 +151,7 @@ export default function BadmintonSchedule() {
             <div
               className="grid gap-0"
               style={{
-                gridTemplateColumns: `repeat(${day.courts.length}, 1fr)`,
+                gridTemplateColumns: `repeat(auto-fit, minmax(250px, 1fr))`,
               }}
             >
               {day.courts.map((court, ci) => (
@@ -159,7 +159,7 @@ export default function BadmintonSchedule() {
                   key={ci}
                   className={
                     ci < day.courts.length - 1
-                      ? "border-r border-border p-6"
+                      ? "border-b md:border-b-0 md:border-r border-border p-6"
                       : "p-6"
                   }
                 >

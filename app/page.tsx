@@ -16,7 +16,7 @@ import {
   Trophy,
   ConciergeBell,
   Shirt,
-  Megaphone,
+  Mic,
   PartyPopper,
 } from "lucide-react";
 
@@ -84,7 +84,7 @@ const faqs = [
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-background">
+    <main className="min-h-screen bg-background pb-28 md:pb-0">
       <Navbar />
 
       {/* ─── HERO ─── */}
@@ -148,29 +148,29 @@ export default function Home() {
               Rangkaian acara puncak perayaan Kemerdekaan RI ke-81 yang penuh dengan keseruan, kreativitas, dan rasa persaudaraan.
             </p>
             
-            <div className="inline-flex flex-col sm:flex-row items-center gap-4 sm:gap-8 bg-amber-50 border border-amber-200/50 rounded-2xl p-5 md:p-6 mx-auto text-left">
-              <div>
-                <p className="text-xs font-bold uppercase tracking-widest text-amber-800/60 mb-1">Waktu</p>
-                <p className="font-semibold text-amber-900 text-sm md:text-base">15.00 - Selesai</p>
-              </div>
-              <div className="hidden sm:block w-px h-10 bg-amber-200/50" />
-              <div>
-                <p className="text-xs font-bold uppercase tracking-widest text-amber-800/60 mb-1">Lokasi</p>
-                <p className="font-semibold text-amber-900 text-sm md:text-base">The City Tower - Lantai 26</p>
-              </div>
-              <div className="hidden sm:block w-px h-10 bg-amber-200/50" />
-              <div>
-                <p className="text-xs font-bold uppercase tracking-widest text-amber-800/60 mb-1">Dresscode</p>
-                <p className="font-semibold text-amber-900 text-sm md:text-base">Tema Kemerdekaan</p>
+            <div className="w-full max-w-xl mx-auto bg-amber-50 border border-amber-200/50 rounded-2xl overflow-hidden">
+              <div className="grid grid-cols-3 divide-x divide-amber-200/50">
+                <div className="flex flex-col items-center justify-center p-4 text-center">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-amber-800/50 mb-1.5">Waktu</p>
+                  <p className="font-bold text-amber-900 text-sm leading-tight">15.00<br/>Selesai</p>
+                </div>
+                <div className="flex flex-col items-center justify-center p-4 text-center">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-amber-800/50 mb-1.5">Lokasi</p>
+                  <p className="font-bold text-amber-900 text-sm leading-tight">City Tower<br/>Lantai 26</p>
+                </div>
+                <div className="flex flex-col items-center justify-center p-4 text-center">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-amber-800/50 mb-1.5">Dresscode</p>
+                  <p className="font-bold text-amber-900 text-sm leading-tight">Tema<br/>Kemerdekaan</p>
+                </div>
               </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
             {/* Yel-Yel */}
             <div className="bg-background border border-border rounded-3xl p-6 flex flex-col gap-4 hover:shadow-md transition-shadow">
               <div className="w-12 h-12 bg-red-100 text-red-500 rounded-2xl flex items-center justify-center">
-                <Megaphone size={24} />
+                <Mic size={24} />
               </div>
               <div>
                 <h3 className="font-heading font-bold text-lg text-foreground mb-2">
@@ -232,13 +232,13 @@ export default function Home() {
       </section>
 
       {/* ─── BADMINTON RULES ─── */}
-      <section id="badminton" className="py-20 md:py-28 bg-navy relative overflow-hidden">
+      <section id="badminton" className="py-14 md:py-28 bg-navy relative overflow-hidden">
         {/* Decorative */}
         <div className="absolute -top-20 -right-20 w-72 h-72 bg-white opacity-[0.03] rounded-full" />
         <div className="absolute -bottom-10 -left-10 w-56 h-56 bg-primary opacity-10 rounded-full" />
 
         <div className="max-w-[1100px] mx-auto px-4 md:px-8 relative z-10">
-          <div className="flex flex-col md:flex-row gap-12 items-start">
+          <div className="flex flex-col md:flex-row gap-8 md:gap-12 items-start">
             {/* Left: Title + Format */}
             <div className="md:w-1/3">
               <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 text-white font-semibold px-4 py-1.5 rounded-full text-xs uppercase tracking-widest mb-6">

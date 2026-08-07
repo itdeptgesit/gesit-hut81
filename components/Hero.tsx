@@ -2,125 +2,162 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowRight, CalendarDays, MapPin } from "lucide-react";
+import { ArrowRight, CalendarDays, MapPin, ChevronDown } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function Hero() {
   return (
-    <section className="relative w-full overflow-hidden min-h-screen flex items-center justify-center bg-gray-50">
-      {/* ── Background Image ── */}
-      <motion.div
-        initial={{ scale: 1.05, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ duration: 1.5, ease: "easeOut" }}
-        className="absolute inset-0"
-      >
-        <Image
-          src="/hero_bg.png"
-          alt="Ilustrasi HUT RI ke-81 – Badminton & Merah Putih"
-          fill
-          priority
-          className="object-cover object-center"
-        />
-      </motion.div>
+    <section className="relative w-full overflow-hidden min-h-screen flex items-center justify-center">
 
-      {/* ── Subtle Gradient Overlay to darken background slightly ── */}
-      <div className="absolute inset-0 bg-gradient-to-b from-white/60 via-white/20 to-white/80 pointer-events-none" />
+      {/* ── Background image — full, no overlay ── */}
+      <Image
+        src="/hero_bg.png"
+        alt="Ilustrasi HUT RI ke-81"
+        fill
+        priority
+        className="object-cover object-center"
+      />
 
-      {/* ── Main Content Container (Glassmorphism Card) ── */}
-      <div className="relative z-10 w-full max-w-[1100px] mx-auto px-4 sm:px-6 md:px-8 pt-24 pb-14 md:pt-32 md:pb-20">
-        
-        <motion.div 
-          initial={{ y: 30, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.8, ease: "easeOut" }}
-          className="relative bg-white/70 backdrop-blur-xl border border-white/50 shadow-2xl rounded-3xl p-6 sm:p-10 md:p-16 flex flex-col items-center text-center overflow-hidden"
+      {/* ════════════ CONTENT ════════════ */}
+      <div className="relative z-10 w-full max-w-[860px] mx-auto px-5 sm:px-8 flex flex-col items-center text-center pt-28 pb-20">
+
+        {/* HUT RI 81 Logo */}
+        <motion.div
+          initial={{ opacity: 0, y: -16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.75 }}
+          className="mb-6 md:mb-8"
         >
-          {/* Decorative subtle shine on the card */}
-          <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-white/60 via-transparent to-transparent pointer-events-none" />
+          <Image
+            src="/hutri81_logo.png"
+            alt="Logo HUT RI ke-81"
+            width={190}
+            height={190}
+            className="object-contain"
+            style={{
+              width: "clamp(110px, 16vw, 180px)",
+              height: "auto",
+              filter: "drop-shadow(0 4px 32px rgba(0,0,0,0.6)) drop-shadow(0 0 12px rgba(255,255,255,0.4))",
+            }}
+          />
+        </motion.div>
 
-          {/* ── Header: Logo & Eyebrow ── */}
-          <div className="relative flex flex-col md:flex-row items-center justify-center gap-4 md:gap-8 mb-8 md:mb-12 w-full">
-            <Image
-              src="/hutri81_logo.png"
-              alt="Logo HUT RI ke-81"
-              width={150}
-              height={75}
-              className="object-contain mix-blend-multiply"
-              style={{ width: "clamp(120px, 15vw, 150px)", height: "auto" }}
-            />
-            
-            {/* Divider for desktop */}
-            <div className="hidden md:block w-px h-12 bg-foreground/20" />
-            
-            <div className="flex flex-col items-center md:items-start text-center md:text-left">
-              <p className="font-heading font-bold text-foreground/80 uppercase tracking-[0.3em] text-xs md:text-sm mb-1">
-                Dirgahayu Indonesia
-              </p>
-              <p className="font-heading font-bold text-primary uppercase tracking-[0.3em] text-xs md:text-sm">
-                17 Agustus 2026
-              </p>
-            </div>
+        {/* Eyebrow */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          className="flex items-center gap-3 mb-5"
+        >
+          <div className="w-5 h-px bg-[#102A4C]/25" />
+          <span className="font-semibold uppercase tracking-[0.25em] text-[10px] text-[#102A4C]/50">
+            Dirgahayu Indonesia · 17 Agustus 2026
+          </span>
+          <div className="w-5 h-px bg-[#102A4C]/25" />
+        </motion.div>
+
+        {/* Main Headline */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, delay: 0.25 }}
+          className="mb-7 md:mb-9"
+        >
+          <h1
+            className="font-heading font-black text-[#102A4C] uppercase leading-[0.88]"
+            style={{ fontSize: "clamp(46px, 9.5vw, 116px)", letterSpacing: "-0.03em" }}
+          >
+            GESIT BERSATU
+          </h1>
+
+          <div className="flex items-center justify-center gap-4 my-3">
+            <div className="h-px bg-[#102A4C]/20 w-10 md:w-14" />
+            <span className="font-heading font-bold uppercase tracking-[0.4em] text-[9px] text-[#102A4C]/35">
+              DALAM
+            </span>
+            <div className="h-px bg-[#102A4C]/20 w-10 md:w-14" />
           </div>
 
-          {/* ── Typography Section ── */}
-          <div className="relative w-full flex flex-col items-center mb-10">
-            <h1 
-              className="font-heading font-black text-slate-900 uppercase leading-[0.9] tracking-tight select-none mb-4"
-              style={{ fontSize: "clamp(42px, 8vw, 96px)", letterSpacing: "-0.02em" }}
-            >
-              GESIT BERSATU
-            </h1>
-            
-            <div className="flex items-center gap-4 my-2 opacity-80 w-full justify-center">
-              <div className="h-px bg-slate-900/20 w-12 md:w-24" />
-              <span className="font-heading font-semibold text-slate-700 uppercase tracking-[0.4em] text-xs">
-                DALAM
-              </span>
-              <div className="h-px bg-slate-900/20 w-12 md:w-24" />
-            </div>
+          <h1
+            className="font-heading font-black italic uppercase leading-[0.88]"
+            style={{ fontSize: "clamp(46px, 9.5vw, 116px)", letterSpacing: "-0.03em", color: "#E31E24" }}
+          >
+            SPORTIVITAS
+          </h1>
+        </motion.div>
 
-            <p 
-              className="font-heading font-black text-primary italic uppercase leading-[0.9] tracking-tight select-none mt-2"
-              style={{ fontSize: "clamp(48px, 9vw, 110px)", letterSpacing: "-0.02em" }}
-            >
-              SPORTIVITAS
-            </p>
-          </div>
-
-          {/* ── Info Badges ── */}
-          <div className="relative flex flex-col sm:flex-row items-center justify-center gap-3 w-full mb-10">
-            <div className="flex items-center gap-2 bg-white/90 border border-slate-200 shadow-sm rounded-full px-5 py-2.5 text-sm font-semibold text-slate-700">
-              <CalendarDays size={18} className="text-primary" />
+        {/* Info badges */}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.55, delay: 0.4 }}
+          className="flex flex-wrap items-center justify-center gap-2.5 mb-7"
+        >
+          <div className="flex items-center gap-2 border border-[#102A4C]/15 bg-white/60 backdrop-blur-sm rounded-full px-4 py-2 text-[#102A4C]/70 text-xs font-medium">
+              <CalendarDays size={12} className="text-[#E31E24] shrink-0" />
               11 – 19 Agustus 2026
             </div>
-            <div className="flex items-center gap-2 bg-white/90 border border-slate-200 shadow-sm rounded-full px-5 py-2.5 text-sm font-semibold text-slate-700">
-              <MapPin size={18} className="text-primary" />
-              The City Tower · Lt. 26 & 27
+            <div className="flex items-center gap-2 border border-[#102A4C]/15 bg-white/60 backdrop-blur-sm rounded-full px-4 py-2 text-[#102A4C]/70 text-xs font-medium">
+              <MapPin size={12} className="text-[#E31E24] shrink-0" />
+              The City Tower · Lt. 26 &amp; 27
             </div>
-          </div>
+        </motion.div>
 
-          {/* ── CTAs ── */}
-          <div className="relative flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
-            <Link
-              href="/register"
-              className="w-full sm:w-auto group flex items-center justify-center gap-2 bg-primary hover:bg-red-700 text-white font-bold rounded-full shadow-lg shadow-primary/30 hover:-translate-y-1 hover:shadow-xl transition-all duration-300"
-              style={{ fontSize: "clamp(14px, 1.5vw, 16px)", padding: "16px 40px" }}
-            >
-              Register Sekarang 
-              <ArrowRight size={18} className="transition-transform group-hover:translate-x-1" />
-            </Link>
-            <Link
-              href="/#event"
-              className="w-full sm:w-auto flex items-center justify-center gap-2 bg-white hover:bg-slate-50 border-2 border-slate-200 text-slate-800 font-bold rounded-full shadow-sm hover:-translate-y-1 hover:shadow-md transition-all duration-300"
-              style={{ fontSize: "clamp(14px, 1.5vw, 16px)", padding: "14px 40px" }}
-            >
-              Lihat Event
-            </Link>
-          </div>
+        {/* CTAs */}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.55, delay: 0.48 }}
+          className="flex items-center gap-3 mb-14 md:mb-16"
+        >
+          <Link
+            href="/register"
+            className="group inline-flex items-center gap-2 bg-[#E31E24] hover:bg-red-700 text-white font-bold rounded-full px-7 py-3.5 md:px-9 md:py-4 text-sm md:text-base shadow-2xl shadow-black/30 hover:-translate-y-0.5 transition-all duration-300"
+          >
+            Register Sekarang
+            <ArrowRight size={15} className="transition-transform group-hover:translate-x-1 shrink-0" />
+          </Link>
+          <Link
+            href="/#event"
+            className="inline-flex items-center bg-white/70 hover:bg-white/90 border border-[#102A4C]/20 text-[#102A4C] font-semibold rounded-full px-7 py-3.5 md:px-9 md:py-4 text-sm md:text-base hover:-translate-y-0.5 transition-all duration-300"
+          >
+            Lihat Event
+          </Link>
+        </motion.div>
 
+        {/* Stats */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.6, delay: 0.62 }}
+          className="flex flex-wrap items-center justify-center gap-5 md:gap-10 pt-6 border-t border-[#102A4C]/15 w-full"
+        >
+          {[
+            { value: "11 – 19 Agu", label: "Hari Pelaksanaan" },
+            { value: "3 Kategori", label: "Badminton" },
+            { value: "4 Lomba", label: "Puncak Acara" },
+          ].map((s, i) => (
+            <div key={s.label} className="flex items-center gap-5 md:gap-10">
+              <div className="text-center">
+                  <p className="font-heading font-black text-[#102A4C] text-base md:text-lg leading-none">{s.value}</p>
+                  <p className="text-[#102A4C]/40 text-[10px] font-medium mt-1.5">{s.label}</p>
+                </div>
+              {i < 2 && <div className="hidden md:block w-px h-7 bg-[#102A4C]/15" />}
+            </div>
+          ))}
         </motion.div>
       </div>
+
+      {/* Scroll hint */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5, delay: 1 }}
+        className="absolute bottom-7 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 text-[#102A4C]/40 z-10"
+      >
+        <span className="text-[9px] uppercase tracking-[0.25em]">Scroll</span>
+        <ChevronDown size={14} className="animate-bounce" />
+      </motion.div>
     </section>
   );
 }
