@@ -8,6 +8,7 @@ import TeamSection from "@/components/TeamSection";
 import WinnersSection from "@/components/WinnersSection";
 import Footer from "@/components/Footer";
 import Link from "next/link";
+import {
   ArrowRight,
   ChevronDown,
   CheckCircle2,
