@@ -118,13 +118,14 @@ export default function Home() {
               href="#badminton"
             />
             <EventCard
-              title="FUN GAMES DAY"
+              title="PUNCAK ACARA"
               date="19 Agustus 2026"
-              description="Tiga lomba seru yang menguji kreativitas, kekompakan, dan semangat kebersamaan tim Anda."
+              description="Rangkaian acara seru yang menguji kreativitas, kekompakan, dan semangat kebersamaan tim Anda."
               categories={[
-                "Yel-Yel Kemerdekaan",
+                "Lomba Yel-Yel",
+                "Fun Games",
+                "Pesta Rasa Merah Putih",
                 "Best Costume",
-                "Potluck Rasa Nusantara",
               ]}
               theme="red"
               icon="games"
@@ -134,104 +135,95 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ─── FUN GAMES DETAIL ─── */}
+      {/* ─── PUNCAK ACARA DETAIL ─── */}
       <section id="fun-games" className="py-20 md:py-28 bg-white border-t border-border/60">
         <div className="max-w-[1100px] mx-auto px-4 md:px-8">
           <div className="text-center mb-14">
             <SectionLabel>19 Agustus 2026</SectionLabel>
-            <h2 className="font-heading font-bold text-3xl md:text-5xl text-foreground mb-4">
-              Fun Games Day
+            <h2 className="font-heading font-bold text-3xl md:text-5xl text-foreground mb-4 uppercase">
+              Puncak Acara
             </h2>
-            <p className="text-muted text-base md:text-lg max-w-xl mx-auto">
-              Tiga lomba seru yang menguji kreativitas, kekompakan, dan semangat kebersamaan tim Anda.
+            <p className="text-muted text-base md:text-lg max-w-2xl mx-auto mb-8">
+              Rangkaian acara puncak perayaan Kemerdekaan RI ke-81 yang penuh dengan keseruan, kreativitas, dan rasa persaudaraan.
             </p>
+            
+            <div className="inline-flex flex-col sm:flex-row items-center gap-4 sm:gap-8 bg-amber-50 border border-amber-200/50 rounded-2xl p-5 md:p-6 mx-auto text-left">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-widest text-amber-800/60 mb-1">Waktu</p>
+                <p className="font-semibold text-amber-900 text-sm md:text-base">15.00 - Selesai</p>
+              </div>
+              <div className="hidden sm:block w-px h-10 bg-amber-200/50" />
+              <div>
+                <p className="text-xs font-bold uppercase tracking-widest text-amber-800/60 mb-1">Lokasi</p>
+                <p className="font-semibold text-amber-900 text-sm md:text-base">The City Tower - Lantai 26</p>
+              </div>
+              <div className="hidden sm:block w-px h-10 bg-amber-200/50" />
+              <div>
+                <p className="text-xs font-bold uppercase tracking-widest text-amber-800/60 mb-1">Dresscode</p>
+                <p className="font-semibold text-amber-900 text-sm md:text-base">Tema Kemerdekaan</p>
+              </div>
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {/* Yel-Yel */}
-            <div className="bg-background border border-border rounded-3xl p-7 flex flex-col gap-4 hover:shadow-md transition-shadow">
+            <div className="bg-background border border-border rounded-3xl p-6 flex flex-col gap-4 hover:shadow-md transition-shadow">
               <div className="w-12 h-12 bg-primary/10 text-primary rounded-2xl flex items-center justify-center">
-                <Mic2 size={26} />
+                <Mic2 size={24} />
               </div>
               <div>
-                <span className="text-xs font-bold uppercase tracking-widest text-muted bg-gray-100 px-2 py-1 rounded-full">
-                  Lomba 1
-                </span>
-                <h3 className="font-heading font-bold text-xl text-foreground mt-3 mb-2">
-                  Yel-Yel Kemerdekaan
+                <h3 className="font-heading font-bold text-lg text-foreground mb-2">
+                  Lomba Yel-Yel
                 </h3>
                 <p className="text-muted text-sm leading-relaxed mb-4">
-                  Setiap tim wajib menampilkan yel-yel berdurasi <strong>maksimal 3 menit</strong>.
+                  Setiap tim wajib menampilkan yel-yel berdurasi <strong>maksimal 3 menit</strong>. Penilaian meliputi kreativitas dan semangat.
                 </p>
-              </div>
-              <div className="mt-auto">
-                <p className="text-xs font-bold uppercase tracking-widest text-muted mb-2">Penilaian</p>
-                <ul className="space-y-1.5 text-sm text-muted">
-                  {["Kreativitas", "Kekompakan tim", "Semangat & Antusiasme", "Kesesuaian dengan tema kemerdekaan"].map(p => (
-                    <li key={p} className="flex items-center gap-2">
-                      <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
-                      {p}
-                    </li>
-                  ))}
-                </ul>
               </div>
             </div>
 
-            {/* Best Costume */}
-            <div className="bg-background border border-border rounded-3xl p-7 flex flex-col gap-4 hover:shadow-md transition-shadow">
-              <div className="w-12 h-12 bg-navy/10 text-navy rounded-2xl flex items-center justify-center">
-                <Shirt size={26} />
+            {/* Fun Games */}
+            <div className="bg-background border border-border rounded-3xl p-6 flex flex-col gap-4 hover:shadow-md transition-shadow">
+              <div className="w-12 h-12 bg-green-500/10 text-green-600 rounded-2xl flex items-center justify-center">
+                <Users size={24} />
               </div>
               <div>
-                <span className="text-xs font-bold uppercase tracking-widest text-muted bg-gray-100 px-2 py-1 rounded-full">
-                  Lomba 2
-                </span>
-                <h3 className="font-heading font-bold text-xl text-foreground mt-3 mb-2">
-                  Best Costume
+                <h3 className="font-heading font-bold text-lg text-foreground mb-2">
+                  Fun Games
                 </h3>
                 <p className="text-muted text-sm leading-relaxed mb-4">
-                  Pakaian adat, nuansa merah putih, atribut perjuangan, atau kreasi lain yang tetap <strong>sopan</strong>.
+                  Beragam permainan seru yang menguji kekompakan dan ketangkasan tim. Siapkan strategi terbaik Anda!
                 </p>
-              </div>
-              <div className="mt-auto">
-                <p className="text-xs font-bold uppercase tracking-widest text-muted mb-2">Penilaian</p>
-                <ul className="space-y-1.5 text-sm text-muted">
-                  {["Kreativitas", "Kekompakan", "Kesesuaian dengan tema kemerdekaan"].map(p => (
-                    <li key={p} className="flex items-center gap-2">
-                      <span className="w-1.5 h-1.5 rounded-full bg-navy shrink-0" />
-                      {p}
-                    </li>
-                  ))}
-                </ul>
               </div>
             </div>
 
             {/* Potluck */}
-            <div className="bg-background border border-border rounded-3xl p-7 flex flex-col gap-4 hover:shadow-md transition-shadow">
+            <div className="bg-background border border-border rounded-3xl p-6 flex flex-col gap-4 hover:shadow-md transition-shadow">
               <div className="w-12 h-12 bg-primary/10 text-primary rounded-2xl flex items-center justify-center">
-                <Utensils size={26} />
+                <Utensils size={24} />
               </div>
               <div>
-                <span className="text-xs font-bold uppercase tracking-widest text-muted bg-gray-100 px-2 py-1 rounded-full">
-                  Lomba 3
-                </span>
-                <h3 className="font-heading font-bold text-xl text-foreground mt-3 mb-2">
-                  Potluck Rasa Nusantara
+                <h3 className="font-heading font-bold text-lg text-foreground mb-2">
+                  Pesta Rasa Merah Putih
                 </h3>
                 <p className="text-muted text-sm leading-relaxed mb-4">
-                  Setiap tim membawa <strong>makanan khas Indonesia</strong> untuk dinikmati bersama-sama.
+                  <strong>(Potluck Tema Nusantara)</strong><br/>
+                  Setiap tim membawa makanan khas Indonesia untuk dinikmati bersama-sama.
                 </p>
               </div>
-              <div className="mt-auto">
-                <p className="text-xs font-bold uppercase tracking-widest text-muted mb-2">Penilaian</p>
-                <ul className="space-y-1.5 text-sm text-muted">
-                  {["Keunikan menu", "Presentasi penyajian", "Konsep", "Nuansa budaya nusantara"].map(p => (
-                    <li key={p} className="flex items-center gap-2">
-                      <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
-                      {p}
-                    </li>
-                  ))}
-                </ul>
+            </div>
+
+            {/* Best Costume */}
+            <div className="bg-background border border-border rounded-3xl p-6 flex flex-col gap-4 hover:shadow-md transition-shadow">
+              <div className="w-12 h-12 bg-navy/10 text-navy rounded-2xl flex items-center justify-center">
+                <Shirt size={24} />
+              </div>
+              <div>
+                <h3 className="font-heading font-bold text-lg text-foreground mb-2">
+                  Best Costume
+                </h3>
+                <p className="text-muted text-sm leading-relaxed mb-4">
+                  Berikan penampilan terbaik Anda dengan kostum bertema kemerdekaan atau adat Nusantara.
+                </p>
               </div>
             </div>
           </div>
