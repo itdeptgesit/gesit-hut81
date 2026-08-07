@@ -7,7 +7,7 @@ import { motion } from "framer-motion";
 
 export default function Hero() {
   return (
-    <section className="relative w-full overflow-hidden min-h-screen flex items-center justify-center">
+    <section className="relative w-full overflow-hidden min-h-screen flex items-center justify-center bg-gray-50">
       {/* ── Background Image ── */}
       <motion.div
         initial={{ scale: 1.05, opacity: 0 }}
@@ -24,127 +24,102 @@ export default function Hero() {
         />
       </motion.div>
 
-      {/* ── Centered Gradient Overlay for Readability ── */}
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          background:
-            "radial-gradient(ellipse 70% 80% at 50% 45%, rgba(255,255,255,0.85) 0%, rgba(255,255,255,0.4) 65%, transparent 100%)",
-        }}
-      />
+      {/* ── Subtle Gradient Overlay to darken background slightly ── */}
+      <div className="absolute inset-0 bg-gradient-to-b from-white/60 via-white/20 to-white/80 pointer-events-none" />
 
-      {/* ── Content ── */}
-      <div className="relative z-10 w-full max-w-[1000px] mx-auto px-4 md:px-8 pt-24 pb-14 md:pt-32 md:pb-20 flex flex-col items-center justify-center text-center">
+      {/* ── Main Content Container (Glassmorphism Card) ── */}
+      <div className="relative z-10 w-full max-w-[1100px] mx-auto px-4 sm:px-6 md:px-8 pt-24 pb-14 md:pt-32 md:pb-20">
         
-        {/* HUT RI 81 Logo */}
-        <motion.div
-          initial={{ y: -20, opacity: 0 }}
+        <motion.div 
+          initial={{ y: 30, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.7, delay: 0.2, ease: "easeOut" }}
-          className="mb-5 md:mb-6"
+          transition={{ duration: 0.8, ease: "easeOut" }}
+          className="relative bg-white/70 backdrop-blur-xl border border-white/50 shadow-2xl rounded-3xl p-6 sm:p-10 md:p-16 flex flex-col items-center text-center overflow-hidden"
         >
-          <Image
-            src="/hutri81_logo.png"
-            alt="Logo HUT RI ke-81"
-            width={160}
-            height={80}
-            className="object-contain mx-auto mix-blend-multiply drop-shadow-sm"
-            style={{ width: "clamp(120px, 15vw, 160px)", height: "auto" }}
-          />
+          {/* Decorative subtle shine on the card */}
+          <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-white/60 via-transparent to-transparent pointer-events-none" />
+
+          {/* ── Header: Logo & Eyebrow ── */}
+          <div className="relative flex flex-col md:flex-row items-center justify-center gap-4 md:gap-8 mb-8 md:mb-12 w-full">
+            <Image
+              src="/hutri81_logo.png"
+              alt="Logo HUT RI ke-81"
+              width={150}
+              height={75}
+              className="object-contain mix-blend-multiply"
+              style={{ width: "clamp(120px, 15vw, 150px)", height: "auto" }}
+            />
+            
+            {/* Divider for desktop */}
+            <div className="hidden md:block w-px h-12 bg-foreground/20" />
+            
+            <div className="flex flex-col items-center md:items-start text-center md:text-left">
+              <p className="font-heading font-bold text-foreground/80 uppercase tracking-[0.3em] text-xs md:text-sm mb-1">
+                Dirgahayu Indonesia
+              </p>
+              <p className="font-heading font-bold text-primary uppercase tracking-[0.3em] text-xs md:text-sm">
+                17 Agustus 2026
+              </p>
+            </div>
+          </div>
+
+          {/* ── Typography Section ── */}
+          <div className="relative w-full flex flex-col items-center mb-10">
+            <h1 
+              className="font-heading font-black text-slate-900 uppercase leading-[0.9] tracking-tight select-none mb-4"
+              style={{ fontSize: "clamp(42px, 8vw, 96px)", letterSpacing: "-0.02em" }}
+            >
+              GESIT BERSATU
+            </h1>
+            
+            <div className="flex items-center gap-4 my-2 opacity-80 w-full justify-center">
+              <div className="h-px bg-slate-900/20 w-12 md:w-24" />
+              <span className="font-heading font-semibold text-slate-700 uppercase tracking-[0.4em] text-xs">
+                DALAM
+              </span>
+              <div className="h-px bg-slate-900/20 w-12 md:w-24" />
+            </div>
+
+            <p 
+              className="font-heading font-black text-primary italic uppercase leading-[0.9] tracking-tight select-none mt-2"
+              style={{ fontSize: "clamp(48px, 9vw, 110px)", letterSpacing: "-0.02em" }}
+            >
+              SPORTIVITAS
+            </p>
+          </div>
+
+          {/* ── Info Badges ── */}
+          <div className="relative flex flex-col sm:flex-row items-center justify-center gap-3 w-full mb-10">
+            <div className="flex items-center gap-2 bg-white/90 border border-slate-200 shadow-sm rounded-full px-5 py-2.5 text-sm font-semibold text-slate-700">
+              <CalendarDays size={18} className="text-primary" />
+              11 – 19 Agustus 2026
+            </div>
+            <div className="flex items-center gap-2 bg-white/90 border border-slate-200 shadow-sm rounded-full px-5 py-2.5 text-sm font-semibold text-slate-700">
+              <MapPin size={18} className="text-primary" />
+              The City Tower · Lt. 26 & 27
+            </div>
+          </div>
+
+          {/* ── CTAs ── */}
+          <div className="relative flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
+            <Link
+              href="/register"
+              className="w-full sm:w-auto group flex items-center justify-center gap-2 bg-primary hover:bg-red-700 text-white font-bold rounded-full shadow-lg shadow-primary/30 hover:-translate-y-1 hover:shadow-xl transition-all duration-300"
+              style={{ fontSize: "clamp(14px, 1.5vw, 16px)", padding: "16px 40px" }}
+            >
+              Register Sekarang 
+              <ArrowRight size={18} className="transition-transform group-hover:translate-x-1" />
+            </Link>
+            <Link
+              href="/#event"
+              className="w-full sm:w-auto flex items-center justify-center gap-2 bg-white hover:bg-slate-50 border-2 border-slate-200 text-slate-800 font-bold rounded-full shadow-sm hover:-translate-y-1 hover:shadow-md transition-all duration-300"
+              style={{ fontSize: "clamp(14px, 1.5vw, 16px)", padding: "14px 40px" }}
+            >
+              Lihat Event
+            </Link>
+          </div>
+
         </motion.div>
-
-        {/* Eyebrow: DIRGAHAYU & TANGGAL */}
-        <motion.div
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.7, delay: 0.35, ease: "easeOut" }}
-          className="mb-5 md:mb-8"
-        >
-          <p className="font-heading font-bold text-foreground uppercase tracking-[0.25em] leading-none mb-2" style={{ fontSize: "clamp(11px, 1.5vw, 14px)" }}>
-            Dirgahayu Indonesia
-          </p>
-          <p className="font-heading font-bold text-primary uppercase tracking-[0.3em] leading-none" style={{ fontSize: "clamp(11px, 1.5vw, 14px)" }}>
-            17 Agustus 2026
-          </p>
-        </motion.div>
-
-        {/* Headline: GESIT BERSATU */}
-        <motion.h1
-          initial={{ scale: 0.95, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 0.8, delay: 0.5, ease: "easeOut" }}
-          className="font-heading font-black text-foreground uppercase leading-none tracking-tight select-none"
-          style={{ fontSize: "clamp(36px, 7.5vw, 84px)", letterSpacing: "-0.01em" }}
-        >
-          GESIT BERSATU
-        </motion.h1>
-
-        {/* — DALAM — divider */}
-        <motion.div
-          initial={{ opacity: 0, scaleX: 0.5 }}
-          animate={{ opacity: 1, scaleX: 1 }}
-          transition={{ duration: 0.7, delay: 0.65, ease: "easeOut" }}
-          className="flex items-center gap-3 md:gap-5 my-3 md:my-5 w-full max-w-sm mx-auto select-none"
-        >
-          <div className="h-px bg-foreground/20 flex-1" />
-          <span className="font-heading font-bold text-foreground/70 uppercase tracking-[0.4em]" style={{ fontSize: "clamp(10px, 1.4vw, 14px)" }}>
-            DALAM
-          </span>
-          <div className="h-px bg-foreground/20 flex-1" />
-        </motion.div>
-
-        {/* Headline: SPORTIVITAS */}
-        <motion.p
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.8, delay: 0.8, ease: "easeOut" }}
-          className="font-heading font-black text-primary italic uppercase leading-none tracking-tight select-none drop-shadow-sm"
-          style={{ fontSize: "clamp(42px, 8.5vw, 96px)", letterSpacing: "-0.01em" }}
-        >
-          SPORTIVITAS
-        </motion.p>
-
-        {/* Info Chips (Tanggal & Tempat) */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.95 }}
-          className="flex flex-wrap items-center justify-center gap-2 md:gap-4 mt-8 md:mt-10 mb-8"
-        >
-          <span className="inline-flex items-center gap-1.5 bg-white/60 backdrop-blur-md border border-foreground/10 rounded-full px-4 py-2 text-[11px] md:text-sm font-semibold text-foreground/80 shadow-sm">
-            <CalendarDays size={16} className="text-primary" />
-            11 – 19 Agustus 2026
-          </span>
-          <span className="inline-flex items-center gap-1.5 bg-white/60 backdrop-blur-md border border-foreground/10 rounded-full px-4 py-2 text-[11px] md:text-sm font-semibold text-foreground/80 shadow-sm">
-            <MapPin size={16} className="text-primary" />
-            The City Tower · Lt. 26 & 27
-          </span>
-        </motion.div>
-
-        {/* CTAs */}
-        <motion.div
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.8, delay: 1.1, ease: "easeOut" }}
-          className="flex flex-col sm:flex-row items-center gap-3 md:gap-4 w-full sm:w-auto"
-        >
-          <Link
-            href="/register"
-            id="hero-register-btn"
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-primary hover:bg-primary-dark text-white font-bold rounded-full shadow-lg shadow-primary/30 hover:-translate-y-0.5 hover:shadow-xl transition-all duration-200"
-            style={{ fontSize: "clamp(13px, 1.3vw, 16px)", padding: "clamp(12px,1.5vw,16px) clamp(28px,3.5vw,48px)" }}
-          >
-            Register Sekarang <ArrowRight size={18} />
-          </Link>
-          <Link
-            href="/#event"
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white/70 backdrop-blur-md border-2 border-primary/20 hover:border-primary/50 text-foreground font-semibold rounded-full hover:bg-white transition-all duration-200"
-            style={{ fontSize: "clamp(13px, 1.3vw, 16px)", padding: "clamp(12px,1.5vw,16px) clamp(28px,3.5vw,48px)" }}
-          >
-            Lihat Event
-          </Link>
-        </motion.div>
-
       </div>
     </section>
   );
