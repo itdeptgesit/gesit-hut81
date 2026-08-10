@@ -63,12 +63,20 @@ ALTER TABLE winners ENABLE ROW LEVEL SECURITY;
 ALTER TABLE settings ENABLE ROW LEVEL SECURITY;
 
 -- Allow public READ access
+DROP POLICY IF EXISTS "Public read participants" ON participants;
 CREATE POLICY "Public read participants" ON participants FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "Public read teams" ON teams;
 CREATE POLICY "Public read teams" ON teams FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "Public read winners" ON winners;
 CREATE POLICY "Public read winners" ON winners FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "Public read settings" ON settings;
 CREATE POLICY "Public read settings" ON settings FOR SELECT USING (true);
 
 -- Allow anon INSERT for registration (participants only)
+DROP POLICY IF EXISTS "Anon insert participants" ON participants;
 CREATE POLICY "Anon insert participants" ON participants FOR INSERT WITH CHECK (true);
 
 -- =====================================================
@@ -83,5 +91,42 @@ CREATE TABLE IF NOT EXISTS quiz_scores (
 );
 
 ALTER TABLE quiz_scores ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Public read quiz_scores" ON quiz_scores;
 CREATE POLICY "Public read quiz_scores" ON quiz_scores FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "Anon insert quiz_scores" ON quiz_scores;
 CREATE POLICY "Anon insert quiz_scores" ON quiz_scores FOR INSERT WITH CHECK (true);
+
+-- =====================================================
+-- MATCH SCHEDULES TABLE
+-- =====================================================
+CREATE TABLE IF NOT EXISTS match_schedules (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  match_key text UNIQUE NOT NULL,
+  category text NOT NULL,
+  match_name text NOT NULL,
+  day text NOT NULL,
+  time text NOT NULL,
+  court text NOT NULL,
+  referee text NOT NULL
+);
+
+ALTER TABLE match_schedules ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Public read match_schedules" ON match_schedules;
+CREATE POLICY "Public read match_schedules" ON match_schedules FOR SELECT USING (true);
+
+INSERT INTO match_schedules (match_key, category, match_name, day, time, court, referee) VALUES
+  ('SP_SF1', 'Single Putra', 'Semi-Final 1 (Slot 1 vs 2)', 'Hari 2', '17.00 - 18.00', 'Court 4', 'Argadana / Aditya'),
+  ('SP_SF2', 'Single Putra', 'Semi-Final 2 (Slot 3 vs 4)', 'Hari 2', '17.00 - 18.00', 'Court 4', 'Argadana / Aditya'),
+  ('SP_F',   'Single Putra', 'Grand Final',                 'Hari 3', '17.00 - 19.00', 'Court 4', 'Argadana / Aditya'),
+  ('SPu_SF1','Single Putri', 'Semi-Final 1 (Slot 1 vs 2)', 'Hari 1', '17.00 - 18.00', 'Court 2', 'Aditya'),
+  ('SPu_SF2','Single Putri', 'Semi-Final 2 (Slot 3 vs 4)', 'Hari 1', '17.00 - 18.00', 'Court 4', 'Argadana'),
+  ('SPu_F',  'Single Putri', 'Grand Final',                 'Hari 3', '17.00 - 19.00', 'Court 4', 'Argadana / Aditya'),
+  ('GC_SF1', 'Ganda Campuran', 'Semi-Final 1 (Slot 1 vs 2)', 'Hari 1', '17.00 - 18.00', 'Court 2', 'Argadana'),
+  ('GC_SF2', 'Ganda Campuran', 'Semi-Final 2 (Slot 3 vs 4)', 'Hari 1', '17.00 - 18.00', 'Court 4', 'Aditya'),
+  ('GC_F',   'Ganda Campuran', 'Grand Final',                 'Hari 3', '17.00 - 19.00', 'Court 4', 'Argadana / Aditya')
+ON CONFLICT (match_key) DO UPDATE SET
+  day = EXCLUDED.day,
+  time = EXCLUDED.time,
+  court = EXCLUDED.court,
+  referee = EXCLUDED.referee;

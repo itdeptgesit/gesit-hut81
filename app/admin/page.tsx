@@ -6,7 +6,7 @@ import { supabase } from "@/lib/supabase";
 import {
   LogOut, Users, Trophy, Monitor, RefreshCw,
   ExternalLink, Loader2, LayoutDashboard, Gamepad2,
-  TrendingUp, Circle, Edit2, Plus, Trash2, X, Award, Download
+  TrendingUp, Circle, Edit2, Plus, Trash2, X, Award, Download, Calendar
 } from "lucide-react";
 import { toPng } from "html-to-image";
 import { QRCodeSVG } from "qrcode.react";
@@ -42,6 +42,17 @@ interface Winner {
   category: string;
   position: string;
   name: string;
+}
+
+interface MatchSchedule {
+  id: string;
+  match_key: string;
+  category: string;
+  match_name: string;
+  day: string;
+  time: string;
+  court: string;
+  referee: string;
 }
 
 // ─── Reusable primitives ───
@@ -156,13 +167,16 @@ export default function AdminDashboard() {
   const [scoresLoading, setScoresLoading] = useState(true);
   const [winners, setWinners] = useState<Winner[]>([]);
   const [winnersLoading, setWinnersLoading] = useState(true);
+  const [schedules, setSchedules] = useState<MatchSchedule[]>([]);
+  const [schedulesLoading, setSchedulesLoading] = useState(true);
   
   // UI States
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("Dashboard");
 
-  // Edit Participant Modal
+  // Edit/Add Participant Modal
   const [editingParticipant, setEditingParticipant] = useState<Participant | null>(null);
+  const [isNewParticipant, setIsNewParticipant] = useState(false);
   const [savingParticipant, setSavingParticipant] = useState(false);
 
   // Bracket Drag & Drop States
@@ -172,6 +186,10 @@ export default function AdminDashboard() {
   const [editingWinner, setEditingWinner] = useState<Winner | null>(null);
   const [savingWinner, setSavingWinner] = useState(false);
   const [isNewWinner, setIsNewWinner] = useState(false);
+
+  // Edit Schedule Modal
+  const [editingSchedule, setEditingSchedule] = useState<MatchSchedule | null>(null);
+  const [savingSchedule, setSavingSchedule] = useState(false);
 
   // E-Sertifikat
   const [certWinnerId, setCertWinnerId] = useState("");
@@ -219,6 +237,13 @@ export default function AdminDashboard() {
     setWinnersLoading(false);
   }, []);
 
+  const fetchSchedules = useCallback(async () => {
+    setSchedulesLoading(true);
+    const { data } = await supabase.from("match_schedules").select("*").order("id", { ascending: true });
+    setSchedules(data || []);
+    setSchedulesLoading(false);
+  }, []);
+
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (user) setAdminEmail(user.email || "");
@@ -226,7 +251,8 @@ export default function AdminDashboard() {
     fetchParticipants();
     fetchScores();
     fetchWinners();
-  }, [fetchParticipants, fetchScores, fetchWinners]);
+    fetchSchedules();
+  }, [fetchParticipants, fetchScores, fetchWinners, fetchSchedules]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -290,26 +316,39 @@ export default function AdminDashboard() {
     if (!editingParticipant) return;
     setSavingParticipant(true);
     try {
+      const method = isNewParticipant ? "POST" : "PATCH";
+      const payload = isNewParticipant 
+        ? {
+            name: editingParticipant.name,
+            event: "Badminton Tournament",
+            floor: editingParticipant.floor || "Lantai 26",
+            category: editingParticipant.category || "Single Putra",
+            partner: editingParticipant.partner || "-",
+          }
+        : {
+            id: editingParticipant.id,
+            name: editingParticipant.name,
+            call_name: editingParticipant.call_name || "",
+            bracket_position: editingParticipant.bracket_position || null,
+            final_position: editingParticipant.final_position || null,
+          };
+      
       const res = await fetch("/api/admin/participants", {
-        method: "PATCH",
+        method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          id: editingParticipant.id,
-          name: editingParticipant.name,
-          call_name: editingParticipant.call_name || "",
-          bracket_position: editingParticipant.bracket_position || null,
-          final_position: editingParticipant.final_position || null,
-        }),
+        body: JSON.stringify(payload),
       });
       if (res.ok) {
         await fetchParticipants();
         setEditingParticipant(null);
+        setIsNewParticipant(false);
       } else {
-        alert("Gagal mengupdate peserta");
+        const errorData = await res.json();
+        alert(`Gagal menyimpan peserta: ${errorData.error}`);
       }
     } catch (err) {
       console.error(err);
-      alert("Terjadi kesalahan.");
+      alert("Terjadi kesalahan saat menyimpan peserta.");
     }
     setSavingParticipant(false);
   };
@@ -350,11 +389,35 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleSaveSchedule = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingSchedule) return;
+    setSavingSchedule(true);
+    try {
+      const res = await fetch("/api/admin/schedules", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(editingSchedule),
+      });
+      if (res.ok) {
+        await fetchSchedules();
+        setEditingSchedule(null);
+      } else {
+        alert("Gagal mengupdate jadwal");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Terjadi kesalahan.");
+    }
+    setSavingSchedule(false);
+  };
+
   const sessions = [...new Set(quizScores.map(s => s.pin))].length;
 
   const navItems = [
     { icon: <LayoutDashboard size={16} />, label: "Dashboard" },
     { icon: <Users size={16} />, label: "Peserta & Bagan" },
+    { icon: <Calendar size={16} />, label: "Jadwal & Wasit" },
     { icon: <Trophy size={16} />, label: "Manajemen Pemenang" },
     { icon: <Award size={16} />, label: "E-Sertifikat" },
   ];
@@ -593,6 +656,17 @@ export default function AdminDashboard() {
                       {/* L-side Slots */}
                       <div className="flex flex-col justify-around gap-8 h-full flex-1 min-w-0 relative">
                         <SlotBox slotNumber="1" type="bracket" participants={participants} category={bracketCategory} onDrop={handleDropToSlot} onRemove={handleRemoveFromSlot} />
+                        {(() => {
+                          const catPrefix = bracketCategory === "Single Putra" ? "SP" : bracketCategory === "Single Putri" ? "SPu" : "GC";
+                          const s = schedules.find(x => x.match_key === `${catPrefix}_SF1`);
+                          if (!s) return null;
+                          return (
+                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-0 flex flex-col items-center bg-zinc-900/90 px-3 py-1.5 rounded-lg border border-zinc-700/50 backdrop-blur-sm whitespace-nowrap text-center shadow-lg pointer-events-none">
+                              <div className="text-[9px] text-zinc-300 font-bold mb-0.5 tracking-wider">{s.day} • {s.time}</div>
+                              <div className="text-[8px] text-zinc-400 font-medium">{s.court} • {s.referee.split('/')[0].trim()}</div>
+                            </div>
+                          );
+                        })()}
                         <SlotBox slotNumber="2" type="bracket" participants={participants} category={bracketCategory} onDrop={handleDropToSlot} onRemove={handleRemoveFromSlot} />
                       </div>
                       
@@ -606,6 +680,17 @@ export default function AdminDashboard() {
                           <div className="bg-gradient-to-r from-red-600 to-red-700 text-white font-black px-2 py-1 md:px-3 md:py-1 text-[9px] md:text-[10px] tracking-widest rounded shadow-[0_0_20px_rgba(220,38,38,0.3)] text-center whitespace-nowrap">
                             GRAND FINAL
                           </div>
+                          {(() => {
+                            const catPrefix = bracketCategory === "Single Putra" ? "SP" : bracketCategory === "Single Putri" ? "SPu" : "GC";
+                            const s = schedules.find(x => x.match_key === `${catPrefix}_F`);
+                            if (!s) return null;
+                            return (
+                              <div className="mt-2 flex flex-col items-center bg-zinc-900/90 px-3 py-1.5 rounded-lg border border-zinc-700/50 backdrop-blur-sm whitespace-nowrap text-center shadow-lg pointer-events-none">
+                                <div className="text-[9px] text-zinc-300 font-bold mb-0.5 tracking-wider">{s.day} • {s.time}</div>
+                                <div className="text-[8px] text-zinc-400 font-medium">{s.court} • {s.referee.split('/')[0].trim()}</div>
+                              </div>
+                            );
+                          })()}
                         </div>
 
                         {/* Final Right Box */}
@@ -613,8 +698,19 @@ export default function AdminDashboard() {
                       </div>
 
                       {/* R-side Slots */}
-                      <div className="flex flex-col justify-around gap-8 h-full flex-1 min-w-0">
+                      <div className="flex flex-col justify-around gap-8 h-full flex-1 min-w-0 relative">
                         <SlotBox slotNumber="3" type="bracket" participants={participants} category={bracketCategory} onDrop={handleDropToSlot} onRemove={handleRemoveFromSlot} />
+                        {(() => {
+                          const catPrefix = bracketCategory === "Single Putra" ? "SP" : bracketCategory === "Single Putri" ? "SPu" : "GC";
+                          const s = schedules.find(x => x.match_key === `${catPrefix}_SF2`);
+                          if (!s) return null;
+                          return (
+                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-0 flex flex-col items-center bg-zinc-900/90 px-3 py-1.5 rounded-lg border border-zinc-700/50 backdrop-blur-sm whitespace-nowrap text-center shadow-lg pointer-events-none">
+                              <div className="text-[9px] text-zinc-300 font-bold mb-0.5 tracking-wider">{s.day} • {s.time}</div>
+                              <div className="text-[8px] text-zinc-400 font-medium">{s.court} • {s.referee.split('/')[0].trim()}</div>
+                            </div>
+                          );
+                        })()}
                         <SlotBox slotNumber="4" type="bracket" participants={participants} category={bracketCategory} onDrop={handleDropToSlot} onRemove={handleRemoveFromSlot} />
                       </div>
                     </div>
@@ -628,9 +724,20 @@ export default function AdminDashboard() {
                   title="Tabel Data Seluruh Peserta"
                   description="Edit detail nama peserta atau nama panggilan secara manual."
                   action={
-                    <button onClick={fetchParticipants} className="text-zinc-400 hover:text-zinc-600 p-1 transition-colors rounded">
-                      <RefreshCw size={14} className={participantsLoading ? "animate-spin" : ""} />
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button onClick={fetchParticipants} className="text-zinc-400 hover:text-zinc-600 p-1 transition-colors rounded">
+                        <RefreshCw size={14} className={participantsLoading ? "animate-spin" : ""} />
+                      </button>
+                      <button 
+                        onClick={() => {
+                          setIsNewParticipant(true);
+                          setEditingParticipant({ id: "", registration_id: "", created_at: "", name: "", floor: "Lantai 26", event: "Badminton Tournament", category: "Single Putra", status: "Registered" });
+                        }}
+                        className="inline-flex items-center gap-1 bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-medium px-3 py-1.5 rounded-lg transition-colors"
+                      >
+                        <Plus size={14} /> Tambah Manual
+                      </button>
+                    </div>
                   }
                 />
                 <div className="p-2">
@@ -693,6 +800,70 @@ export default function AdminDashboard() {
                 </div>
               </Card>
             </div>
+          )}
+
+          {activeTab === "Jadwal & Wasit" && (
+            <Card>
+              <CardHeader
+                title="Pengaturan Jadwal & Wasit Pertandingan"
+                description="Ubah waktu, lapangan, dan nama wasit untuk setiap pertandingan."
+                action={
+                  <button onClick={fetchSchedules} className="text-zinc-400 hover:text-zinc-600 p-1 transition-colors rounded">
+                    <RefreshCw size={14} className={schedulesLoading ? "animate-spin" : ""} />
+                  </button>
+                }
+              />
+              <div className="p-2">
+                {schedulesLoading ? (
+                  <div className="flex justify-center py-12"><Loader2 size={24} className="animate-spin text-zinc-400" /></div>
+                ) : schedules.length === 0 ? (
+                  <div className="text-center py-12">
+                    <Calendar size={32} className="text-zinc-200 mx-auto mb-2" />
+                    <p className="text-sm text-zinc-400">Belum ada data jadwal</p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="text-[11px] uppercase tracking-wider text-zinc-400 bg-zinc-50 border-y border-zinc-200">
+                          <th className="px-4 py-3 text-left font-medium">Kategori & Match</th>
+                          <th className="px-4 py-3 text-left font-medium">Hari & Jam</th>
+                          <th className="px-4 py-3 text-left font-medium">Lapangan</th>
+                          <th className="px-4 py-3 text-left font-medium">Wasit</th>
+                          <th className="px-4 py-3 text-right font-medium">Aksi</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-zinc-100">
+                        {schedules.map((s) => (
+                          <tr key={s.id} className="hover:bg-zinc-50 transition-colors">
+                            <td className="px-4 py-3">
+                              <div className="font-bold text-zinc-900">{s.category}</div>
+                              <div className="text-xs text-zinc-500">{s.match_name}</div>
+                            </td>
+                            <td className="px-4 py-3">
+                              <div className="font-medium text-zinc-900">{s.day}</div>
+                              <div className="text-xs text-zinc-500">{s.time}</div>
+                            </td>
+                            <td className="px-4 py-3">
+                              <Badge variant="warning">{s.court}</Badge>
+                            </td>
+                            <td className="px-4 py-3 font-medium text-zinc-900">{s.referee}</td>
+                            <td className="px-4 py-3 text-right">
+                              <button 
+                                onClick={() => setEditingSchedule({ ...s })}
+                                className="inline-flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-700 bg-blue-50 px-2 py-1 rounded"
+                              >
+                                <Edit2 size={12} /> Edit
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </Card>
           )}
 
           {activeTab === "Manajemen Pemenang" && (
@@ -948,68 +1119,119 @@ export default function AdminDashboard() {
               </div>
             </div>
           )}
-
         </div>
       </main>
 
-      {/* --- Modals --- */}
+      {/* Modals */}
       {editingParticipant && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl w-full max-w-md overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200">
-            <div className="flex justify-between items-center px-6 py-4 border-b border-zinc-100 bg-zinc-50/50">
-              <h3 className="font-bold text-zinc-900">Edit Data & Bagan</h3>
-              <button onClick={() => setEditingParticipant(null)} className="text-zinc-400 hover:text-zinc-700"><X size={18} /></button>
+            <div className="flex justify-between items-center p-4 border-b border-zinc-100">
+              <h3 className="font-bold text-zinc-900">{isNewParticipant ? "Tambah Peserta Manual" : "Edit Detail Peserta"}</h3>
+              <button onClick={() => { setEditingParticipant(null); setIsNewParticipant(false); }} className="text-zinc-400 hover:text-zinc-600">
+                <X size={20} />
+              </button>
             </div>
-            <form onSubmit={handleSaveParticipant} className="p-6 space-y-4">
+            <form onSubmit={handleSaveParticipant} className="p-4 space-y-4">
               <div>
                 <label className="block text-xs font-semibold text-zinc-700 mb-1">Nama Lengkap</label>
                 <input 
                   type="text" 
-                  value={editingParticipant.name} 
-                  onChange={(e) => setEditingParticipant({...editingParticipant, name: e.target.value})}
-                  className="w-full border border-zinc-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900"
+                  value={editingParticipant.name}
+                  onChange={e => setEditingParticipant({...editingParticipant, name: e.target.value})}
+                  className="w-full border border-zinc-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900" 
                   required
                 />
               </div>
-              <div>
-                <label className="block text-xs font-semibold text-zinc-700 mb-1">Nama Panggilan (Ditampilkan di Bagan)</label>
-                <input 
-                  type="text" 
-                  value={editingParticipant.call_name || ""} 
-                  onChange={(e) => setEditingParticipant({...editingParticipant, call_name: e.target.value})}
-                  className="w-full border border-zinc-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold text-zinc-700 mb-1">Slot Semi-Final</label>
-                  <select 
-                    value={editingParticipant.bracket_position || ""} 
-                    onChange={(e) => setEditingParticipant({...editingParticipant, bracket_position: e.target.value})}
-                    className="w-full border border-zinc-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900 bg-white"
-                  >
-                    <option value="">-- Belum Diset --</option>
-                    <option value="1">Slot 1 (Kiri Atas)</option>
-                    <option value="2">Slot 2 (Kiri Bawah)</option>
-                    <option value="3">Slot 3 (Kanan Atas)</option>
-                    <option value="4">Slot 4 (Kanan Bawah)</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-zinc-700 mb-1">Slot Final</label>
-                  <select 
-                    value={editingParticipant.final_position || ""} 
-                    onChange={(e) => setEditingParticipant({...editingParticipant, final_position: e.target.value})}
-                    className="w-full border border-zinc-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900 bg-white"
-                  >
-                    <option value="">-- Belum Diset --</option>
-                    <option value="L">Final (Kiri)</option>
-                    <option value="R">Final (Kanan)</option>
-                  </select>
-                </div>
-              </div>
+              
+              {isNewParticipant ? (
+                <>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-semibold text-zinc-700 mb-1">Lantai</label>
+                      <select 
+                        value={editingParticipant.floor}
+                        onChange={e => setEditingParticipant({...editingParticipant, floor: e.target.value})}
+                        className="w-full border border-zinc-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-zinc-900 bg-white"
+                        required
+                      >
+                        <option value="Lantai 26">Lantai 26</option>
+                        <option value="Lantai 27">Lantai 27</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-zinc-700 mb-1">Kategori</label>
+                      <select 
+                        value={editingParticipant.category || ""}
+                        onChange={e => setEditingParticipant({...editingParticipant, category: e.target.value})}
+                        className="w-full border border-zinc-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-zinc-900 bg-white"
+                        required
+                      >
+                        <option value="Single Putra">Single Putra</option>
+                        <option value="Single Putri">Single Putri</option>
+                        <option value="Ganda Campuran">Ganda Campuran</option>
+                      </select>
+                    </div>
+                  </div>
+                  {editingParticipant.category === "Ganda Campuran" && (
+                    <div>
+                      <label className="block text-xs font-semibold text-zinc-700 mb-1">Nama Partner</label>
+                      <input 
+                        type="text" 
+                        value={editingParticipant.partner || ""}
+                        onChange={e => setEditingParticipant({...editingParticipant, partner: e.target.value})}
+                        className="w-full border border-zinc-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-zinc-900" 
+                        placeholder="Wajib untuk Ganda Campuran"
+                        required={editingParticipant.category === "Ganda Campuran"}
+                      />
+                    </div>
+                  )}
+                </>
+              ) : (
+                <>
+                  <div>
+                    <label className="block text-xs font-semibold text-zinc-700 mb-1">Nama Panggilan (Utk Bagan)</label>
+                    <input 
+                      type="text" 
+                      value={editingParticipant.call_name || ""}
+                      onChange={e => setEditingParticipant({...editingParticipant, call_name: e.target.value})}
+                      className="w-full border border-zinc-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-zinc-900" 
+                      placeholder="Opsional, max 10 huruf direkomendasikan"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-semibold text-zinc-700 mb-1">Slot Semi-Final</label>
+                      <select 
+                        value={editingParticipant.bracket_position || ""} 
+                        onChange={(e) => setEditingParticipant({...editingParticipant, bracket_position: e.target.value})}
+                        className="w-full border border-zinc-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900 bg-white"
+                      >
+                        <option value="">-- Belum Diset --</option>
+                        <option value="1">Slot 1 (Kiri Atas)</option>
+                        <option value="2">Slot 2 (Kiri Bawah)</option>
+                        <option value="3">Slot 3 (Kanan Atas)</option>
+                        <option value="4">Slot 4 (Kanan Bawah)</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-zinc-700 mb-1">Slot Final</label>
+                      <select 
+                        value={editingParticipant.final_position || ""} 
+                        onChange={(e) => setEditingParticipant({...editingParticipant, final_position: e.target.value})}
+                        className="w-full border border-zinc-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900 bg-white"
+                      >
+                        <option value="">-- Belum Diset --</option>
+                        <option value="L">Final (Kiri)</option>
+                        <option value="R">Final (Kanan)</option>
+                      </select>
+                    </div>
+                  </div>
+                </>
+              )}
+
               <div className="pt-4 flex justify-end gap-2">
-                <button type="button" onClick={() => setEditingParticipant(null)} className="px-4 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-100 rounded-lg">Batal</button>
+                <button type="button" onClick={() => { setEditingParticipant(null); setIsNewParticipant(false); }} className="px-4 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-100 rounded-lg">Batal</button>
                 <button type="submit" disabled={savingParticipant} className="px-4 py-2 text-sm font-medium text-white bg-zinc-900 hover:bg-zinc-800 rounded-lg flex items-center gap-2">
                   {savingParticipant && <Loader2 size={14} className="animate-spin" />} Simpan
                 </button>
@@ -1083,6 +1305,76 @@ export default function AdminDashboard() {
                 <button type="button" onClick={() => setEditingWinner(null)} className="px-4 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-100 rounded-lg">Batal</button>
                 <button type="submit" disabled={savingWinner} className="px-4 py-2 text-sm font-medium text-white bg-zinc-900 hover:bg-zinc-800 rounded-lg flex items-center gap-2">
                   {savingWinner && <Loader2 size={14} className="animate-spin" />} Simpan
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {editingSchedule && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl w-full max-w-md overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex justify-between items-center px-6 py-4 border-b border-zinc-100 bg-zinc-50/50">
+              <div>
+                <h3 className="font-bold text-zinc-900">Edit Jadwal & Wasit</h3>
+                <p className="text-xs text-zinc-500 mt-0.5">{editingSchedule.category} — {editingSchedule.match_name}</p>
+              </div>
+              <button onClick={() => setEditingSchedule(null)} className="text-zinc-400 hover:text-zinc-700"><X size={18} /></button>
+            </div>
+            <form onSubmit={handleSaveSchedule} className="p-6 space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-zinc-700 mb-1">Hari</label>
+                  <select
+                    value={editingSchedule.day}
+                    onChange={(e) => setEditingSchedule({ ...editingSchedule, day: e.target.value })}
+                    className="w-full border border-zinc-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900 bg-white"
+                    required
+                  >
+                    <option value="Hari 1">Hari 1 (Selasa)</option>
+                    <option value="Hari 2">Hari 2 (Rabu)</option>
+                    <option value="Hari 3">Hari 3 (Kamis)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-zinc-700 mb-1">Jam</label>
+                  <input
+                    type="text"
+                    value={editingSchedule.time}
+                    onChange={(e) => setEditingSchedule({ ...editingSchedule, time: e.target.value })}
+                    placeholder="Contoh: 17.00 - 18.00"
+                    className="w-full border border-zinc-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900"
+                    required
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-zinc-700 mb-1">Lapangan / Court</label>
+                <input
+                  type="text"
+                  value={editingSchedule.court}
+                  onChange={(e) => setEditingSchedule({ ...editingSchedule, court: e.target.value })}
+                  placeholder="Contoh: Court 2, Court 4"
+                  className="w-full border border-zinc-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-zinc-700 mb-1">Nama Wasit</label>
+                <input
+                  type="text"
+                  value={editingSchedule.referee}
+                  onChange={(e) => setEditingSchedule({ ...editingSchedule, referee: e.target.value })}
+                  placeholder="Contoh: Argadana / Aditya"
+                  className="w-full border border-zinc-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900"
+                  required
+                />
+              </div>
+              <div className="pt-2 flex justify-end gap-2">
+                <button type="button" onClick={() => setEditingSchedule(null)} className="px-4 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-100 rounded-lg">Batal</button>
+                <button type="submit" disabled={savingSchedule} className="px-4 py-2 text-sm font-medium text-white bg-zinc-900 hover:bg-zinc-800 rounded-lg flex items-center gap-2">
+                  {savingSchedule && <Loader2 size={14} className="animate-spin" />} Simpan
                 </button>
               </div>
             </form>

@@ -74,21 +74,24 @@ export async function POST(request: Request) {
     }
 
     // ── Generate Registration ID ──
-    const { data: latestParticipant } = await supabaseAdmin
+    const { data: allParticipants } = await supabaseAdmin
       .from("participants")
-      .select("registration_id")
-      .order("registration_id", { ascending: false })
-      .limit(1)
-      .maybeSingle();
+      .select("registration_id");
 
     let nextIdNumber = 1;
-    if (latestParticipant && latestParticipant.registration_id) {
-      const parts = latestParticipant.registration_id.split('-');
-      const lastNumStr = parts[parts.length - 1];
-      const lastNum = parseInt(lastNumStr, 10);
-      if (!isNaN(lastNum)) {
-        nextIdNumber = lastNum + 1;
+    if (allParticipants && allParticipants.length > 0) {
+      let maxId = 0;
+      for (const p of allParticipants) {
+        if (p.registration_id?.startsWith("HUTRI-2026-")) {
+          const parts = p.registration_id.split('-');
+          const lastNumStr = parts[parts.length - 1];
+          const lastNum = parseInt(lastNumStr, 10);
+          if (!isNaN(lastNum) && lastNum > maxId) {
+            maxId = lastNum;
+          }
+        }
       }
+      nextIdNumber = maxId + 1;
     }
     const registration_id = `HUTRI-2026-${String(nextIdNumber).padStart(4, "0")}`;
 
@@ -117,8 +120,9 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     console.error("Registration error:", error);
+    const errorMessage = error instanceof Error ? error.message : (error && typeof error === 'object' && 'message' in error ? error.message : JSON.stringify(error));
     return NextResponse.json(
-      { error: `Terjadi kesalahan internal: ${error instanceof Error ? error.message : String(error)}` },
+      { error: `Terjadi kesalahan internal: ${errorMessage}` },
       { status: 500 }
     );
   }

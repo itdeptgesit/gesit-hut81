@@ -7,30 +7,11 @@ import clsx from "clsx";
 
 const categories = ["Single Putra", "Single Putri", "Ganda Campuran"];
 
-// Schedule info per category per slot (matches BadmintonSchedule.tsx logic)
-// Slot 1 vs Slot 3 = top row, Slot 2 vs Slot 4 = bottom row
-const SCHEDULE_INFO: Record<string, Record<string, { day: string; time: string; court: string }>> = {
-  "Single Putra": {
-    "1": { day: "Hari 1", time: "17.00–18.00", court: "Lap. 1" },
-    "3": { day: "Hari 1", time: "17.00–18.00", court: "Lap. 1" },
-    "2": { day: "Hari 2", time: "17.00–18.00", court: "Lap. 1" },
-    "4": { day: "Hari 2", time: "17.00–18.00", court: "Lap. 1" },
-  },
-  "Single Putri": {
-    "1": { day: "Hari 1", time: "17.00–18.00", court: "Lap. 2" },
-    "3": { day: "Hari 1", time: "17.00–18.00", court: "Lap. 2" },
-    "2": { day: "Hari 2", time: "17.00–18.00", court: "Lap. 1" },
-    "4": { day: "Hari 2", time: "17.00–18.00", court: "Lap. 1" },
-  },
-  "Ganda Campuran": {
-    "1": { day: "Hari 1", time: "17.00–18.00", court: "Lap. 1" },
-    "3": { day: "Hari 1", time: "17.00–18.00", court: "Lap. 1" },
-    "2": { day: "Hari 1", time: "17.00–18.00", court: "Lap. 2" },
-    "4": { day: "Hari 1", time: "17.00–18.00", court: "Lap. 2" },
-  },
-};
-
-const FINAL_SCHEDULE = { day: "Hari 3", time: "17.00–19.00", court: "Lap. 1" };
+// Map category and match type to match_key
+function getMatchKey(category: string, matchType: "SF1" | "SF2" | "F") {
+  const catPrefix = category === "Single Putra" ? "SP" : category === "Single Putri" ? "SPu" : "GC";
+  return `${catPrefix}_${matchType}`;
+}
 
 // Stable color palette for avatars based on first char
 const AVATAR_COLORS = [
@@ -127,28 +108,34 @@ interface SlotData {
   floor: string;
   isDouble?: boolean;
   isTBD?: boolean;
-  scheduleInfo?: { day: string; time: string; court: string };
+  scheduleInfo?: { day: string; time: string; court: string; referee: string };
 }
 
 export default function TournamentBracket() {
   const [participants, setParticipants] = useState<Participant[]>([]);
+  const [schedules, setSchedules] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState(categories[0]);
 
   useEffect(() => {
-    fetch("/api/participants")
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.participants) {
+    Promise.all([
+      fetch("/api/participants").then(res => res.json()),
+      fetch("/api/schedules").then(res => res.json())
+    ])
+      .then(([participantsData, schedulesData]) => {
+        if (participantsData.participants) {
           setParticipants(
-            data.participants.filter((p: Participant) =>
+            participantsData.participants.filter((p: Participant) =>
               p.event.toLowerCase().includes("badminton")
             )
           );
         }
+        if (schedulesData.schedules) {
+          setSchedules(schedulesData.schedules);
+        }
       })
-      .catch((err) => {
+      .catch(err => {
         if (err?.name === "AbortError" || err?.message === "Failed to fetch") return;
-        console.error("Error fetching participants:", err);
+        console.error("Error fetching data:", err);
       });
   }, []);
 
@@ -166,7 +153,12 @@ export default function TournamentBracket() {
 
   const getSlotData = (category: string, bracketPosition: string, defaultFloor: string): SlotData => {
     const p = getParticipant(category, bracketPosition);
-    const scheduleInfo = SCHEDULE_INFO[category]?.[bracketPosition];
+    
+    const matchType = (bracketPosition === "1" || bracketPosition === "2") ? "SF1" : "SF2";
+    const matchKey = getMatchKey(category, matchType);
+    const scheduleRow = schedules.find(s => s.match_key === matchKey);
+    const scheduleInfo = scheduleRow ? { day: scheduleRow.day, time: scheduleRow.time, court: scheduleRow.court, referee: scheduleRow.referee } : undefined;
+
     if (!p) {
       return { name: "TBD", floor: defaultFloor, isTBD: true, scheduleInfo };
     }
@@ -272,10 +264,13 @@ export default function TournamentBracket() {
 
           {/* Schedule info chip */}
           {slot.scheduleInfo && (
-            <div className="mt-3 pt-2.5 border-t border-white/5 flex items-center gap-3 text-[10px] text-white/40 font-medium">
+            <div className="mt-3 pt-2.5 border-t border-white/5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-white/40 font-medium">
               <span className="bg-white/5 px-1.5 py-0.5 rounded font-bold text-white/60">{slot.scheduleInfo.day}</span>
               <span>{slot.scheduleInfo.time}</span>
-              <span className="ml-auto text-primary/70 font-bold">{slot.scheduleInfo.court}</span>
+              <span className="text-primary/70 font-bold">{slot.scheduleInfo.court}</span>
+              {slot.scheduleInfo.referee && (
+                <span className="ml-auto text-white/30 font-medium">🏸 {slot.scheduleInfo.referee}</span>
+              )}
             </div>
           )}
         </div>
@@ -353,11 +348,18 @@ export default function TournamentBracket() {
                     GRAND FINAL
                   </div>
                   {/* Grand Final schedule info */}
-                  <div className="flex items-center justify-center gap-2 mt-1.5 text-[9px] text-white/40 font-medium">
-                    <span className="bg-white/5 px-1.5 py-0.5 rounded font-bold text-white/50">{FINAL_SCHEDULE.day}</span>
-                    <span>{FINAL_SCHEDULE.time}</span>
-                    <span className="text-red-400/80 font-bold">{FINAL_SCHEDULE.court}</span>
-                  </div>
+                  {(() => {
+                    const finalKey = getMatchKey(activeTab, "F");
+                    const finalRow = schedules.find(s => s.match_key === finalKey);
+                    if (!finalRow) return null;
+                    return (
+                      <div className="flex items-center justify-center gap-2 mt-1.5 text-[9px] text-white/40 font-medium">
+                        <span className="bg-white/5 px-1.5 py-0.5 rounded font-bold text-white/50">{finalRow.day}</span>
+                        <span>{finalRow.time}</span>
+                        <span className="text-red-400/80 font-bold">{finalRow.court}</span>
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
 
