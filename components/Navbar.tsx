@@ -48,7 +48,6 @@ export default function Navbar() {
     { name: "Badminton", href: "/#jadwal-badminton" },
     { name: "Peserta", href: "/#peserta" },
     { name: "Teams", href: "/#teams" },
-    { name: "FAQ", href: "/#faq" },
   ];
 
   return (

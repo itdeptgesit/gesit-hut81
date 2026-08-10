@@ -9,6 +9,7 @@ import {
   TrendingUp, Circle, Edit2, Plus, Trash2, X, Award, Download
 } from "lucide-react";
 import { toPng } from "html-to-image";
+import { QRCodeSVG } from "qrcode.react";
 import Link from "next/link";
 import Image from "next/image";
 
@@ -927,10 +928,14 @@ export default function AdminDashboard() {
                       </div>
                     </div>
 
-                    {/* QR Code Placeholder */}
+                    {/* QR Code */}
                     <div className="absolute bottom-6 right-6 bg-white p-2 rounded-lg border border-zinc-200 shadow-sm flex flex-col items-center">
                       <div className="w-16 h-16 bg-zinc-100 mb-1 flex items-center justify-center">
-                        <div className="w-14 h-14" style={{ backgroundImage: "url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22currentColor%22 stroke-width=%221%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Crect x=%223%22 y=%223%22 width=%2218%22 height=%2218%22 rx=%222%22 ry=%222%22/%3E%3Cpath d=%22M7 7h.01%22/%3E%3Cpath d=%22M17 7h.01%22/%3E%3Cpath d=%22M7 17h.01%22/%3E%3Cpath d=%22M17 17h.01%22/%3E%3Cpath d=%22M7 12h.01%22/%3E%3Cpath d=%22M12 7h.01%22/%3E%3Cpath d=%22M12 12h.01%22/%3E%3Cpath d=%22M17 12h.01%22/%3E%3Cpath d=%22M12 17h.01%22/%3E%3C/svg%3E')", backgroundSize: "cover", opacity: 0.5 }}></div>
+                        <QRCodeSVG 
+                          value={certWinnerId ? `${typeof window !== "undefined" ? window.location.origin : ""}/verify/${certWinnerId}` : "https://gesit.com"} 
+                          size={56} 
+                          level="M" 
+                        />
                       </div>
                       <p className="text-[6px] font-bold tracking-widest uppercase">CERTIFICATE ID</p>
                     </div>
