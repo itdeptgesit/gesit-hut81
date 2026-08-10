@@ -11,7 +11,7 @@ const days = [
     date: "11 Agustus 2026",
     time: "17.00 – 18.00",
     duration: "1 Jam",
-    location: "Agora Mall Lt.11, Court 4",
+    location: "Agora Mall Lt.11, Court 4 & Court 2",
     courts: [
       {
         name: "Lapangan 1",

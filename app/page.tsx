@@ -352,6 +352,9 @@ export default function Home() {
             </p>
           </div>
           <BadmintonSchedule />
+        </div>
+        {/* Bracket needs full width on mobile to scroll, so break out of container */}
+        <div className="max-w-[1100px] mx-auto px-4 md:px-8 overflow-x-auto">
           <TournamentBracket />
         </div>
       </section>

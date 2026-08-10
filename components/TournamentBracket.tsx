@@ -252,14 +252,14 @@ export default function TournamentBracket() {
       </div>
 
       {/* Tabs */}
-      <div className="flex justify-center mb-12 px-4">
-        <div className="inline-flex bg-gray-100 border border-gray-200 p-1.5 rounded-full shadow-inner overflow-x-auto hide-scrollbar max-w-full gap-1">
+      <div className="flex justify-center mb-12">
+        <div className="flex bg-gray-100 border border-gray-200 p-1.5 rounded-full shadow-inner gap-1">
           {categories.map((cat) => (
             <button
               key={cat}
               onClick={() => setActiveTab(cat)}
               className={clsx(
-                "px-5 md:px-8 py-2.5 rounded-full font-bold text-xs md:text-sm uppercase tracking-widest transition-all whitespace-nowrap",
+                "px-3 md:px-8 py-2 md:py-2.5 rounded-full font-bold text-[10px] md:text-sm uppercase tracking-wider md:tracking-widest transition-all whitespace-nowrap",
                 activeTab === cat
                   ? "bg-white text-primary shadow-sm"
                   : "text-gray-500 hover:text-gray-900"
@@ -271,56 +271,60 @@ export default function TournamentBracket() {
         </div>
       </div>
 
-      {/* Bracket Container */}
-      <div className="bg-[#0a0a0c] border border-gray-800 rounded-3xl p-6 md:p-10 overflow-hidden relative shadow-2xl">
-        {/* Ambient glow */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-primary/5 blur-[120px] rounded-full pointer-events-none"></div>
+      {/* Bracket Container — scrollable on mobile */}
+      <div className="w-full overflow-x-auto hide-scrollbar pb-6 md:pb-0">
+        <div className="bg-[#0a0a0c] border border-gray-800 rounded-3xl relative shadow-2xl min-w-[800px]">
+          {/* Ambient glow */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-primary/5 blur-[120px] rounded-full pointer-events-none" />
 
-        <div className="min-w-[640px] w-full flex items-center justify-between gap-2 relative z-10">
+          <div className="p-6 md:p-10 w-full flex items-center justify-between gap-2 relative z-10">
 
-          {/* LEFT BRACKET */}
-          <div className="flex items-center flex-1 min-w-0">
-            <div className="flex flex-col gap-6 flex-1 min-w-0">
-              <TeamBox slot={slots[0]} />
-              <TeamBox slot={slots[1]} />
-            </div>
-            {/* L-shaped connector */}
-            <div className="w-8 shrink-0 border-y-2 border-r-2 border-white/10 h-[100px] rounded-r-xl"></div>
-            <div className="w-6 shrink-0 border-b-2 border-white/10"></div>
-          </div>
-
-          {/* CENTER TROPHY + GRAND FINAL */}
-          <div className="flex flex-col items-center gap-6 px-3 md:px-6 relative z-20 shrink-0">
-            <div className="relative group cursor-default">
-              <div className="absolute inset-0 bg-yellow-500/25 blur-3xl rounded-full group-hover:bg-yellow-500/35 transition-all duration-500"></div>
-              <Trophy
-                className="w-16 h-16 md:w-24 md:h-24 text-yellow-400 drop-shadow-[0_0_24px_rgba(250,204,21,0.7)] relative z-10 transition-transform duration-500 group-hover:scale-110"
-                strokeWidth={1}
-              />
+            {/* LEFT BRACKET */}
+            <div className="flex items-center flex-1 min-w-0">
+              <div className="flex flex-col gap-6 flex-1 min-w-0">
+                <TeamBox slot={slots[0]} />
+                <TeamBox slot={slots[1]} />
+              </div>
+              {/* L-shaped connector */}
+              <div className="w-8 shrink-0 border-y-2 border-r-2 border-white/10 h-[100px] rounded-r-xl" />
+              <div className="w-6 shrink-0 border-b-2 border-white/10" />
             </div>
 
-            {/* Grand Final box */}
-            <div className="relative p-[2px] rounded-sm shadow-[0_0_30px_rgba(227,30,36,0.2)]"
-              style={{ background: "linear-gradient(90deg, #e31e24, #b91c1c)" }}>
-              <div className="bg-[#0a0a0c] px-5 md:px-8 py-3 text-center rounded-sm">
-                <div className="tracking-widest text-sm md:text-base font-black text-white whitespace-nowrap">
-                  GRAND FINAL
+            {/* CENTER TROPHY + GRAND FINAL */}
+            <div className="flex flex-col items-center gap-6 px-3 md:px-6 relative z-20 shrink-0">
+              <div className="relative group cursor-default">
+                <div className="absolute inset-0 bg-yellow-500/25 blur-3xl rounded-full group-hover:bg-yellow-500/35 transition-all duration-500" />
+                <Trophy
+                  className="w-16 h-16 md:w-24 md:h-24 text-yellow-400 drop-shadow-[0_0_24px_rgba(250,204,21,0.7)] relative z-10 transition-transform duration-500 group-hover:scale-110"
+                  strokeWidth={1}
+                />
+              </div>
+
+              {/* Grand Final box */}
+              <div
+                className="relative p-[2px] rounded-sm shadow-[0_0_30px_rgba(227,30,36,0.2)]"
+                style={{ background: "linear-gradient(90deg, #e31e24, #b91c1c)" }}
+              >
+                <div className="bg-[#0a0a0c] px-5 md:px-8 py-3 text-center rounded-sm">
+                  <div className="tracking-widest text-sm md:text-base font-black text-white whitespace-nowrap">
+                    GRAND FINAL
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          {/* RIGHT BRACKET */}
-          <div className="flex items-center flex-row-reverse flex-1 min-w-0">
-            <div className="flex flex-col gap-6 flex-1 min-w-0">
-              <TeamBox slot={slots[2]} />
-              <TeamBox slot={slots[3]} />
+            {/* RIGHT BRACKET */}
+            <div className="flex items-center flex-row-reverse flex-1 min-w-0">
+              <div className="flex flex-col gap-6 flex-1 min-w-0">
+                <TeamBox slot={slots[2]} />
+                <TeamBox slot={slots[3]} />
+              </div>
+              {/* L-shaped connector */}
+              <div className="w-8 shrink-0 border-y-2 border-l-2 border-white/10 h-[100px] rounded-l-xl" />
+              <div className="w-6 shrink-0 border-b-2 border-white/10" />
             </div>
-            {/* L-shaped connector */}
-            <div className="w-8 shrink-0 border-y-2 border-l-2 border-white/10 h-[100px] rounded-l-xl"></div>
-            <div className="w-6 shrink-0 border-b-2 border-white/10"></div>
-          </div>
 
+          </div>
         </div>
       </div>
     </div>
