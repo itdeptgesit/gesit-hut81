@@ -80,7 +80,7 @@ export default function BadmintonSchedule() {
   };
 
   // Group: day → court → matches[]
-  const grouped: Record<string, { meta: any; timeRange: string; courts: Record<string, { referee: string; matches: any[] }> }> = {};
+  const grouped: Record<string, { meta: any; timeRange: string; courts: Record<string, { matches: any[] }> }> = {};
   for (const match of schedules) {
     if (!grouped[match.day]) {
       grouped[match.day] = {

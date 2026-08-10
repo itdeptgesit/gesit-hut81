@@ -338,59 +338,12 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ─── REGISTRATION CTA ─── */}
-      <section className="py-20 md:py-28 bg-navy relative overflow-hidden">
-        <div className="absolute -top-24 -right-24 w-64 h-64 bg-white opacity-[0.03] rounded-full" />
-        <div className="absolute -bottom-16 -left-16 w-80 h-80 bg-primary opacity-10 rounded-full" />
-        <motion.div
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] border border-white/5 rounded-full pointer-events-none"
-          animate={{ scale: [1, 1.08, 1] }}
-          transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-        />
-
-        <div className="max-w-[800px] mx-auto px-4 md:px-8 text-center relative z-10">
-          <FadeIn>
-            <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 text-white font-semibold px-4 py-1.5 rounded-full text-xs uppercase tracking-widest mb-6">
-              <span className="w-1.5 h-1.5 bg-primary rounded-full animate-pulse" />
-              Pendaftaran Dibuka
-            </div>
-            <h2 className="font-heading font-bold text-3xl md:text-5xl text-white mb-6 leading-tight">
-              Siap Bertanding?
-            </h2>
-            <p className="text-white/70 text-base md:text-xl mb-10 max-w-xl mx-auto leading-relaxed">
-              Daftarkan diri Anda sekarang dan jadilah bagian dari perayaan HUT
-              Republik Indonesia ke-81 bersama keluarga besar GESIT.
-            </p>
-            <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.97 }}>
-              <Link
-                href="/register"
-                id="cta-register-btn"
-                className="inline-flex items-center justify-center gap-2 bg-primary hover:bg-primary-dark text-white px-10 py-4 rounded-full font-bold text-base md:text-lg transition-all duration-200 shadow-xl hover:-translate-y-1 hover:shadow-2xl hover:shadow-primary/30"
-              >
-                Daftar Sekarang <ArrowRight size={20} />
-              </Link>
-            </motion.div>
-          </FadeIn>
-        </div>
-      </section>
 
       <Footer />
 
       {/* ─── Background Music ─── */}
       <BackgroundMusic />
 
-      {/* ─── Mobile Sticky CTA ─── */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 z-50">
-        <div className="m-4">
-          <Link
-            href="/register"
-            id="mobile-sticky-register-btn"
-            className="flex justify-center items-center gap-2 w-full bg-primary hover:bg-primary-dark text-white shadow-xl shadow-primary/40 py-4 rounded-full font-bold text-base transition-all"
-          >
-            REGISTER SEKARANG <ArrowRight size={18} />
-          </Link>
-        </div>
-      </div>
     </main>
   );
 }

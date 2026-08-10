@@ -91,12 +91,6 @@ export default function Navbar() {
               </Link>
             ))}
           </div>
-          <Link
-            href="/register"
-            className="bg-primary hover:bg-primary-dark text-white px-6 py-2.5 rounded-full font-medium text-sm transition-colors shadow-sm"
-          >
-            Register Sekarang
-          </Link>
         </div>
 
         {/* Mobile Toggle */}
@@ -134,13 +128,6 @@ export default function Navbar() {
                 {link.name}
               </Link>
             ))}
-            <Link
-              href="/register"
-              className="bg-primary text-white text-center px-6 py-3 rounded-full font-medium text-base mt-2 active:scale-95 transition-transform"
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              Register Sekarang
-            </Link>
           </motion.div>
         )}
       </AnimatePresence>

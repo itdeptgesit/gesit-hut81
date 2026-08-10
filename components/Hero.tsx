@@ -110,13 +110,7 @@ export default function Hero() {
           transition={{ duration: 0.55, delay: 0.48 }}
           className="flex items-center gap-3 mb-14 md:mb-16"
         >
-          <Link
-            href="/register"
-            className="group inline-flex items-center gap-2 bg-[#E31E24] hover:bg-red-700 text-white font-bold rounded-full px-7 py-3.5 md:px-9 md:py-4 text-sm md:text-base shadow-2xl shadow-black/30 hover:-translate-y-0.5 transition-all duration-300"
-          >
-            Register Sekarang
-            <ArrowRight size={15} className="transition-transform group-hover:translate-x-1 shrink-0" />
-          </Link>
+
           <Link
             href="/#event"
             className="inline-flex items-center bg-white/70 hover:bg-white/90 border border-[#102A4C]/20 text-[#102A4C] font-semibold rounded-full px-7 py-3.5 md:px-9 md:py-4 text-sm md:text-base hover:-translate-y-0.5 transition-all duration-300"

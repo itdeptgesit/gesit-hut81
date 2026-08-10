@@ -4,7 +4,7 @@ export default function Footer() {
   return (
     <footer className="bg-navy-dark text-white">
       <div className="max-w-[1280px] mx-auto px-4 md:px-8 py-14 md:py-16">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-10 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-10 mb-12">
           {/* Brand */}
           <div className="md:col-span-1">
             <div className="mb-5">
@@ -67,21 +67,7 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Register CTA */}
-          <div>
-            <h4 className="font-heading font-bold text-sm uppercase tracking-widest text-white/40 mb-5">
-              Daftar Sekarang
-            </h4>
-            <p className="text-white/50 text-sm mb-4 leading-relaxed">
-              Belum mendaftar? Segera amankan tempatmu sebelum penuh!
-            </p>
-            <Link
-              href="/register"
-              className="inline-flex items-center gap-2 bg-primary hover:bg-primary-dark text-white text-sm font-semibold px-5 py-2.5 rounded-full transition-colors"
-            >
-              Register →
-            </Link>
-          </div>
+
         </div>
 
         <div className="pt-8 border-t border-white/10 flex flex-col sm:flex-row justify-between items-center gap-3">
