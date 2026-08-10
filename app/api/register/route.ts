@@ -74,11 +74,22 @@ export async function POST(request: Request) {
     }
 
     // ── Generate Registration ID ──
-    const { count } = await supabaseAdmin
+    const { data: latestParticipant } = await supabaseAdmin
       .from("participants")
-      .select("*", { count: "exact", head: true });
+      .select("registration_id")
+      .order("registration_id", { ascending: false })
+      .limit(1)
+      .maybeSingle();
 
-    const nextIdNumber = (count ?? 0) + 1;
+    let nextIdNumber = 1;
+    if (latestParticipant && latestParticipant.registration_id) {
+      const parts = latestParticipant.registration_id.split('-');
+      const lastNumStr = parts[parts.length - 1];
+      const lastNum = parseInt(lastNumStr, 10);
+      if (!isNaN(lastNum)) {
+        nextIdNumber = lastNum + 1;
+      }
+    }
     const registration_id = `HUTRI-2026-${String(nextIdNumber).padStart(4, "0")}`;
 
     // ── Insert to Supabase ──
@@ -107,7 +118,7 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error("Registration error:", error);
     return NextResponse.json(
-      { error: "Terjadi kesalahan internal. Silakan coba lagi." },
+      { error: `Terjadi kesalahan internal: ${error instanceof Error ? error.message : String(error)}` },
       { status: 500 }
     );
   }
