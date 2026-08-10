@@ -1,41 +1,36 @@
 import { NextResponse } from "next/server";
-import { getSheetData } from "@/lib/googleSheets";
+import { supabaseAdmin } from "@/lib/supabase";
 import { Participant } from "@/types";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const data = await getSheetData("Participants!A:N");
+    const { data, error } = await supabaseAdmin
+      .from("participants")
+      .select("*")
+      .order("created_at", { ascending: true });
 
-    if (!data || data.length <= 1) {
-      return NextResponse.json({ participants: [] });
-    }
+    if (error) throw error;
 
-    const rows = data.slice(1); // skip header row
-
-    // Columns: registration_id | timestamp | name | department | floor | email | phone | event | category | partner | status
-    const participants: Participant[] = rows.map((row) => ({
-      registration_id: row[0] || "",
-      timestamp: row[1] || "",
-      name: row[2] || "",
-      department: row[3] || "",
-      floor: row[4] || "",
-      email: row[5] || "",
-      phone: row[6] || "",
-      event: row[7] || "",
-      category: row[8] || "",
-      partner: row[9] || "",
-      // Columns: registration_id | timestamp | name | department | floor | email | phone | event | category | partner | status | call_name | photo_url | partner_photo_url
-      status: row[10] || "Registered",
-      call_name: row[11] || "",
-      photo_url: row[12] || "",
-      partner_photo_url: row[13] || "",
+    const participants: Participant[] = (data || []).map((row) => ({
+      registration_id: row.registration_id,
+      timestamp: row.created_at,
+      name: row.name,
+      department: "-",
+      floor: row.floor,
+      email: "-",
+      phone: "-",
+      event: row.event,
+      category: row.category || "",
+      partner: row.partner || "",
+      status: row.status || "Registered",
+      call_name: row.call_name || "",
+      photo_url: row.photo_url || "",
+      partner_photo_url: row.partner_photo_url || "",
     }));
 
-    return NextResponse.json({
-      participants: participants.filter((p) => p.registration_id),
-    });
+    return NextResponse.json({ participants });
   } catch (error) {
     console.error("Failed to fetch participants:", error);
     return NextResponse.json(

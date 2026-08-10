@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getSheetData, appendSheetData } from "@/lib/googleSheets";
+import { supabaseAdmin } from "@/lib/supabase";
 
 export async function POST(request: Request) {
   try {
@@ -15,22 +15,36 @@ export async function POST(request: Request) {
     }
 
     if (!["Badminton Tournament"].includes(body.event)) {
-      return NextResponse.json({ error: "Event tidak valid. Hanya menerima pendaftaran Badminton Tournament." }, { status: 400 });
+      return NextResponse.json(
+        { error: "Event tidak valid. Hanya menerima pendaftaran Badminton Tournament." },
+        { status: 400 }
+      );
     }
 
     if (body.event === "Badminton Tournament" && !body.category) {
       return NextResponse.json({ error: "Kategori badminton wajib dipilih." }, { status: 400 });
     }
 
-    if (body.event === "Badminton Tournament" && body.category === "Ganda Campuran" && !body.partner) {
-      return NextResponse.json({ error: "Nama partner wajib diisi untuk Ganda Campuran." }, { status: 400 });
+    if (
+      body.event === "Badminton Tournament" &&
+      body.category === "Ganda Campuran" &&
+      !body.partner
+    ) {
+      return NextResponse.json(
+        { error: "Nama partner wajib diisi untuk Ganda Campuran." },
+        { status: 400 }
+      );
     }
 
     // ── Check registration_open setting ──
     try {
-      const settingsData = await getSheetData("Settings!A:B");
-      const isOpenRow = settingsData.find((row) => row[0] === "registration_open");
-      if (isOpenRow && isOpenRow[1]?.toUpperCase() !== "TRUE") {
+      const { data: settingRow } = await supabaseAdmin
+        .from("settings")
+        .select("value")
+        .eq("key", "registration_open")
+        .single();
+
+      if (settingRow && settingRow.value?.toUpperCase() !== "TRUE") {
         return NextResponse.json(
           { error: "Pendaftaran saat ini sedang ditutup. Silakan hubungi panitia." },
           { status: 403 }
@@ -40,51 +54,45 @@ export async function POST(request: Request) {
       // If settings can't be read, allow registration to proceed
     }
 
-    // ── Generate Registration ID & Check Quota ──
-    let nextIdNumber = 1;
-    try {
-      const existingData = await getSheetData("Participants!A:K");
-      if (existingData && existingData.length > 0) {
-        // existingData[0] is header
-        const rows = existingData.slice(1);
-        nextIdNumber = rows.length + 1;
+    // ── Check Quota (max 2 per floor per category) ──
+    const { data: existing, error: fetchError } = await supabaseAdmin
+      .from("participants")
+      .select("id")
+      .eq("floor", body.floor)
+      .eq("category", body.category)
+      .neq("status", "Cancelled");
 
-        // Check category limit (2 per floor per category)
-        const sameCategoryCount = rows.filter(
-          (row) => row[4] === body.floor && row[8] === body.category && row[10] !== "Cancelled"
-        ).length;
+    if (fetchError) throw fetchError;
 
-        if (sameCategoryCount >= 2) {
-          return NextResponse.json(
-            { error: `Kuota pendaftaran untuk kategori ${body.category} pada ${body.floor} sudah penuh.` },
-            { status: 400 }
-          );
-        }
-      }
-    } catch {
-      nextIdNumber = 1;
+    if ((existing?.length ?? 0) >= 2) {
+      return NextResponse.json(
+        {
+          error: `Kuota pendaftaran untuk kategori ${body.category} pada ${body.floor} sudah penuh.`,
+        },
+        { status: 400 }
+      );
     }
 
+    // ── Generate Registration ID ──
+    const { count } = await supabaseAdmin
+      .from("participants")
+      .select("*", { count: "exact", head: true });
+
+    const nextIdNumber = (count ?? 0) + 1;
     const registration_id = `HUTRI-2026-${String(nextIdNumber).padStart(4, "0")}`;
-    const timestamp = new Date().toLocaleString("id-ID", { timeZone: "Asia/Jakarta" });
 
-    // ── Build Row ──
-    // Columns: registration_id | timestamp | name | department | floor | email | phone | event | category | partner | status
-    const rowData = [
+    // ── Insert to Supabase ──
+    const { error: insertError } = await supabaseAdmin.from("participants").insert({
       registration_id,
-      timestamp,
-      body.name,
-      "-", // department removed
-      body.floor,
-      "-", // email removed
-      "-", // phone removed
-      body.event,
-      body.category || "-",
-      body.partner || "-",
-      "Registered",
-    ];
+      name: body.name,
+      floor: body.floor,
+      event: body.event,
+      category: body.category || null,
+      partner: body.partner || null,
+      status: "Registered",
+    });
 
-    await appendSheetData("Participants!A:K", [rowData] as any[][]);
+    if (insertError) throw insertError;
 
     return NextResponse.json({
       success: true,

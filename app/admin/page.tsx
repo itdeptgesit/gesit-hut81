@@ -12,9 +12,15 @@ import Link from "next/link";
 import Image from "next/image";
 
 interface Participant {
-  Nama?: string;
-  Divisi?: string;
-  [key: string]: string | undefined;
+  id: string;
+  registration_id: string;
+  created_at: string;
+  name: string;
+  floor: string;
+  event: string;
+  category?: string;
+  partner?: string;
+  status: string;
 }
 
 interface QuizScore {
@@ -76,13 +82,11 @@ export default function AdminDashboard() {
 
   const fetchParticipants = useCallback(async () => {
     setParticipantsLoading(true);
-    try {
-      const res = await fetch("/api/participants");
-      const data = await res.json();
-      setParticipants(data.participants || []);
-    } catch {
-      setParticipants([]);
-    }
+    const { data } = await supabase
+      .from("participants")
+      .select("*")
+      .order("created_at", { ascending: true });
+    setParticipants(data || []);
     setParticipantsLoading(false);
   }, []);
 
@@ -302,15 +306,25 @@ export default function AdminDashboard() {
                         <tr className="text-[11px] uppercase tracking-wider text-zinc-400">
                           <th className="px-4 py-2 text-left font-medium">#</th>
                           <th className="px-4 py-2 text-left font-medium">Nama</th>
-                          <th className="px-4 py-2 text-left font-medium">Divisi</th>
+                          <th className="px-4 py-2 text-left font-medium">Lantai</th>
+                          <th className="px-4 py-2 text-left font-medium">Kategori</th>
+                          <th className="px-4 py-2 text-left font-medium">Status</th>
                         </tr>
                       </thead>
                       <tbody>
                         {participants.map((p, i) => (
-                          <tr key={i} className="hover:bg-zinc-50 transition-colors">
+                          <tr key={p.id || i} className="hover:bg-zinc-50 transition-colors">
                             <td className="px-4 py-2.5 text-zinc-400 text-xs">{i + 1}</td>
-                            <td className="px-4 py-2.5 font-medium text-zinc-900">{p.Nama || p["Nama Lengkap"] || "—"}</td>
-                            <td className="px-4 py-2.5 text-zinc-500 text-xs">{p.Divisi || p["Lantai/Divisi"] || "—"}</td>
+                            <td className="px-4 py-2.5 font-medium text-zinc-900">{p.name || "—"}</td>
+                            <td className="px-4 py-2.5 text-zinc-500 text-xs">{p.floor || "—"}</td>
+                            <td className="px-4 py-2.5 text-zinc-500 text-xs">{p.category || "—"}</td>
+                            <td className="px-4 py-2.5 text-xs">
+                              <span className={`inline-flex px-2 py-0.5 rounded-full font-medium ${
+                                p.status === "Cancelled"
+                                  ? "bg-red-50 text-red-600"
+                                  : "bg-emerald-50 text-emerald-700"
+                              }`}>{p.status}</span>
+                            </td>
                           </tr>
                         ))}
                       </tbody>

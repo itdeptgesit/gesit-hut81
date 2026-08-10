@@ -1,23 +1,19 @@
 import { NextResponse } from "next/server";
-import { getSheetData } from "@/lib/googleSheets";
+import { supabaseAdmin } from "@/lib/supabase";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const data = await getSheetData("Settings!A:B");
-    
-    if (!data || data.length === 0) {
-      return NextResponse.json({ settings: {} });
-    }
+    const { data, error } = await supabaseAdmin
+      .from("settings")
+      .select("key, value");
 
-    const rows = data.slice(1); // skip headers
+    if (error) throw error;
+
     const settings: Record<string, string> = {};
-
-    rows.forEach(row => {
-      if (row[0]) {
-        settings[row[0]] = row[1] || "";
-      }
+    (data || []).forEach((row) => {
+      settings[row.key] = row.value;
     });
 
     return NextResponse.json({ settings });
