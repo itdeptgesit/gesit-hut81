@@ -8,6 +8,7 @@ import ParticipantSection from "@/components/ParticipantSection";
 import TeamSection from "@/components/TeamSection";
 import WinnersSection from "@/components/WinnersSection";
 import Footer from "@/components/Footer";
+import BackgroundMusic from "@/components/BackgroundMusic";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -384,13 +385,8 @@ export default function Home() {
 
       <Footer />
 
-      {/* ─── Background Music (YouTube) ─── */}
-      <iframe
-        src="https://www.youtube.com/embed/b_HWhKIyM6w?autoplay=1&loop=1&playlist=b_HWhKIyM6w&controls=0&mute=0"
-        allow="autoplay"
-        style={{ position: "fixed", width: 0, height: 0, border: "none", opacity: 0, pointerEvents: "none" }}
-        aria-hidden="true"
-      />
+      {/* ─── Background Music ─── */}
+      <BackgroundMusic />
 
       {/* ─── Mobile Sticky CTA ─── */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 z-50">
