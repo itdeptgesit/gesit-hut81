@@ -1,8 +1,11 @@
+"use client";
+
 import Link from "next/link";
 import clsx from "clsx";
 import { ArrowRight } from "lucide-react";
-
 import Image from "next/image";
+import { motion } from "framer-motion";
+import { scaleUp, fadeUp } from "./animations";
 
 interface EventCardProps {
   title: string;
@@ -12,15 +15,22 @@ interface EventCardProps {
   theme: "navy" | "red";
   icon: "badminton" | "games";
   href: string;
+  delay?: number;
 }
 
-export default function EventCard({ title, date, description, categories, theme, icon, href }: EventCardProps) {
+export default function EventCard({ title, date, description, categories, theme, icon, href, delay = 0 }: EventCardProps) {
   const isNavy = theme === "navy";
 
   return (
-    <div
+    <motion.div
+      variants={scaleUp}
+      initial="hidden"
+      whileInView="visible"
+      viewport={{ once: true, margin: "-60px" }}
+      transition={{ delay }}
+      whileHover={{ y: -6, scale: 1.01 }}
       className={clsx(
-        "relative rounded-3xl overflow-hidden p-7 md:p-10 flex flex-col transition-transform hover:-translate-y-1 duration-300",
+        "relative rounded-3xl overflow-hidden p-7 md:p-10 flex flex-col duration-300",
         isNavy
           ? "bg-navy shadow-2xl shadow-navy/30"
           : "bg-primary shadow-2xl shadow-primary/30"
@@ -61,14 +71,15 @@ export default function EventCard({ title, date, description, categories, theme,
 
       <div className="relative z-10 flex flex-col h-full">
         {/* Date badge */}
-        <div
+        <motion.div
+          variants={fadeUp}
           className={clsx(
             "inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest px-3 py-1.5 rounded-full w-fit mb-5",
             isNavy ? "bg-white/10 text-white/80" : "bg-white/15 text-white/90"
           )}
         >
           {date}
-        </div>
+        </motion.div>
 
         {/* Title */}
         <h3
@@ -120,6 +131,6 @@ export default function EventCard({ title, date, description, categories, theme,
           </Link>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }
