@@ -49,7 +49,6 @@ export default function Navbar() {
     { name: "Peserta", href: "/#peserta" },
     { name: "Teams", href: "/#teams" },
     { name: "FAQ", href: "/#faq" },
-    { name: "🎉 Quiz", href: "/quiz" },
   ];
 
   return (

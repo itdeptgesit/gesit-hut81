@@ -229,29 +229,6 @@ export default function Home() {
               </div>
             </div>
           </div>
-
-          {/* Quiz CTA Banner */}
-          <div className="mt-8 relative overflow-hidden bg-gradient-to-r from-[#102A4C] to-[#1a3a60] rounded-3xl p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-6 border border-white/10 shadow-lg">
-            <div className="absolute -right-10 -top-10 w-40 h-40 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
-            <div className="flex items-center gap-5">
-              <div className="text-5xl shrink-0">🎉</div>
-              <div>
-                <p className="text-white/60 text-xs font-bold uppercase tracking-widest mb-1">Mini Game</p>
-                <h3 className="font-heading font-black text-white text-xl md:text-2xl leading-tight">
-                  HUT RI ke-81 Quiz Challenge
-                </h3>
-                <p className="text-white/60 text-sm mt-1">
-                  Uji pengetahuanmu tentang kemerdekaan Indonesia. Siapa yang paling cepat dan tepat?
-                </p>
-              </div>
-            </div>
-            <Link
-              href="/quiz"
-              className="shrink-0 bg-primary hover:bg-primary-dark text-white px-8 py-3.5 rounded-full font-black text-base transition-all duration-200 hover:-translate-y-1 hover:shadow-xl hover:shadow-primary/30 uppercase tracking-wider whitespace-nowrap"
-            >
-              🚀 Main Sekarang
-            </Link>
-          </div>
         </div>
       </section>
 
