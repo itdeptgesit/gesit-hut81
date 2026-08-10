@@ -49,12 +49,12 @@ export async function POST(request: Request) {
         const rows = existingData.slice(1);
         nextIdNumber = rows.length + 1;
 
-        // Check category limit (1 per floor per category)
+        // Check category limit (2 per floor per category)
         const sameCategoryCount = rows.filter(
           (row) => row[4] === body.floor && row[8] === body.category && row[10] !== "Cancelled"
         ).length;
 
-        if (sameCategoryCount >= 1) {
+        if (sameCategoryCount >= 2) {
           return NextResponse.json(
             { error: `Kuota pendaftaran untuk kategori ${body.category} pada ${body.floor} sudah penuh.` },
             { status: 400 }

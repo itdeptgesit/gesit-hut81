@@ -1,4 +1,8 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import { MapPin, Clock, User } from "lucide-react";
+import { Participant } from "@/types";
 
 const days = [
   {
@@ -78,6 +82,70 @@ const pics = [
 ];
 
 export default function BadmintonSchedule() {
+  const [participants, setParticipants] = useState<Participant[]>([]);
+
+  useEffect(() => {
+    fetch("/api/participants")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.participants) {
+          setParticipants(data.participants.filter((p: Participant) => p.event.toLowerCase().includes("badminton")));
+        }
+      })
+      .catch((err) => {
+        if (err?.name === "AbortError" || err?.message === "Failed to fetch") return;
+        console.error("Error fetching participants:", err);
+      });
+  }, []);
+
+  const getName = (floor: string, category: string, index: number) => {
+    const list = participants.filter((p) => p.floor.includes(floor) && p.category === category);
+    if (list[index]) {
+      const p = list[index];
+      if (category === "Ganda Campuran" && p.partner) {
+        const name1 = p.call_name || p.name.split(" ")[0];
+        const name2 = p.partner.split(" ")[0];
+        return `${name1} & ${name2}`;
+      }
+      return p.call_name || p.name.split(" ").slice(0, 2).join(" ");
+    }
+    return null;
+  };
+
+  const renderMatchName = (matchString: string) => {
+    if (matchString.includes("Single Pria 26A vs Single Pria 27A")) {
+      const p1 = getName("26", "Single Putra", 0) || "Single Pria 26A";
+      const p2 = getName("27", "Single Putra", 0) || "Single Pria 27A";
+      return `${p1} vs ${p2}`;
+    }
+    if (matchString.includes("Ganda Campur 26A vs Ganda Campur 27A")) {
+      const p1 = getName("26", "Ganda Campuran", 0) || "Ganda Campur 26A";
+      const p2 = getName("27", "Ganda Campuran", 0) || "Ganda Campur 27A";
+      return `${p1} vs ${p2}`;
+    }
+    if (matchString.includes("Single Wanita 26A vs Single Wanita 27A")) {
+      const p1 = getName("26", "Single Putri", 0) || "Single Wanita 26A";
+      const p2 = getName("27", "Single Putri", 0) || "Single Wanita 27A";
+      return `${p1} vs ${p2}`;
+    }
+    if (matchString.includes("Ganda Campur 26B vs Ganda Campur 27B")) {
+      const p1 = getName("26", "Ganda Campuran", 1) || "Ganda Campur 26B";
+      const p2 = getName("27", "Ganda Campuran", 1) || "Ganda Campur 27B";
+      return `${p1} vs ${p2}`;
+    }
+    if (matchString.includes("Single Pria 26B vs Single Pria 27B")) {
+      const p1 = getName("26", "Single Putra", 1) || "Single Pria 26B";
+      const p2 = getName("27", "Single Putra", 1) || "Single Pria 27B";
+      return `${p1} vs ${p2}`;
+    }
+    if (matchString.includes("Single Wanita 26B vs Single Wanita 27B")) {
+      const p1 = getName("26", "Single Putri", 1) || "Single Wanita 26B";
+      const p2 = getName("27", "Single Putri", 1) || "Single Wanita 27B";
+      return `${p1} vs ${p2}`;
+    }
+    return matchString;
+  };
+
   return (
     <div className="w-full">
       {/* PIC Info */}
@@ -181,7 +249,7 @@ export default function BadmintonSchedule() {
                         </div>
                         <div className="w-px self-stretch bg-border shrink-0" />
                         <p className="text-sm font-semibold text-foreground leading-snug">
-                          {s.match}
+                          {renderMatchName(s.match)}
                         </p>
                       </div>
                     ))}

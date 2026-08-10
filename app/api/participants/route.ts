@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const data = await getSheetData("Participants!A:K");
+    const data = await getSheetData("Participants!A:N");
 
     if (!data || data.length <= 1) {
       return NextResponse.json({ participants: [] });
@@ -26,7 +26,11 @@ export async function GET() {
       event: row[7] || "",
       category: row[8] || "",
       partner: row[9] || "",
+      // Columns: registration_id | timestamp | name | department | floor | email | phone | event | category | partner | status | call_name | photo_url | partner_photo_url
       status: row[10] || "Registered",
+      call_name: row[11] || "",
+      photo_url: row[12] || "",
+      partner_photo_url: row[13] || "",
     }));
 
     return NextResponse.json({

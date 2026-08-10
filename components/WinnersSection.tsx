@@ -140,7 +140,8 @@ export default function WinnersSection() {
         if (data.winners) {
           setWinners(data.winners);
         }
-      } catch (error) {
+      } catch (error: any) {
+        if (error?.name === "AbortError" || error?.message === "Failed to fetch") return;
         console.error("Error fetching winners:", error);
       } finally {
         setLoading(false);

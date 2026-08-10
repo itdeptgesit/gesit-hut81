@@ -6,11 +6,32 @@ import Image from "next/image";
 import { Menu, X } from "lucide-react";
 import clsx from "clsx";
 import { usePathname } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const pathname = usePathname();
+
+  const handleScrollTo = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
+    if (pathname === "/") {
+      if (href.startsWith("/#")) {
+        const targetId = href.replace("/#", "");
+        const elem = document.getElementById(targetId);
+        if (elem) {
+          e.preventDefault();
+          elem.scrollIntoView({ behavior: "smooth" });
+          setIsMobileMenuOpen(false);
+        }
+      } else if (href === "/") {
+        e.preventDefault();
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        setIsMobileMenuOpen(false);
+      }
+    } else {
+      setIsMobileMenuOpen(false);
+    }
+  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -61,8 +82,9 @@ export default function Navbar() {
               <Link
                 key={link.name}
                 href={link.href}
+                onClick={(e) => handleScrollTo(e, link.href)}
                 className={clsx(
-                  "text-sm font-medium transition-colors hover:text-primary",
+                  "text-sm font-medium transition-all duration-300 hover:text-primary active:scale-95 active:text-primary/80",
                   pathname === link.href ? "text-primary" : "text-foreground"
                 )}
               >
@@ -80,35 +102,49 @@ export default function Navbar() {
 
         {/* Mobile Toggle */}
         <button
-          className="md:hidden text-foreground"
+          className="md:hidden text-foreground active:scale-95 transition-transform"
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
         >
-          {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          <motion.div
+            initial={false}
+            animate={{ rotate: isMobileMenuOpen ? 90 : 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          </motion.div>
         </button>
       </div>
 
       {/* Mobile Nav */}
-      {isMobileMenuOpen && (
-        <div className="md:hidden absolute top-full left-0 right-0 bg-white shadow-lg border-t border-border py-4 px-4 flex flex-col gap-4">
-          {navLinks.map((link) => (
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.2 }}
+            className="md:hidden absolute top-full left-0 right-0 bg-white shadow-lg border-t border-border py-4 px-4 flex flex-col gap-4"
+          >
+            {navLinks.map((link) => (
+              <Link
+                key={link.name}
+                href={link.href}
+                className="text-base font-medium text-foreground py-2 border-b border-border/50 active:scale-95 active:text-primary transition-all duration-200"
+                onClick={(e) => handleScrollTo(e, link.href)}
+              >
+                {link.name}
+              </Link>
+            ))}
             <Link
-              key={link.name}
-              href={link.href}
-              className="text-base font-medium text-foreground py-2 border-b border-border/50"
+              href="/register"
+              className="bg-primary text-white text-center px-6 py-3 rounded-full font-medium text-base mt-2 active:scale-95 transition-transform"
               onClick={() => setIsMobileMenuOpen(false)}
             >
-              {link.name}
+              Register Sekarang
             </Link>
-          ))}
-          <Link
-            href="/register"
-            className="bg-primary text-white text-center px-6 py-3 rounded-full font-medium text-base mt-2"
-            onClick={() => setIsMobileMenuOpen(false)}
-          >
-            Register Sekarang
-          </Link>
-        </div>
-      )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </nav>
   );
 }

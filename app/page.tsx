@@ -3,6 +3,7 @@ import Hero from "@/components/Hero";
 import EventCard from "@/components/EventCard";
 import ScheduleTimeline from "@/components/ScheduleTimeline";
 import BadmintonSchedule from "@/components/BadmintonSchedule";
+import TournamentBracket from "@/components/TournamentBracket";
 import ParticipantSection from "@/components/ParticipantSection";
 import TeamSection from "@/components/TeamSection";
 import WinnersSection from "@/components/WinnersSection";
@@ -46,7 +47,7 @@ const badmintonRules = [
   "Setiap peserta hanya diperbolehkan mengikuti 1 (satu) kategori pertandingan.",
   "Setiap pertandingan menggunakan 1 (satu) set pertandingan hingga 21 poin (rally point system). Apabila skor mencapai 21–21, pertandingan dilanjutkan hingga selisih 2 (dua) poin, dengan batas maksimal 30 poin.",
   "Peserta wajib hadir di lokasi minimal 15 menit sebelum jadwal pertandingan untuk melakukan persiapan.",
-  "Peserta wajib menggunakan pakaian dan sepatu olahraga yang sesuai. Peserta diperbolehkan menggunakan raket pribadi.",
+  "Peserta wajib menggunakan pakaian dan sepatu olahraga yang sesuai. Peserta diwajibkan menggunakan raket pribadi.",
   "Shuttlecock akan disediakan oleh panitia.",
   "Seluruh peserta diharapkan menjunjung tinggi sportivitas, fair play, kebersamaan, dan saling menghormati selama pertandingan berlangsung.",
   "Penentuan pemenang dilakukan berdasarkan hasil pertandingan pada masing-masing kategori. Penilaian ditujukan sebagai bagian dari kegiatan kebersamaan dan bukan semata-mata untuk menentukan siapa yang menang atau kalah.",
@@ -268,9 +269,9 @@ export default function Home() {
                   </div>
                   <ul className="space-y-2">
                     {[
-                      { cat: "Single Putra", desc: "1 wakil per lantai" },
-                      { cat: "Single Putri", desc: "1 wakil per lantai" },
-                      { cat: "Ganda Campuran", desc: "1 pasangan per lantai" },
+                      { cat: "Single Putra", desc: "2 wakil per lantai" },
+                      { cat: "Single Putri", desc: "2 wakil per lantai" },
+                      { cat: "Ganda Campuran", desc: "2 pasang per lantai" },
                     ].map((c) => (
                       <li key={c.cat} className="flex items-start gap-2 text-sm">
                         <span className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 shrink-0" />
@@ -351,6 +352,7 @@ export default function Home() {
             </p>
           </div>
           <BadmintonSchedule />
+          <TournamentBracket />
         </div>
       </section>
 

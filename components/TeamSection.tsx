@@ -18,7 +18,8 @@ export default function TeamSection() {
         if (data.teams) {
           setTeams(data.teams);
         }
-      } catch (error) {
+      } catch (error: any) {
+        if (error?.name === "AbortError" || error?.message === "Failed to fetch") return;
         console.error("Error fetching teams:", error);
       } finally {
         setLoading(false);
@@ -74,15 +75,6 @@ export default function TeamSection() {
               <p className="text-sm text-muted font-medium mb-6 bg-gray-100 inline-block px-3 py-1 rounded-full">
                 {selectedTeam.event}
               </p>
-
-              <div className="mb-6">
-                <span className="text-xs font-bold text-muted uppercase tracking-wider block mb-2">
-                  Captain
-                </span>
-                <p className="text-lg font-semibold text-foreground">
-                  {selectedTeam.captain}
-                </p>
-              </div>
 
               <div>
                 <span className="text-xs font-bold text-muted uppercase tracking-wider block mb-2">

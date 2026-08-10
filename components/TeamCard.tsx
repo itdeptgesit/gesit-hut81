@@ -33,21 +33,16 @@ export default function TeamCard({ team, onClick }: TeamCardProps) {
         </div>
       </div>
 
-      <div className="mb-4 flex-1">
-        <div className="flex flex-col gap-1 mb-3 text-sm">
-          <span className="text-muted text-xs uppercase tracking-wider">Captain</span>
-          <span className="font-medium text-foreground">{team.captain}</span>
-        </div>
-        
-        <div className="flex items-center gap-2 text-sm text-muted">
-          <Users size={16} />
+      <div className="mb-5">
+        <div className="flex items-center gap-2.5 text-sm font-medium text-foreground bg-gray-50 border border-border/60 py-2.5 px-3.5 rounded-xl">
+          <Users size={16} className="text-primary" />
           <span>{team.members.split(',').length} Participants</span>
         </div>
       </div>
 
       <button
         onClick={() => onClick(team)}
-        className="w-full py-2.5 rounded-xl border border-border text-foreground text-sm font-medium hover:bg-gray-50 transition-colors"
+        className="mt-auto w-full py-2.5 rounded-xl border border-border text-foreground text-sm font-medium hover:bg-gray-50 transition-colors"
       >
         Lihat Team
       </button>

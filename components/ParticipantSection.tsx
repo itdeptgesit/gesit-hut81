@@ -23,7 +23,8 @@ export default function ParticipantSection() {
         if (data.participants) {
           setParticipants(data.participants);
         }
-      } catch (error) {
+      } catch (error: any) {
+        if (error?.name === "AbortError" || error?.message === "Failed to fetch") return;
         console.error("Error fetching participants:", error);
       } finally {
         setLoading(false);

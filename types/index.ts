@@ -10,6 +10,9 @@ export interface Participant {
   category: string;
   partner?: string;
   status: string;
+  call_name?: string;
+  photo_url?: string;
+  partner_photo_url?: string;
 }
 
 export interface Team {
