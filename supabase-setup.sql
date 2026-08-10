@@ -16,7 +16,9 @@ CREATE TABLE IF NOT EXISTS participants (
   status              text DEFAULT 'Registered',
   call_name           text,
   photo_url           text,
-  partner_photo_url   text
+  partner_photo_url   text,
+  bracket_position    text,
+  final_position      text
 );
 
 -- 2. TEAMS TABLE

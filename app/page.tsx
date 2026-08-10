@@ -11,7 +11,6 @@ import Footer from "@/components/Footer";
 import Link from "next/link";
 import {
   ArrowRight,
-  ChevronDown,
   CheckCircle2,
   Users,
   Trophy,
@@ -56,32 +55,6 @@ const badmintonRules = [
   "Apabila terjadi hal-hal yang belum diatur dalam ketentuan ini, keputusan akan disesuaikan oleh panitia demi kelancaran dan kenyamanan seluruh peserta."
 ];
 
-const faqs = [
-  {
-    q: "Bagaimana penentuan kelompok?",
-    a: "Pembagian kelompok dilakukan berdasarkan spin tanggal 7 Agustus 2026, yang diwakilkan oleh masing-masing PIC lantai 26 dan 27. Kelompok ini menjadi kelompok peserta lomba pada tanggal 19 Agustus 2026.",
-  },
-  {
-    q: "Siapa saja yang bisa ikut badminton?",
-    a: "Perwakilan karyawan dari Lantai 26 dan Lantai 27. Setiap lantai mengirimkan perwakilan yang terdiri dari 4 putra dan 4 putri untuk bertanding di tiga kategori: Single Putra, Single Putri, dan Ganda Campuran.",
-  },
-  {
-    q: "Apa saja lomba pada Fun Games Day 19 Agustus?",
-    a: "Ada 3 lomba utama: (1) Yel-Yel Kemerdekaan — tampilkan yel-yel tim maks 3 menit; (2) Best Costume — kostum bertema kemerdekaan atau adat; (3) Potluck Rasa Nusantara — bawa makanan khas Indonesia untuk dinikmati bersama.",
-  },
-  {
-    q: "Apa yang dinilai dalam Potluck Rasa Nusantara?",
-    a: "Penilaian meliputi keunikan menu, presentasi penyajian, konsep, dan nuansa budaya nusantara yang dibawa oleh setiap tim.",
-  },
-  {
-    q: "Apakah kostum untuk Best Costume harus seragam?",
-    a: "Kostum dapat berupa pakaian adat, nuansa merah putih, atribut perjuangan, atau kreasi lain yang tetap sopan. Penilaian meliputi kreativitas, kekompakan, dan kesesuaian dengan tema kemerdekaan.",
-  },
-  {
-    q: "Apa itu sistem rally point?",
-    a: "Setiap poin dihitung dari setiap reli, baik saat melakukan servis maupun menerima servis. Pertandingan dimainkan 1 set hingga 21 poin. Jika skor 21–21, pertandingan dilanjutkan hingga selisih 2 poin, dengan batas maksimal 30 poin.",
-  },
-];
 
 export default function Home() {
   return (
@@ -380,40 +353,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ─── FAQ SECTION ─── */}
-      <section id="faq" className="py-20 md:py-28 bg-white border-t border-border/60">
-        <div className="max-w-[1100px] mx-auto px-4 md:px-8">
-          <div className="text-center mb-14">
-            <SectionLabel>FAQ</SectionLabel>
-            <h2 className="font-heading font-bold text-3xl md:text-5xl text-foreground mb-4">
-              Pertanyaan Umum
-            </h2>
-            <p className="text-muted text-base md:text-lg max-w-xl mx-auto">
-              Masih ada pertanyaan seputar event? Temukan jawabannya di sini.
-            </p>
-          </div>
-
-          <div className="max-w-2xl mx-auto flex flex-col gap-4">
-            {faqs.map((faq, i) => (
-              <details
-                key={i}
-                className="group bg-background border border-border rounded-2xl overflow-hidden"
-              >
-                <summary className="flex items-center justify-between gap-4 p-5 md:p-6 cursor-pointer list-none font-semibold text-foreground text-base hover:text-primary transition-colors">
-                  {faq.q}
-                  <ChevronDown
-                    size={18}
-                    className="shrink-0 text-muted transition-transform group-open:rotate-180"
-                  />
-                </summary>
-                <div className="px-5 md:px-6 pb-5 md:pb-6 text-muted text-sm md:text-base leading-relaxed border-t border-border pt-4">
-                  {faq.a}
-                </div>
-              </details>
-            ))}
-          </div>
-        </div>
-      </section>
 
       {/* ─── REGISTRATION CTA ─── */}
       <section className="py-20 md:py-28 bg-navy relative overflow-hidden">
@@ -444,6 +383,14 @@ export default function Home() {
       </section>
 
       <Footer />
+
+      {/* ─── Background Music (YouTube) ─── */}
+      <iframe
+        src="https://www.youtube.com/embed/b_HWhKIyM6w?autoplay=1&loop=1&playlist=b_HWhKIyM6w&controls=0&mute=0"
+        allow="autoplay"
+        style={{ position: "fixed", width: 0, height: 0, border: "none", opacity: 0, pointerEvents: "none" }}
+        aria-hidden="true"
+      />
 
       {/* ─── Mobile Sticky CTA ─── */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 z-50">

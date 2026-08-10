@@ -28,6 +28,8 @@ export async function GET() {
       call_name: row.call_name || "",
       photo_url: row.photo_url || "",
       partner_photo_url: row.partner_photo_url || "",
+      bracket_position: row.bracket_position || "",
+      final_position: row.final_position || "",
     }));
 
     return NextResponse.json({ participants });

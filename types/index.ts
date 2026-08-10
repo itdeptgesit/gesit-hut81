@@ -13,6 +13,8 @@ export interface Participant {
   call_name?: string;
   photo_url?: string;
   partner_photo_url?: string;
+  bracket_position?: string;
+  final_position?: string;
 }
 
 export interface Team {

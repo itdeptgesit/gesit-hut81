@@ -16,16 +16,16 @@ const days = [
       {
         name: "Lapangan 1",
         sets: [
-          { set: "Set 1", duration: "±30 menit", match: "Single Pria 26A vs Single Pria 27A" },
-          { set: "Set 2", duration: "±30 menit", match: "Ganda Campur 26A vs Ganda Campur 27A" },
+          { set: "Set 1", duration: "±30 menit", matchKey: "SP_slot1_vs_slot3" },
+          { set: "Set 2", duration: "±30 menit", matchKey: "GC_slot1_vs_slot3" },
         ],
         referee: "Argadana / Aditya",
       },
       {
         name: "Lapangan 2",
         sets: [
-          { set: "Set 1", duration: "±30 menit", match: "Single Wanita 26A vs Single Wanita 27A" },
-          { set: "Set 2", duration: "±30 menit", match: "Ganda Campur 26B vs Ganda Campur 27B" },
+          { set: "Set 1", duration: "±30 menit", matchKey: "SPu_slot1_vs_slot3" },
+          { set: "Set 2", duration: "±30 menit", matchKey: "GC_slot2_vs_slot4" },
         ],
         referee: "Argadana / Aditya",
       },
@@ -44,8 +44,8 @@ const days = [
       {
         name: "Lapangan 1",
         sets: [
-          { set: "Set 1", duration: "±30 menit", match: "Single Pria 26B vs Single Pria 27B" },
-          { set: "Set 2", duration: "±30 menit", match: "Single Wanita 26B vs Single Wanita 27B" },
+          { set: "Set 1", duration: "±30 menit", matchKey: "SP_slot2_vs_slot4" },
+          { set: "Set 2", duration: "±30 menit", matchKey: "SPu_slot2_vs_slot4" },
         ],
         referee: "Argadana / Aditya",
       },
@@ -64,9 +64,9 @@ const days = [
       {
         name: "Lapangan 1",
         sets: [
-          { set: "Set 1", duration: "±30 menit", match: "Final Single Pria — Team A vs Team B" },
-          { set: "Set 2", duration: "±30 menit", match: "Final Ganda Campur — Team A vs Team B" },
-          { set: "Set 3", duration: "±30 menit", match: "Final Single Wanita — Team A vs Team B" },
+          { set: "Set 1", duration: "±30 menit", matchKey: "FINAL_SP" },
+          { set: "Set 2", duration: "±30 menit", matchKey: "FINAL_GC" },
+          { set: "Set 3", duration: "±30 menit", matchKey: "FINAL_SPu" },
         ],
         referee: "Argadana / Aditya",
       },
@@ -98,52 +98,93 @@ export default function BadmintonSchedule() {
       });
   }, []);
 
-  const getName = (floor: string, category: string, index: number) => {
-    const list = participants.filter((p) => p.floor.includes(floor) && p.category === category);
-    if (list[index]) {
-      const p = list[index];
-      if (category === "Ganda Campuran" && p.partner) {
-        const name1 = p.call_name || p.name.split(" ")[0];
-        const name2 = p.partner.split(" ")[0];
-        return `${name1} & ${name2}`;
-      }
-      return p.call_name || p.name.split(" ").slice(0, 2).join(" ");
+  // Get display name for a participant
+  const displayName = (p: Participant, category: string): string => {
+    if (category === "Ganda Campuran" && p.partner && p.partner !== "-") {
+      const n1 = p.call_name || p.name.split(" ")[0];
+      const n2 = p.partner.split(" ")[0];
+      return `${n1} & ${n2}`;
     }
-    return null;
+    return p.call_name || p.name.split(" ").slice(0, 2).join(" ");
   };
 
-  const renderMatchName = (matchString: string) => {
-    if (matchString.includes("Single Pria 26A vs Single Pria 27A")) {
-      const p1 = getName("26", "Single Putra", 0) || "Single Pria 26A";
-      const p2 = getName("27", "Single Putra", 0) || "Single Pria 27A";
-      return `${p1} vs ${p2}`;
+  // Get participant by bracket_position
+  const getBySlot = (category: string, slot: string): Participant | undefined =>
+    participants.find((p) => p.category === category && p.bracket_position === slot);
+
+  // Get participant by final_position
+  const getByFinal = (category: string, finalPos: string): Participant | undefined =>
+    participants.find((p) => p.category === category && p.final_position === finalPos);
+
+  const resolveMatch = (matchKey: string): string => {
+    const fallbacks: Record<string, string> = {
+      SP_slot1_vs_slot3: "Single Pria Slot 1 vs Slot 3",
+      SP_slot2_vs_slot4: "Single Pria Slot 2 vs Slot 4",
+      SPu_slot1_vs_slot3: "Single Wanita Slot 1 vs Slot 3",
+      SPu_slot2_vs_slot4: "Single Wanita Slot 2 vs Slot 4",
+      GC_slot1_vs_slot3: "Ganda Campur Slot 1 vs Slot 3",
+      GC_slot2_vs_slot4: "Ganda Campur Slot 2 vs Slot 4",
+      FINAL_SP: "Final Single Pria",
+      FINAL_SPu: "Final Single Wanita",
+      FINAL_GC: "Final Ganda Campuran",
+    };
+
+    // Semi-final matches — resolved from bracket_position
+    if (matchKey === "SP_slot1_vs_slot3") {
+      const p1 = getBySlot("Single Putra", "1");
+      const p2 = getBySlot("Single Putra", "3");
+      if (p1 || p2) return `${p1 ? displayName(p1, "Single Putra") : "Slot 1"} vs ${p2 ? displayName(p2, "Single Putra") : "Slot 3"}`;
     }
-    if (matchString.includes("Ganda Campur 26A vs Ganda Campur 27A")) {
-      const p1 = getName("26", "Ganda Campuran", 0) || "Ganda Campur 26A";
-      const p2 = getName("27", "Ganda Campuran", 0) || "Ganda Campur 27A";
-      return `${p1} vs ${p2}`;
+    if (matchKey === "SP_slot2_vs_slot4") {
+      const p1 = getBySlot("Single Putra", "2");
+      const p2 = getBySlot("Single Putra", "4");
+      if (p1 || p2) return `${p1 ? displayName(p1, "Single Putra") : "Slot 2"} vs ${p2 ? displayName(p2, "Single Putra") : "Slot 4"}`;
     }
-    if (matchString.includes("Single Wanita 26A vs Single Wanita 27A")) {
-      const p1 = getName("26", "Single Putri", 0) || "Single Wanita 26A";
-      const p2 = getName("27", "Single Putri", 0) || "Single Wanita 27A";
-      return `${p1} vs ${p2}`;
+    if (matchKey === "SPu_slot1_vs_slot3") {
+      const p1 = getBySlot("Single Putri", "1");
+      const p2 = getBySlot("Single Putri", "3");
+      if (p1 || p2) return `${p1 ? displayName(p1, "Single Putri") : "Slot 1"} vs ${p2 ? displayName(p2, "Single Putri") : "Slot 3"}`;
     }
-    if (matchString.includes("Ganda Campur 26B vs Ganda Campur 27B")) {
-      const p1 = getName("26", "Ganda Campuran", 1) || "Ganda Campur 26B";
-      const p2 = getName("27", "Ganda Campuran", 1) || "Ganda Campur 27B";
-      return `${p1} vs ${p2}`;
+    if (matchKey === "SPu_slot2_vs_slot4") {
+      const p1 = getBySlot("Single Putri", "2");
+      const p2 = getBySlot("Single Putri", "4");
+      if (p1 || p2) return `${p1 ? displayName(p1, "Single Putri") : "Slot 2"} vs ${p2 ? displayName(p2, "Single Putri") : "Slot 4"}`;
     }
-    if (matchString.includes("Single Pria 26B vs Single Pria 27B")) {
-      const p1 = getName("26", "Single Putra", 1) || "Single Pria 26B";
-      const p2 = getName("27", "Single Putra", 1) || "Single Pria 27B";
-      return `${p1} vs ${p2}`;
+    if (matchKey === "GC_slot1_vs_slot3") {
+      const p1 = getBySlot("Ganda Campuran", "1");
+      const p2 = getBySlot("Ganda Campuran", "3");
+      if (p1 || p2) return `${p1 ? displayName(p1, "Ganda Campuran") : "Slot 1"} vs ${p2 ? displayName(p2, "Ganda Campuran") : "Slot 3"}`;
     }
-    if (matchString.includes("Single Wanita 26B vs Single Wanita 27B")) {
-      const p1 = getName("26", "Single Putri", 1) || "Single Wanita 26B";
-      const p2 = getName("27", "Single Putri", 1) || "Single Wanita 27B";
-      return `${p1} vs ${p2}`;
+    if (matchKey === "GC_slot2_vs_slot4") {
+      const p1 = getBySlot("Ganda Campuran", "2");
+      const p2 = getBySlot("Ganda Campuran", "4");
+      if (p1 || p2) return `${p1 ? displayName(p1, "Ganda Campuran") : "Slot 2"} vs ${p2 ? displayName(p2, "Ganda Campuran") : "Slot 4"}`;
     }
-    return matchString;
+
+    // Grand Final matches — resolved from final_position (L vs R)
+    if (matchKey === "FINAL_SP") {
+      const fL = getByFinal("Single Putra", "L");
+      const fR = getByFinal("Single Putra", "R");
+      if (fL || fR) {
+        return `Final Single Pria: ${fL ? displayName(fL, "Single Putra") : "TBD"} vs ${fR ? displayName(fR, "Single Putra") : "TBD"}`;
+      }
+    }
+    if (matchKey === "FINAL_SPu") {
+      const fL = getByFinal("Single Putri", "L");
+      const fR = getByFinal("Single Putri", "R");
+      if (fL || fR) {
+        return `Final Single Wanita: ${fL ? displayName(fL, "Single Putri") : "TBD"} vs ${fR ? displayName(fR, "Single Putri") : "TBD"}`;
+      }
+    }
+    if (matchKey === "FINAL_GC") {
+      const fL = getByFinal("Ganda Campuran", "L");
+      const fR = getByFinal("Ganda Campuran", "R");
+      if (fL || fR) {
+        return `Final Ganda Campuran: ${fL ? displayName(fL, "Ganda Campuran") : "TBD"} vs ${fR ? displayName(fR, "Ganda Campuran") : "TBD"}`;
+      }
+    }
+
+    return fallbacks[matchKey] || matchKey;
   };
 
   return (
@@ -249,7 +290,7 @@ export default function BadmintonSchedule() {
                         </div>
                         <div className="w-px self-stretch bg-border shrink-0" />
                         <p className="text-sm font-semibold text-foreground leading-snug">
-                          {renderMatchName(s.match)}
+                          {resolveMatch(s.matchKey)}
                         </p>
                       </div>
                     ))}

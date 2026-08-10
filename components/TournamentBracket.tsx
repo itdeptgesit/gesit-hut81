@@ -7,6 +7,31 @@ import clsx from "clsx";
 
 const categories = ["Single Putra", "Single Putri", "Ganda Campuran"];
 
+// Schedule info per category per slot (matches BadmintonSchedule.tsx logic)
+// Slot 1 vs Slot 3 = top row, Slot 2 vs Slot 4 = bottom row
+const SCHEDULE_INFO: Record<string, Record<string, { day: string; time: string; court: string }>> = {
+  "Single Putra": {
+    "1": { day: "Hari 1", time: "17.00–18.00", court: "Lap. 1" },
+    "3": { day: "Hari 1", time: "17.00–18.00", court: "Lap. 1" },
+    "2": { day: "Hari 2", time: "17.00–18.00", court: "Lap. 1" },
+    "4": { day: "Hari 2", time: "17.00–18.00", court: "Lap. 1" },
+  },
+  "Single Putri": {
+    "1": { day: "Hari 1", time: "17.00–18.00", court: "Lap. 2" },
+    "3": { day: "Hari 1", time: "17.00–18.00", court: "Lap. 2" },
+    "2": { day: "Hari 2", time: "17.00–18.00", court: "Lap. 1" },
+    "4": { day: "Hari 2", time: "17.00–18.00", court: "Lap. 1" },
+  },
+  "Ganda Campuran": {
+    "1": { day: "Hari 1", time: "17.00–18.00", court: "Lap. 1" },
+    "3": { day: "Hari 1", time: "17.00–18.00", court: "Lap. 1" },
+    "2": { day: "Hari 1", time: "17.00–18.00", court: "Lap. 2" },
+    "4": { day: "Hari 1", time: "17.00–18.00", court: "Lap. 2" },
+  },
+};
+
+const FINAL_SCHEDULE = { day: "Hari 3", time: "17.00–19.00", court: "Lap. 1" };
+
 // Stable color palette for avatars based on first char
 const AVATAR_COLORS = [
   "#e11d48", // rose
@@ -102,6 +127,7 @@ interface SlotData {
   floor: string;
   isDouble?: boolean;
   isTBD?: boolean;
+  scheduleInfo?: { day: string; time: string; court: string };
 }
 
 export default function TournamentBracket() {
@@ -126,17 +152,23 @@ export default function TournamentBracket() {
       });
   }, []);
 
-  const getParticipant = (floor: string, category: string, index: number): Participant | null => {
-    const list = participants.filter(
-      (p) => p.floor.includes(floor) && p.category === category
-    );
-    return list[index] || null;
+  const getParticipant = (category: string, bracketPosition: string): Participant | null => {
+    return participants.find(
+      (p) => p.category === category && p.bracket_position === bracketPosition
+    ) || null;
   };
 
-  const getSlotData = (floor: string, floorLabel: string, category: string, index: number): SlotData => {
-    const p = getParticipant(floor, category, index);
+  const getFinalist = (category: string, finalPosition: "L" | "R"): Participant | null => {
+    return participants.find(
+      (p) => p.category === category && p.final_position === finalPosition
+    ) || null;
+  };
+
+  const getSlotData = (category: string, bracketPosition: string, defaultFloor: string): SlotData => {
+    const p = getParticipant(category, bracketPosition);
+    const scheduleInfo = SCHEDULE_INFO[category]?.[bracketPosition];
     if (!p) {
-      return { name: "TBD", floor: floorLabel, isTBD: true };
+      return { name: "TBD", floor: defaultFloor, isTBD: true, scheduleInfo };
     }
 
     if (category === "Ganda Campuran") {
@@ -147,42 +179,44 @@ export default function TournamentBracket() {
         partner: name2,
         photoUrl: p.photo_url || "",
         partnerPhotoUrl: p.partner_photo_url || "",
-        floor: floorLabel,
+        floor: p.floor || defaultFloor,
         isDouble: true,
         isTBD: false,
+        scheduleInfo,
       };
     }
 
     return {
       name: p.call_name || p.name.split(" ").slice(0, 2).join(" "),
       photoUrl: p.photo_url || "",
-      floor: floorLabel,
+      floor: p.floor || defaultFloor,
       isTBD: false,
+      scheduleInfo,
     };
   };
 
   const getSlots = (): [SlotData, SlotData, SlotData, SlotData] => {
     if (activeTab === "Single Putra") {
       return [
-        getSlotData("26", "26A", "Single Putra", 0),
-        getSlotData("27", "27A", "Single Putra", 0),
-        getSlotData("26", "26B", "Single Putra", 1),
-        getSlotData("27", "27B", "Single Putra", 1),
+        getSlotData("Single Putra", "1", "26A"),
+        getSlotData("Single Putra", "2", "27A"),
+        getSlotData("Single Putra", "3", "26B"),
+        getSlotData("Single Putra", "4", "27B"),
       ];
     }
     if (activeTab === "Single Putri") {
       return [
-        getSlotData("26", "26A", "Single Putri", 0),
-        getSlotData("27", "27A", "Single Putri", 0),
-        getSlotData("26", "26B", "Single Putri", 1),
-        getSlotData("27", "27B", "Single Putri", 1),
+        getSlotData("Single Putri", "1", "26A"),
+        getSlotData("Single Putri", "2", "27A"),
+        getSlotData("Single Putri", "3", "26B"),
+        getSlotData("Single Putri", "4", "27B"),
       ];
     }
     return [
-      getSlotData("26", "26A", "Ganda Campuran", 0),
-      getSlotData("27", "27A", "Ganda Campuran", 0),
-      getSlotData("26", "26B", "Ganda Campuran", 1),
-      getSlotData("27", "27B", "Ganda Campuran", 1),
+      getSlotData("Ganda Campuran", "1", "26A"),
+      getSlotData("Ganda Campuran", "2", "27A"),
+      getSlotData("Ganda Campuran", "3", "26B"),
+      getSlotData("Ganda Campuran", "4", "27B"),
     ];
   };
 
@@ -235,6 +269,15 @@ export default function TournamentBracket() {
               )}
             </div>
           </div>
+
+          {/* Schedule info chip */}
+          {slot.scheduleInfo && (
+            <div className="mt-3 pt-2.5 border-t border-white/5 flex items-center gap-3 text-[10px] text-white/40 font-medium">
+              <span className="bg-white/5 px-1.5 py-0.5 rounded font-bold text-white/60">{slot.scheduleInfo.day}</span>
+              <span>{slot.scheduleInfo.time}</span>
+              <span className="ml-auto text-primary/70 font-bold">{slot.scheduleInfo.court}</span>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -291,7 +334,7 @@ export default function TournamentBracket() {
             </div>
 
             {/* CENTER TROPHY + GRAND FINAL */}
-            <div className="flex flex-col items-center gap-6 px-3 md:px-6 relative z-20 shrink-0">
+            <div className="flex flex-col items-center gap-4 px-3 md:px-6 relative z-20 shrink-0">
               <div className="relative group cursor-default">
                 <div className="absolute inset-0 bg-yellow-500/25 blur-3xl rounded-full group-hover:bg-yellow-500/35 transition-all duration-500" />
                 <Trophy
@@ -300,7 +343,7 @@ export default function TournamentBracket() {
                 />
               </div>
 
-              {/* Grand Final box */}
+              {/* Grand Final box with finalists */}
               <div
                 className="relative p-[2px] rounded-sm shadow-[0_0_30px_rgba(227,30,36,0.2)]"
                 style={{ background: "linear-gradient(90deg, #e31e24, #b91c1c)" }}
@@ -309,8 +352,53 @@ export default function TournamentBracket() {
                   <div className="tracking-widest text-sm md:text-base font-black text-white whitespace-nowrap">
                     GRAND FINAL
                   </div>
+                  {/* Grand Final schedule info */}
+                  <div className="flex items-center justify-center gap-2 mt-1.5 text-[9px] text-white/40 font-medium">
+                    <span className="bg-white/5 px-1.5 py-0.5 rounded font-bold text-white/50">{FINAL_SCHEDULE.day}</span>
+                    <span>{FINAL_SCHEDULE.time}</span>
+                    <span className="text-red-400/80 font-bold">{FINAL_SCHEDULE.court}</span>
+                  </div>
                 </div>
               </div>
+
+              {/* Finalists panel */}
+              {(() => {
+                const fL = getFinalist(activeTab, "L");
+                const fR = getFinalist(activeTab, "R");
+                if (!fL && !fR) return null;
+                return (
+                  <div className="w-full flex flex-col gap-2 mt-1">
+                    {[fL, fR].map((f, idx) =>
+                      f ? (
+                        <div
+                          key={idx}
+                          className="flex items-center gap-2 bg-gradient-to-r from-red-950/80 to-[#0a0a0c] border border-red-800/40 rounded-lg px-3 py-2"
+                        >
+                          <PlayerAvatar name={f.call_name || f.name} photoUrl={f.photo_url} size="sm" />
+                          <div className="flex flex-col min-w-0">
+                            <span className="text-white font-black text-xs uppercase tracking-wide truncate">
+                              {activeTab === "Ganda Campuran" && f.partner && f.partner !== "-"
+                                ? `${f.call_name || f.name.split(" ")[0]} & ${f.partner.split(" ")[0]}`
+                                : f.call_name || f.name.split(" ").slice(0, 2).join(" ")}
+                            </span>
+                            <span className="text-red-400 text-[9px] font-bold uppercase tracking-widest">
+                              {idx === 0 ? "Finalis" : "Finalis"}
+                            </span>
+                          </div>
+                        </div>
+                      ) : (
+                        <div
+                          key={idx}
+                          className="flex items-center gap-2 bg-[#0a0a0c] border border-white/5 rounded-lg px-3 py-2 opacity-40"
+                        >
+                          <div className="w-12 h-12 rounded-full bg-white/5 shrink-0" />
+                          <span className="text-white/20 font-bold text-xs uppercase tracking-wide">TBD</span>
+                        </div>
+                      )
+                    )}
+                  </div>
+                );
+              })()}
             </div>
 
             {/* RIGHT BRACKET */}
