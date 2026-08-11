@@ -1,6 +1,6 @@
 import { QuizQuestion, quizQuestions } from './quizData';
 
-export type QuizPhase = "lobby" | "countdown" | "question" | "answer" | "leaderboard" | "result";
+export type QuizPhase = "idle" | "lobby" | "countdown" | "question" | "answer" | "leaderboard" | "result";
 
 export interface Participant {
   id: string;
