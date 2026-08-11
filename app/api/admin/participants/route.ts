@@ -46,7 +46,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Lantai tidak valid." }, { status: 400 });
     }
 
-    if (body.event === "Badminton Tournament" && !body.category) {
+    if (body.event === "Internal Badminton Tournament 2026" && !body.category) {
       return NextResponse.json({ error: "Kategori badminton wajib dipilih." }, { status: 400 });
     }
 

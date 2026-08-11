@@ -321,7 +321,7 @@ export default function AdminDashboard() {
       const payload = isNewParticipant 
         ? {
             name: editingParticipant.name,
-            event: "Badminton Tournament",
+            event: "Internal Badminton Tournament 2026",
             floor: editingParticipant.floor || "Lantai 26",
             category: editingParticipant.category || "Single Putra",
             partner: editingParticipant.partner || "-",
@@ -783,7 +783,7 @@ export default function AdminDashboard() {
                       <button 
                         onClick={() => {
                           setIsNewParticipant(true);
-                          setEditingParticipant({ id: "", registration_id: "", created_at: "", name: "", floor: "Lantai 26", event: "Badminton Tournament", category: "Single Putra", status: "Registered" });
+                          setEditingParticipant({ id: "", registration_id: "", created_at: "", name: "", floor: "Lantai 26", event: "Internal Badminton Tournament 2026", category: "Single Putra", status: "Registered" });
                         }}
                         className="inline-flex items-center gap-1 bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-medium px-3 py-1.5 rounded-lg transition-colors"
                       >

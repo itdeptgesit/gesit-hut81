@@ -193,7 +193,7 @@ export default function Home() {
                 11 – 13 Agustus 2026
               </div>
               <h2 className="font-heading font-bold text-3xl md:text-4xl text-white mb-6 leading-tight">
-                Badminton Tournament
+                Internal Badminton Tournament 2026
               </h2>
 
               <StaggerContainer className="space-y-4 mb-8">

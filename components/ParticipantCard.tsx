@@ -3,7 +3,7 @@ import { User } from "lucide-react";
 import clsx from "clsx";
 
 export default function ParticipantCard({ participant }: { participant: Participant }) {
-  const isBadminton = participant.event === "Badminton Tournament";
+  const isBadminton = participant.event === "Internal Badminton Tournament 2026";
 
   return (
     <div className="bg-white border border-border rounded-2xl p-5 shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5 duration-200">

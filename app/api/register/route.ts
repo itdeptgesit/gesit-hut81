@@ -14,19 +14,19 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Lantai tidak valid." }, { status: 400 });
     }
 
-    if (!["Badminton Tournament"].includes(body.event)) {
+    if (!["Internal Badminton Tournament 2026"].includes(body.event)) {
       return NextResponse.json(
-        { error: "Event tidak valid. Hanya menerima pendaftaran Badminton Tournament." },
+        { error: "Event tidak valid. Hanya menerima pendaftaran Internal Badminton Tournament 2026." },
         { status: 400 }
       );
     }
 
-    if (body.event === "Badminton Tournament" && !body.category) {
+    if (body.event === "Internal Badminton Tournament 2026" && !body.category) {
       return NextResponse.json({ error: "Kategori badminton wajib dipilih." }, { status: 400 });
     }
 
     if (
-      body.event === "Badminton Tournament" &&
+      body.event === "Internal Badminton Tournament 2026" &&
       body.category === "Ganda Campuran" &&
       !body.partner
     ) {

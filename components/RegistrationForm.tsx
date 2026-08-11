@@ -16,7 +16,7 @@ const schema = z
     floor: z.enum(["Lantai 26", "Lantai 27"], {
       message: "Pilih lantai Anda",
     }),
-    event: z.literal("Badminton Tournament"),
+    event: z.literal("Internal Badminton Tournament 2026"),
     category: z.string().optional(),
     partner: z.string().optional(),
     costume_desc: z.string().optional(),
@@ -25,7 +25,7 @@ const schema = z
     }),
   })
   .superRefine((data, ctx) => {
-    if (data.event === "Badminton Tournament") {
+    if (data.event === "Internal Badminton Tournament 2026") {
       if (!data.category) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
@@ -97,7 +97,7 @@ export default function RegistrationForm() {
   } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
-      event: "Badminton Tournament",
+      event: "Internal Badminton Tournament 2026",
     },
   });
 
@@ -194,7 +194,7 @@ export default function RegistrationForm() {
             Form Pendaftaran
           </h2>
           <p className="text-slate-500 text-sm md:text-base max-w-md mx-auto">
-            Lengkapi data di bawah untuk berpartisipasi dalam Badminton Tournament HUT RI ke-81 GESIT.
+            Lengkapi data di bawah untuk berpartisipasi dalam Internal Badminton Tournament 2026 HUT RI ke-81 GESIT.
           </p>
         </div>
         
