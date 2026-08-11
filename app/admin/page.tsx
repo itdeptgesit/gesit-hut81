@@ -1111,7 +1111,7 @@ export default function AdminDashboard() {
                   }}
                 >
                   {/* Content */}
-                  <div className="relative z-10 w-full h-full flex flex-col items-center pt-[80px] px-16 text-center">
+                  <div className="relative z-10 w-full h-full flex flex-col items-center pt-[110px] px-16 text-center">
                     
                     <h1 className="text-[40px] font-black text-[#0B1A3A] tracking-[0.2em] mb-0.5 uppercase" style={{ fontFamily: "var(--font-playfair)" }}>Certificate</h1>
                     
