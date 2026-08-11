@@ -36,15 +36,16 @@ function shuffle<T>(array: T[]): T[] {
 }
 
 // Generate active questions with shuffled options
-export function generateQuestions(): ActiveQuestion[] {
-  const shuffledQs = shuffle(quizQuestions); // shuffle order of questions
+export function generateQuestions(dbQuestions: any[] = quizQuestions): ActiveQuestion[] {
+  const shuffledQs = shuffle(dbQuestions); // shuffle order of questions
   return shuffledQs.map(q => {
-    const optionsWithIndex = q.options.map((opt, i) => ({ opt, isCorrect: i === q.correct }));
+    const optionsWithIndex: { opt: string; isCorrect: boolean }[] = q.options.map((opt: string, i: number) => ({ opt, isCorrect: i === q.correct }));
     const shuffledOptions = shuffle(optionsWithIndex);
     const correctShuffledIndex = shuffledOptions.findIndex(o => o.isCorrect);
     
     return {
       ...q,
+      timeLimit: q.timelimit || q.timeLimit || 20,
       shuffledOptions: shuffledOptions.map(o => o.opt),
       correctShuffledIndex
     };

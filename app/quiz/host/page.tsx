@@ -26,6 +26,38 @@ const BackgroundEffect = () => (
   </>
 );
 
+let audioCtx: AudioContext | null = null;
+const playTickSound = () => {
+  if (typeof window === 'undefined') return;
+  try {
+    if (!audioCtx) {
+      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioContextClass) return;
+      audioCtx = new AudioContextClass();
+    }
+    if (audioCtx.state === 'suspended') {
+      audioCtx.resume();
+    }
+    const oscillator = audioCtx.createOscillator();
+    const gainNode = audioCtx.createGain();
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+    
+    oscillator.type = 'sine';
+    oscillator.frequency.setValueAtTime(800, audioCtx.currentTime);
+    oscillator.frequency.exponentialRampToValueAtTime(10, audioCtx.currentTime + 0.05);
+    
+    gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
+    
+    oscillator.start(audioCtx.currentTime);
+    oscillator.stop(audioCtx.currentTime + 0.05);
+  } catch (e) {
+    // Ignore audio errors
+  }
+};
+
 export default function QuizHostPage() {
   const [state, setState] = useState<QuizState>({
     pin: null,
@@ -138,15 +170,26 @@ export default function QuizHostPage() {
     };
   }, [state.pin, broadcastState]);
 
-  const handleStartLobby = () => {
+  const handleStartLobby = async () => {
     const newPin = Math.floor(1000 + Math.random() * 9000).toString();
     setHasSaved(false);
     setIsSaving(false);
+    
+    // Fetch questions from DB
+    const { data: dbQuestions, error } = await supabase.from('quiz_questions').select('*');
+    
+    let activeQuestions = [];
+    if (!error && dbQuestions && dbQuestions.length > 0) {
+      activeQuestions = generateQuestions(dbQuestions);
+    } else {
+      activeQuestions = generateQuestions(); // fallback to default
+    }
+
     setState({ 
        pin: newPin, 
        phase: "lobby", 
        participants: {}, 
-       questions: generateQuestions(), 
+       questions: activeQuestions, 
        currentQuestionIndex: 0,
        questionStartTime: null
     });
@@ -199,6 +242,9 @@ export default function QuizHostPage() {
       clearInterval(timerRef.current!);
       timerRef.current = setInterval(() => {
         setTimeLeft(prev => {
+          if (prev > 1) {
+            playTickSound();
+          }
           if (prev <= 1) {
             clearInterval(timerRef.current!);
             handleShowAnswer();
@@ -209,9 +255,13 @@ export default function QuizHostPage() {
       }, 1000);
     } else if (state.phase === "countdown") {
        setTimeLeft(3);
+       playTickSound();
        clearInterval(timerRef.current!);
        timerRef.current = setInterval(() => {
          setTimeLeft(prev => {
+           if (prev > 1) {
+             playTickSound();
+           }
            if (prev <= 1) {
              clearInterval(timerRef.current!);
              handleShowQuestion();

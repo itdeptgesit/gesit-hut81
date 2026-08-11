@@ -6,7 +6,7 @@ import { supabase } from "@/lib/supabase";
 import {
   LogOut, Users, Trophy, Monitor, RefreshCw,
   ExternalLink, Loader2, LayoutDashboard, Gamepad2,
-  TrendingUp, Circle, Edit2, Plus, Trash2, X, Award, Download, Calendar
+  TrendingUp, Circle, Edit2, Plus, Trash2, X, Award, Download, Calendar, BookOpen, CheckCircle2, BarChart2
 } from "lucide-react";
 import { toPng } from "html-to-image";
 import { QRCodeSVG } from "qrcode.react";
@@ -53,6 +53,23 @@ interface MatchSchedule {
   time: string;
   court: string;
   referee: string;
+}
+
+interface QuizQuestion {
+  id: string;
+  question: string;
+  options: string[];
+  correct: number;
+  timeLimit: number;
+  category: string;
+  emoji: string;
+}
+
+interface GroupScore {
+  id: string;
+  group_name: string;
+  score: number;
+  created_at?: string;
 }
 
 // ─── Reusable primitives ───
@@ -170,6 +187,23 @@ export default function AdminDashboard() {
   const [schedules, setSchedules] = useState<MatchSchedule[]>([]);
   const [schedulesLoading, setSchedulesLoading] = useState(true);
   
+  const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[]>([]);
+  const [questionsLoading, setQuestionsLoading] = useState(true);
+  const [editingQuestion, setEditingQuestion] = useState<QuizQuestion | null>(null);
+  const [isNewQuestion, setIsNewQuestion] = useState(false);
+  const [savingQuestion, setSavingQuestion] = useState(false);
+  
+  const [groupScores, setGroupScores] = useState<GroupScore[]>([]);
+  const [groupScoresLoading, setGroupScoresLoading] = useState(true);
+  const [editingGroupScore, setEditingGroupScore] = useState<GroupScore | null>(null);
+  const [isNewGroupScore, setIsNewGroupScore] = useState(false);
+  const [savingGroupScore, setSavingGroupScore] = useState(false);
+  
+  const [judges, setJudges] = useState<any[]>([]);
+  const [newJudgeName, setNewJudgeName] = useState("");
+  const [newJudgePin, setNewJudgePin] = useState("");
+  const [competitionTitle, setCompetitionTitle] = useState("FUN GAMES");
+  
   // UI States
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("Dashboard");
@@ -245,6 +279,37 @@ export default function AdminDashboard() {
     setSchedulesLoading(false);
   }, []);
 
+  const fetchQuestions = useCallback(async () => {
+    setQuestionsLoading(true);
+    const { data } = await supabase.from("quiz_questions").select("*").order("created_at", { ascending: true });
+    setQuizQuestions(data || []);
+    setQuestionsLoading(false);
+  }, []);
+
+  const fetchGroupScores = useCallback(async () => {
+    setGroupScoresLoading(true);
+    const { data } = await supabase.from("group_scores").select("*").order("score", { ascending: false });
+    setGroupScores(data || []);
+    setGroupScoresLoading(false);
+  }, []);
+
+  const fetchJudges = useCallback(async () => {
+    const res = await fetch("/api/admin/judges");
+    if (res.ok) setJudges(await res.json());
+  }, []);
+
+  const fetchSettings = useCallback(async () => {
+    const { data } = await supabase
+      .from("settings")
+      .select("value")
+      .eq("key", "competition_title")
+      .single();
+      
+    if (data && data.value) {
+      setCompetitionTitle(data.value);
+    }
+  }, []);
+
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (user) setAdminEmail(user.email || "");
@@ -253,7 +318,11 @@ export default function AdminDashboard() {
     fetchScores();
     fetchWinners();
     fetchSchedules();
-  }, [fetchParticipants, fetchScores, fetchWinners, fetchSchedules]);
+    fetchQuestions();
+    fetchGroupScores();
+    fetchJudges();
+    fetchSettings();
+  }, [fetchParticipants, fetchScores, fetchWinners, fetchSchedules, fetchQuestions, fetchGroupScores, fetchJudges, fetchSettings]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -413,6 +482,121 @@ export default function AdminDashboard() {
     setSavingSchedule(false);
   };
 
+  const handleSaveQuestion = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingQuestion) return;
+    setSavingQuestion(true);
+    try {
+      const method = isNewQuestion ? "POST" : "PATCH";
+      const res = await fetch("/api/admin/quiz-questions", {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(editingQuestion),
+      });
+      if (res.ok) {
+        await fetchQuestions();
+        setEditingQuestion(null);
+      } else {
+        alert("Gagal mengupdate soal quiz");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Terjadi kesalahan.");
+    }
+    setSavingQuestion(false);
+  };
+
+  const handleDeleteQuestion = async (id: string) => {
+    if (!confirm("Hapus soal ini?")) return;
+    try {
+      const res = await fetch(`/api/admin/quiz-questions?id=${id}`, { method: "DELETE" });
+      if (res.ok) {
+        await fetchQuestions();
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleSaveGroupScore = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingGroupScore) return;
+    setSavingGroupScore(true);
+    try {
+      const method = isNewGroupScore ? "POST" : "PATCH";
+      const res = await fetch("/api/admin/group-scores", {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(editingGroupScore),
+      });
+      if (res.ok) {
+        await fetchGroupScores();
+        setEditingGroupScore(null);
+      } else {
+        alert("Gagal mengupdate skor");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Terjadi kesalahan.");
+    }
+    setSavingGroupScore(false);
+  };
+
+  const handleDeleteGroupScore = async (id: string) => {
+    if (!confirm("Hapus grup ini dari scoreboard?")) return;
+    try {
+      const res = await fetch(`/api/admin/group-scores?id=${id}`, { method: "DELETE" });
+      if (res.ok) {
+        await fetchGroupScores();
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleQuickScoreUpdate = async (id: string, diff: number) => {
+    const group = groupScores.find(g => g.id === id);
+    if (!group) return;
+    
+    // Optimistic UI update
+    setGroupScores(prev => prev.map(g => g.id === id ? { ...g, score: g.score + diff } : g).sort((a, b) => b.score - a.score));
+
+    try {
+      const res = await fetch("/api/admin/group-scores", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, increment: diff }),
+      });
+      if (!res.ok) {
+        await fetchGroupScores(); // rollback if failed
+      }
+    } catch (err) {
+      console.error(err);
+      await fetchGroupScores();
+    }
+  };
+
+  const handleSyncTeams = async () => {
+    if (!confirm("Sinkronisasi semua kelompok dari data Tim Fun Games ke Scoreboard? Kelompok yang sudah ada tidak akan duplikat.")) return;
+    try {
+      const res = await fetch("/api/admin/group-scores", { method: "PUT" });
+      const result = await res.json();
+      if (res.ok) {
+        await fetchGroupScores();
+        if (result.inserted === 0) {
+          alert("Semua tim sudah tersinkronisasi sebelumnya.");
+        } else {
+          alert(`✅ Berhasil menambahkan ${result.inserted} kelompok ke scoreboard!`);
+        }
+      } else {
+        alert("Gagal sinkronisasi: " + result.error);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Terjadi kesalahan saat sinkronisasi.");
+    }
+  };
+
   const sessions = [...new Set(quizScores.map(s => s.pin))].length;
 
   const navItems = [
@@ -420,6 +604,8 @@ export default function AdminDashboard() {
     { icon: <Users size={16} />, label: "Peserta & Bagan" },
     { icon: <Calendar size={16} />, label: "Jadwal & Wasit" },
     { icon: <Trophy size={16} />, label: "Manajemen Pemenang" },
+    { icon: <BarChart2 size={16} />, label: "Scoreboard Kelompok" },
+    { icon: <BookOpen size={16} />, label: "Manajemen Soal Quiz" },
     { icon: <Award size={16} />, label: "E-Sertifikat" },
   ];
 
@@ -995,6 +1181,296 @@ export default function AdminDashboard() {
             </Card>
           )}
 
+          {activeTab === "Scoreboard Kelompok" && (
+            <div className="space-y-6">
+            <Card>
+              <CardHeader
+                title="Scoreboard Kelompok (Fun Games)"
+                description="Kelola dan update skor tiap kelompok secara real-time."
+                action={
+                  <div className="flex items-center gap-2">
+                    <Link href="/scoreboard" target="_blank" className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 transition-all border border-zinc-200 bg-white">
+                      <Monitor size={14} /> Layar Publik
+                    </Link>
+                    <button onClick={fetchGroupScores} className="text-zinc-400 hover:text-zinc-600 p-1 transition-colors rounded">
+                      <RefreshCw size={14} className={groupScoresLoading ? "animate-spin" : ""} />
+                    </button>
+                    <button
+                      onClick={handleSyncTeams}
+                      className="inline-flex items-center gap-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium px-3 py-1.5 rounded-lg transition-colors"
+                    >
+                      <RefreshCw size={14} /> Sync dari Tim
+                    </button>
+                    <button 
+                      onClick={() => {
+                        setIsNewGroupScore(true);
+                        setEditingGroupScore({ id: "", group_name: "", score: 0 });
+                      }}
+                      className="inline-flex items-center gap-1 bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-medium px-3 py-1.5 rounded-lg transition-colors"
+                    >
+                      <Plus size={14} /> Tambah Manual
+                    </button>
+                  </div>
+                }
+              />
+              <div className="p-2">
+                {groupScoresLoading ? (
+                  <div className="flex justify-center py-12"><Loader2 size={24} className="animate-spin text-zinc-400" /></div>
+                ) : groupScores.length === 0 ? (
+                  <div className="text-center py-12 space-y-3">
+                    <BarChart2 size={32} className="text-zinc-200 mx-auto" />
+                    <p className="text-sm text-zinc-400">Belum ada grup di scoreboard.</p>
+                    <button onClick={handleSyncTeams} className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-lg transition-colors mx-auto">
+                      <RefreshCw size={13} /> Sync Otomatis dari Data Tim
+                    </button>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="text-[11px] uppercase tracking-wider text-zinc-400 bg-zinc-50 border-y border-zinc-200">
+                          <th className="px-4 py-3 text-center font-medium w-16">Peringkat</th>
+                          <th className="px-4 py-3 text-left font-medium">Nama Kelompok</th>
+                          <th className="px-4 py-3 text-center font-medium">Skor Saat Ini</th>
+                          <th className="px-4 py-3 text-center font-medium">Aksi Cepat</th>
+                          <th className="px-4 py-3 text-right font-medium">Aksi</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-zinc-100">
+                        {groupScores.map((g, index) => (
+                          <tr key={g.id} className="hover:bg-zinc-50 transition-colors">
+                            <td className="px-4 py-3 text-center">
+                              <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold ${
+                                index === 0 ? "bg-yellow-100 text-yellow-700" :
+                                index === 1 ? "bg-zinc-200 text-zinc-600" :
+                                index === 2 ? "bg-orange-100 text-orange-700" : "text-zinc-400"
+                              }`}>
+                                {index + 1}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 font-bold text-zinc-900">{g.group_name}</td>
+                            <td className="px-4 py-3 text-center">
+                              <span className="font-black text-lg text-zinc-800">{g.score.toLocaleString()}</span>
+                            </td>
+                            <td className="px-4 py-3 text-center">
+                              <div className="flex items-center justify-center gap-1">
+                                <button onClick={() => handleQuickScoreUpdate(g.id, -10)} className="px-2 py-1 text-xs font-bold text-red-600 hover:bg-red-50 rounded border border-red-200">-10</button>
+                                <button onClick={() => handleQuickScoreUpdate(g.id, 10)} className="px-2 py-1 text-xs font-bold text-emerald-600 hover:bg-emerald-50 rounded border border-emerald-200">+10</button>
+                                <button onClick={() => handleQuickScoreUpdate(g.id, 25)} className="px-2 py-1 text-xs font-bold text-emerald-600 hover:bg-emerald-50 rounded border border-emerald-200">+25</button>
+                                <button onClick={() => handleQuickScoreUpdate(g.id, 50)} className="px-2 py-1 text-xs font-bold text-emerald-600 hover:bg-emerald-50 rounded border border-emerald-200">+50</button>
+                                <button onClick={() => handleQuickScoreUpdate(g.id, 100)} className="px-2 py-1 text-xs font-bold text-blue-600 hover:bg-blue-50 rounded border border-blue-200">+100</button>
+                              </div>
+                            </td>
+                            <td className="px-4 py-3 text-right">
+                              <div className="flex items-center justify-end gap-2">
+                                <button 
+                                  onClick={() => { setIsNewGroupScore(false); setEditingGroupScore({ ...g }); }}
+                                  className="text-blue-600 hover:text-blue-800 p-1"
+                                >
+                                  <Edit2 size={14} />
+                                </button>
+                                <button 
+                                  onClick={() => handleDeleteGroupScore(g.id)}
+                                  className="text-red-600 hover:text-red-800 p-1"
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </Card>
+
+            {/* Pengaturan Kompetisi & Juri */}
+            <Card>
+              <CardHeader title="Pengaturan Lomba & Juri" description="Atur judul lomba saat ini dan kelola akses PIN untuk juri." />
+              <div className="p-6 space-y-6">
+                <div>
+                  <label className="block text-sm font-semibold text-zinc-700 mb-2">Judul Lomba Saat Ini</label>
+                  <div className="flex gap-2">
+                    <input 
+                      type="text" 
+                      value={competitionTitle} 
+                      onChange={(e) => setCompetitionTitle(e.target.value)}
+                      className="flex-1 p-2 border border-zinc-300 rounded-lg text-sm font-bold uppercase focus:ring-2 focus:ring-zinc-900 focus:outline-none"
+                    />
+                    <button 
+                      onClick={async () => {
+                        const res = await fetch("/api/settings", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ key: "competition_title", value: competitionTitle })
+                        });
+                        if (res.ok) alert("Judul lomba berhasil disimpan!");
+                      }}
+                      className="bg-zinc-900 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-zinc-800 transition-colors"
+                    >
+                      Simpan Judul
+                    </button>
+                  </div>
+                  <p className="text-xs text-zinc-500 mt-1">Judul ini akan otomatis muncul di Portal Juri secara real-time.</p>
+                </div>
+
+                <div className="border-t border-zinc-200 pt-6">
+                  <h4 className="text-sm font-semibold text-zinc-900 mb-4">Daftar Juri (Akses Portal)</h4>
+                  
+                  <form 
+                    className="flex flex-col sm:flex-row gap-2 mb-6"
+                    onSubmit={async (e) => {
+                      e.preventDefault();
+                      if (!newJudgeName || !newJudgePin) return;
+                      const res = await fetch("/api/admin/judges", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ name: newJudgeName, pin: newJudgePin })
+                      });
+                      if (res.ok) {
+                        setNewJudgeName("");
+                        setNewJudgePin("");
+                        fetchJudges();
+                      } else {
+                        alert("Gagal menambahkan juri. Mungkin PIN sudah digunakan.");
+                      }
+                    }}
+                  >
+                    <input type="text" placeholder="Nama Juri (Misal: Juri Budi)" value={newJudgeName} onChange={e => setNewJudgeName(e.target.value)} className="flex-1 p-2 border border-zinc-300 rounded-lg text-sm focus:ring-2 focus:ring-zinc-900 focus:outline-none" required />
+                    <input type="text" placeholder="PIN Akses" value={newJudgePin} onChange={e => setNewJudgePin(e.target.value)} className="w-full sm:w-32 p-2 border border-zinc-300 rounded-lg text-sm font-mono tracking-widest focus:ring-2 focus:ring-zinc-900 focus:outline-none" required />
+                    <button type="submit" className="bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-emerald-700 transition-colors shrink-0">Tambah Juri</button>
+                  </form>
+
+                  <div className="border border-zinc-200 rounded-xl overflow-hidden">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="bg-zinc-50 text-zinc-500 border-b border-zinc-200">
+                          <th className="px-4 py-3 text-left font-semibold">Nama Juri</th>
+                          <th className="px-4 py-3 text-left font-semibold">PIN</th>
+                          <th className="px-4 py-3 text-right font-semibold">Aksi</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {judges.map(j => (
+                          <tr key={j.id} className="border-b border-zinc-100 last:border-0 hover:bg-zinc-50 transition-colors">
+                            <td className="px-4 py-3 font-bold text-zinc-900">{j.name}</td>
+                            <td className="px-4 py-3 text-zinc-600"><Badge>{j.pin}</Badge></td>
+                            <td className="px-4 py-3 text-right">
+                              <button 
+                                onClick={async () => {
+                                  if (!confirm("Hapus juri ini? Juri tidak akan bisa login lagi dengan PIN ini.")) return;
+                                  await fetch(`/api/admin/judges?id=${j.id}`, { method: "DELETE" });
+                                  fetchJudges();
+                                }}
+                                className="text-red-600 hover:text-red-800 p-1"
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                        {judges.length === 0 && (
+                          <tr><td colSpan={3} className="px-4 py-8 text-center text-zinc-500">Belum ada juri yang didaftarkan.</td></tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </Card>
+            </div>
+          )}
+
+          {activeTab === "Manajemen Soal Quiz" && (
+            <Card>
+              <CardHeader
+                title="Manajemen Soal Quiz"
+                description="Kelola daftar soal untuk sesi quiz live."
+                action={
+                  <div className="flex items-center gap-2">
+                    <button onClick={fetchQuestions} className="text-zinc-400 hover:text-zinc-600 p-1 transition-colors rounded">
+                      <RefreshCw size={14} className={questionsLoading ? "animate-spin" : ""} />
+                    </button>
+                    <button 
+                      onClick={() => {
+                        setIsNewQuestion(true);
+                        setEditingQuestion({ id: "", question: "", options: ["", "", "", ""], correct: 0, timeLimit: 20, category: "Umum", emoji: "❓" });
+                      }}
+                      className="inline-flex items-center gap-1 bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-medium px-3 py-1.5 rounded-lg transition-colors"
+                    >
+                      <Plus size={14} /> Tambah Soal
+                    </button>
+                  </div>
+                }
+              />
+              <div className="p-2">
+                {questionsLoading ? (
+                  <div className="flex justify-center py-12"><Loader2 size={24} className="animate-spin text-zinc-400" /></div>
+                ) : quizQuestions.length === 0 ? (
+                  <div className="text-center py-12">
+                    <BookOpen size={32} className="text-zinc-200 mx-auto mb-2" />
+                    <p className="text-sm text-zinc-400">Belum ada soal quiz</p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="text-[11px] uppercase tracking-wider text-zinc-400 bg-zinc-50 border-y border-zinc-200">
+                          <th className="px-4 py-3 text-left font-medium">Kategori</th>
+                          <th className="px-4 py-3 text-left font-medium">Pertanyaan</th>
+                          <th className="px-4 py-3 text-left font-medium">Opsi & Jawaban</th>
+                          <th className="px-4 py-3 text-right font-medium">Aksi</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-zinc-100">
+                        {quizQuestions.map((q) => (
+                          <tr key={q.id} className="hover:bg-zinc-50 transition-colors">
+                            <td className="px-4 py-3">
+                              <div className="flex items-center gap-2">
+                                <span className="text-lg">{q.emoji}</span>
+                                <span className="font-medium text-zinc-700">{q.category}</span>
+                              </div>
+                            </td>
+                            <td className="px-4 py-3 font-medium text-zinc-900 max-w-xs">{q.question}</td>
+                            <td className="px-4 py-3">
+                              <div className="flex flex-col gap-1 text-xs">
+                                {q.options.map((opt, i) => (
+                                  <div key={i} className={`flex items-center gap-1 ${i === q.correct ? "text-emerald-600 font-bold" : "text-zinc-500"}`}>
+                                    <span className="w-4">{["A", "B", "C", "D"][i]}.</span>
+                                    <span className="truncate max-w-[200px]">{opt}</span>
+                                    {i === q.correct && <CheckCircle2 size={12} />}
+                                  </div>
+                                ))}
+                              </div>
+                            </td>
+                            <td className="px-4 py-3 text-right">
+                              <div className="flex items-center justify-end gap-2">
+                                <button 
+                                  onClick={() => { setIsNewQuestion(false); setEditingQuestion({ ...q }); }}
+                                  className="text-blue-600 hover:text-blue-800 p-1"
+                                >
+                                  <Edit2 size={14} />
+                                </button>
+                                <button 
+                                  onClick={() => handleDeleteQuestion(q.id)}
+                                  className="text-red-600 hover:text-red-800 p-1"
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </Card>
+          )}
+
           {activeTab === "E-Sertifikat" && (
             <div className="flex flex-col lg:flex-row gap-6">
               {/* Form Section */}
@@ -1446,6 +1922,131 @@ export default function AdminDashboard() {
                 <button type="button" onClick={() => setEditingSchedule(null)} className="px-4 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-100 rounded-lg">Batal</button>
                 <button type="submit" disabled={savingSchedule} className="px-4 py-2 text-sm font-medium text-white bg-zinc-900 hover:bg-zinc-800 rounded-lg flex items-center gap-2">
                   {savingSchedule && <Loader2 size={14} className="animate-spin" />} Simpan
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {editingQuestion && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex justify-between items-center px-6 py-4 border-b border-zinc-100 bg-zinc-50/50">
+              <h3 className="font-bold text-zinc-900">{isNewQuestion ? "Tambah Soal Quiz" : "Edit Soal Quiz"}</h3>
+              <button onClick={() => setEditingQuestion(null)} className="text-zinc-400 hover:text-zinc-700"><X size={18} /></button>
+            </div>
+            <form onSubmit={handleSaveQuestion} className="p-6 space-y-4 max-h-[80vh] overflow-y-auto">
+              <div>
+                <label className="block text-xs font-semibold text-zinc-700 mb-1">Pertanyaan</label>
+                <textarea
+                  value={editingQuestion.question}
+                  onChange={(e) => setEditingQuestion({...editingQuestion, question: e.target.value})}
+                  className="w-full border border-zinc-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900 resize-none h-20"
+                  required
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-zinc-700 mb-1">Kategori</label>
+                  <input
+                    type="text"
+                    value={editingQuestion.category}
+                    onChange={(e) => setEditingQuestion({...editingQuestion, category: e.target.value})}
+                    className="w-full border border-zinc-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-zinc-900"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-zinc-700 mb-1">Emoji</label>
+                  <input
+                    type="text"
+                    value={editingQuestion.emoji}
+                    onChange={(e) => setEditingQuestion({...editingQuestion, emoji: e.target.value})}
+                    className="w-full border border-zinc-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-zinc-900"
+                    required
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-zinc-700 mb-1">Batas Waktu (detik)</label>
+                <input
+                  type="number"
+                  value={editingQuestion.timeLimit || (editingQuestion as any).timelimit || 20}
+                  onChange={(e) => setEditingQuestion({...editingQuestion, timeLimit: parseInt(e.target.value) || 20})}
+                  className="w-full border border-zinc-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-zinc-900"
+                  required
+                />
+              </div>
+              <div className="space-y-3 pt-2">
+                <label className="block text-xs font-semibold text-zinc-700 mb-1">Pilihan Jawaban (Tandai yang benar)</label>
+                {[0, 1, 2, 3].map(idx => (
+                  <div key={idx} className="flex items-center gap-3">
+                    <input 
+                      type="radio" 
+                      name="correctOption" 
+                      checked={editingQuestion.correct === idx} 
+                      onChange={() => setEditingQuestion({...editingQuestion, correct: idx})}
+                      className="w-4 h-4 text-zinc-900 focus:ring-zinc-900"
+                    />
+                    <input
+                      type="text"
+                      value={editingQuestion.options[idx] || ""}
+                      onChange={(e) => {
+                        const newOpts = [...editingQuestion.options];
+                        newOpts[idx] = e.target.value;
+                        setEditingQuestion({...editingQuestion, options: newOpts});
+                      }}
+                      placeholder={`Opsi ${["A", "B", "C", "D"][idx]}`}
+                      className="flex-1 border border-zinc-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-zinc-900"
+                      required
+                    />
+                  </div>
+                ))}
+              </div>
+              <div className="pt-4 flex justify-end gap-2">
+                <button type="button" onClick={() => setEditingQuestion(null)} className="px-4 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-100 rounded-lg">Batal</button>
+                <button type="submit" disabled={savingQuestion} className="px-4 py-2 text-sm font-medium text-white bg-zinc-900 hover:bg-zinc-800 rounded-lg flex items-center gap-2">
+                  {savingQuestion && <Loader2 size={14} className="animate-spin" />} Simpan
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {editingGroupScore && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex justify-between items-center px-6 py-4 border-b border-zinc-100 bg-zinc-50/50">
+              <h3 className="font-bold text-zinc-900">{isNewGroupScore ? "Tambah Kelompok" : "Edit Skor Kelompok"}</h3>
+              <button onClick={() => setEditingGroupScore(null)} className="text-zinc-400 hover:text-zinc-700"><X size={18} /></button>
+            </div>
+            <form onSubmit={handleSaveGroupScore} className="p-6 space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-zinc-700 mb-1">Nama Kelompok</label>
+                <input
+                  type="text"
+                  value={editingGroupScore.group_name}
+                  onChange={(e) => setEditingGroupScore({...editingGroupScore, group_name: e.target.value})}
+                  className="w-full border border-zinc-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-zinc-900"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-zinc-700 mb-1">Skor Manual</label>
+                <input
+                  type="number"
+                  value={editingGroupScore.score}
+                  onChange={(e) => setEditingGroupScore({...editingGroupScore, score: parseInt(e.target.value) || 0})}
+                  className="w-full border border-zinc-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-zinc-900"
+                  required
+                />
+              </div>
+              <div className="pt-4 flex justify-end gap-2">
+                <button type="button" onClick={() => setEditingGroupScore(null)} className="px-4 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-100 rounded-lg">Batal</button>
+                <button type="submit" disabled={savingGroupScore} className="px-4 py-2 text-sm font-medium text-white bg-zinc-900 hover:bg-zinc-800 rounded-lg flex items-center gap-2">
+                  {savingGroupScore && <Loader2 size={14} className="animate-spin" />} Simpan
                 </button>
               </div>
             </form>
