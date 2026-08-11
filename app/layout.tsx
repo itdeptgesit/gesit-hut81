@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, Saira_Semi_Condensed } from "next/font/google";
+import { Inter, Saira_Semi_Condensed, Playfair_Display, Montserrat } from "next/font/google";
 import "./globals.css";
 
 const inter = Inter({
@@ -11,6 +11,19 @@ const saira = Saira_Semi_Condensed({
   variable: "--font-saira",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
+});
+
+const playfair = Playfair_Display({
+  variable: "--font-playfair",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800", "900"],
+  style: ["normal", "italic"],
+});
+
+const montserrat = Montserrat({
+  variable: "--font-montserrat",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800", "900"],
 });
 
 export const metadata: Metadata = {
@@ -26,7 +39,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${inter.variable} ${saira.variable} h-full antialiased`}
+      className={`${inter.variable} ${saira.variable} ${playfair.variable} ${montserrat.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">{children}</body>
     </html>

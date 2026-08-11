@@ -193,7 +193,8 @@ export default function AdminDashboard() {
 
   // E-Sertifikat
   const [certWinnerId, setCertWinnerId] = useState("");
-  const [certData, setCertData] = useState({ name: "", category: "", event: "", position: "", date: "13 August 2026" });
+  const [certTemplate, setCertTemplate] = useState("badminton");
+  const [certData, setCertData] = useState({ name: "", category: "", event: "", position: "", date: "19 August 2026" });
   const certRef = useRef<HTMLDivElement>(null);
   const [isDownloading, setIsDownloading] = useState(false);
 
@@ -957,7 +958,7 @@ export default function AdminDashboard() {
                         setCertWinnerId(e.target.value);
                         if (e.target.value) {
                           const w = winners.find(x => x.id === e.target.value);
-                          if (w) setCertData({ name: w.name, category: w.category, event: w.event, position: w.position, date: "13 August 2026" });
+                          if (w) setCertData({ name: w.name, category: w.category, event: w.event, position: w.position, date: "19 August 2026" });
                         }
                       }}
                       className="w-full border border-zinc-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-zinc-900 bg-white"
@@ -969,6 +970,30 @@ export default function AdminDashboard() {
                     </select>
                   </div>
                   <div className="border-t border-zinc-100 my-4"></div>
+                  {/* Template Selector */}
+                  <div>
+                    <label className="block text-xs font-semibold text-zinc-700 mb-1">Certificate Template</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setCertTemplate("badminton")}
+                        className={`flex flex-col items-center gap-1 p-2 rounded-lg border-2 text-xs font-semibold transition-all ${
+                          certTemplate === "badminton" ? "border-red-600 bg-red-50 text-red-700" : "border-zinc-200 text-zinc-500 hover:border-zinc-400"
+                        }`}
+                      >
+                        <span>🏸</span> Badminton
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setCertTemplate("fungames")}
+                        className={`flex flex-col items-center gap-1 p-2 rounded-lg border-2 text-xs font-semibold transition-all ${
+                          certTemplate === "fungames" ? "border-red-600 bg-red-50 text-red-700" : "border-zinc-200 text-zinc-500 hover:border-zinc-400"
+                        }`}
+                      >
+                        <span>🎮</span> Fun Games
+                      </button>
+                    </div>
+                  </div>
                   <div>
                     <label className="block text-xs font-semibold text-zinc-700 mb-1">Nama Penerima</label>
                     <input 
@@ -1029,88 +1054,83 @@ export default function AdminDashboard() {
                   style={{ 
                     width: "800px", 
                     height: "565px",
-                    backgroundImage: "url('/hero_bg.png')",
+                    backgroundImage: certTemplate === "fungames" ? "url('/E-CERTIFICATE-2.jpg')" : "url('/E-CERTIFICATE-1.jpg')",
                     backgroundSize: "cover",
                     backgroundPosition: "center"
                   }}
                 >
                   {/* Content */}
-                  <div className="relative z-10 w-full h-full flex flex-col items-center pt-10 px-16 text-center">
+                  <div className="relative z-10 w-full h-full flex flex-col items-center pt-[80px] px-16 text-center">
                     
-                    <h1 className="text-[42px] font-black text-[#0B1A3A] tracking-[0.2em] mb-1 font-serif uppercase">Certificate</h1>
+                    <h1 className="text-[40px] font-black text-[#0B1A3A] tracking-[0.2em] mb-0.5 uppercase" style={{ fontFamily: "var(--font-playfair)" }}>Certificate</h1>
                     
-                    <div className="flex items-center justify-center gap-4 w-full mb-6">
+                    <div className="flex items-center justify-center gap-4 w-full mb-2">
                       <div className="h-[1px] bg-[#c49b5b] flex-1 max-w-[100px]"></div>
-                      <h2 className="text-[14px] text-[#c49b5b] tracking-[0.3em] uppercase font-serif">Of Achievement</h2>
+                      <h2 className="text-[12px] text-[#c49b5b] tracking-[0.3em] uppercase" style={{ fontFamily: "var(--font-playfair)" }}>Of Achievement</h2>
                       <div className="h-[1px] bg-[#c49b5b] flex-1 max-w-[100px]"></div>
                     </div>
                     
-                    <div className="w-2 h-2 rotate-45 border border-[#c49b5b] mb-6"></div>
+                    <div className="w-1.5 h-1.5 rotate-45 border border-[#c49b5b] mb-3"></div>
                     
-                    <p className="text-[13px] text-zinc-700 italic mb-6">This certificate is proudly presented to</p>
+                    <p className="text-[12px] text-zinc-700 italic mb-3" style={{ fontFamily: "var(--font-montserrat)" }}>This certificate is proudly presented to</p>
                     
-                    <h2 className="text-4xl font-bold text-[#b91c1c] capitalize font-serif mb-4 pb-2 border-b border-[#c49b5b]/30 px-12 inline-block">
-                      {certData.name || "Nama Penerima"}
+                    <h2 className="text-[34px] font-bold text-[#b91c1c] uppercase tracking-widest mb-2 pb-2 border-b border-[#c49b5b]/30 px-16 inline-block leading-none" style={{ fontFamily: "var(--font-montserrat)" }}>
+                      {certData.name || "[WINNER NAME]"}
                     </h2>
                     
-                    <p className="text-[13px] text-zinc-700 font-medium mb-3">as</p>
+                    <p className="text-[12px] text-zinc-700 font-medium mb-1" style={{ fontFamily: "var(--font-montserrat)" }}>as</p>
                     
-                    <h3 className="text-3xl font-black text-[#b91c1c] uppercase tracking-wider mb-3 font-serif">
-                      {certData.position || "PLACE"}
+                    <h3 
+                      className="font-black text-[#b91c1c] uppercase leading-none mb-1" 
+                      style={{ 
+                        fontFamily: "var(--font-saira)",
+                        fontSize: (certData.position || "1st PLACE").length > 10 ? "26px" : "34px",
+                        letterSpacing: (certData.position || "1st PLACE").length > 10 ? "0.08em" : "0.2em",
+                      }}
+                    >
+                      {certData.position || "1st PLACE"}
                     </h3>
                     
-                    {/* Ribbon for Category */}
-                    <div className="relative inline-block mb-6">
-                      <div className="bg-[#991b1b] text-white text-xs font-bold uppercase tracking-widest px-8 py-2 relative z-10 shadow-sm">
-                        {certData.category || "CATEGORY"}
-                      </div>
-                      <div className="absolute top-1/2 -left-3 -translate-y-1/2 w-0 h-0 border-y-[14px] border-y-transparent border-r-[12px] border-r-[#7f1d1d] z-0"></div>
-                      <div className="absolute top-1/2 -right-3 -translate-y-1/2 w-0 h-0 border-y-[14px] border-y-transparent border-l-[12px] border-l-[#7f1d1d] z-0"></div>
-                    </div>
-                    
-                    <h4 className="text-[15px] font-bold text-[#0B1A3A] uppercase tracking-wide mb-4">
-                      {certData.event || "GESIT INTERNAL BADMINTON TOURNAMENT 2026"}
-                    </h4>
-                    
-                    <p className="text-[11px] text-zinc-600 max-w-[480px] leading-relaxed mb-6">
-                      In recognition of outstanding performance, sportsmanship,<br/>
-                      and dedication throughout the tournament.
-                    </p>
-                    
-                    <div className="flex justify-between w-full absolute bottom-12 px-16">
-                      <div className="text-center w-48">
-                        <div className="h-16 flex items-center justify-center">
-                          {/* Signature Placeholder */}
-                        </div>
-                        <div className="w-full border-b border-[#c49b5b] mb-1"></div>
-                        <p className="text-[9px] font-bold text-zinc-800 tracking-wider">TOURNAMENT COMMITTEE</p>
-                      </div>
-                      
-                      <div className="text-center">
-                        <p className="text-[11px] text-zinc-800 mb-8 font-medium">Jakarta, {certData.date || "13 August 2026"}</p>
-                      </div>
-                      
-                      <div className="text-center w-48">
-                        <div className="h-16 flex items-center justify-center">
-                          {/* Signature Placeholder */}
-                        </div>
-                        <div className="w-full border-b border-[#c49b5b] mb-1"></div>
-                        <p className="text-[9px] font-bold text-zinc-800 tracking-wider">MANAGEMENT / DIRECTOR</p>
-                      </div>
+                    {/* Category - hidden when "-" */}
+                    {(certData.category && certData.category !== "-") ? (
+                      <h4 className="text-[14px] font-bold text-[#b91c1c] uppercase tracking-[0.15em] mb-2" style={{ fontFamily: "var(--font-montserrat)" }}>
+                        {certData.category}
+                      </h4>
+                    ) : (
+                      <div className="mb-2" />
+                    )}
+
+                    {/* Gold Divider */}
+                    <div className="flex items-center gap-3 w-full max-w-[380px] mb-3">
+                      <div className="h-[1px] bg-[#c49b5b] flex-1" />
+                      <div className="w-1.5 h-1.5 rotate-45 bg-[#c49b5b]" />
+                      <div className="h-[1px] bg-[#c49b5b] flex-1" />
                     </div>
 
+                    <h4 className="text-[17px] font-bold text-[#0B1A3A] uppercase tracking-wide mb-0.5" style={{ fontFamily: "var(--font-montserrat)" }}>
+                      {certData.event || "GESIT INTERNAL 17TH AUGUST EVENT 2026"}
+                    </h4>
+
+                    <p className="text-[14px] font-bold text-[#b91c1c] italic tracking-wide mb-2" style={{ fontFamily: "var(--font-montserrat)" }}>
+                      "GESIT Bersatu dalam Sportivitas"
+                    </p>
+                    
+                    <p className="text-[11px] text-zinc-600 max-w-[420px] leading-relaxed" style={{ fontFamily: "var(--font-montserrat)" }}>
+                      In recognition of outstanding achievement, sportsmanship,<br/>
+                      and dedication throughout the competition.
+                    </p>
+
                     {/* QR Code */}
-                    <div className="absolute bottom-6 right-6 bg-white p-2 rounded-lg border border-zinc-200 shadow-sm flex flex-col items-center">
-                      <div className="w-16 h-16 bg-zinc-100 mb-1 flex items-center justify-center">
+                    <div className="absolute bottom-6 right-16 bg-white p-1.5 rounded-lg border border-zinc-200 shadow-sm flex flex-col items-center">
+                      <div className="w-12 h-12 bg-zinc-100 mb-1 flex items-center justify-center">
                         <QRCodeSVG 
-                          value={certWinnerId ? `${typeof window !== "undefined" ? window.location.origin : ""}/verify/${certWinnerId}` : "https://gesit.com"} 
-                          size={56} 
+                          value={certWinnerId ? `https://event.gesit.co.id/e-certificate/${certWinnerId}` : "https://event.gesit.co.id/e-certificate/00000000-0000-0000-0000-000000000000"} 
+                          size={46} 
                           level="M" 
                         />
                       </div>
-                      <p className="text-[6px] font-bold tracking-widest uppercase">CERTIFICATE ID</p>
+                      <p className="text-[4px] font-bold tracking-widest uppercase text-center mt-0.5">Scan to Verify<br/>Certificate</p>
                     </div>
-
                   </div>
                 </div>
                 <p className="text-xs text-zinc-400 mt-4 text-center">
@@ -1245,66 +1265,66 @@ export default function AdminDashboard() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
           <div className="bg-white rounded-2xl w-full max-w-md overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200">
             <div className="flex justify-between items-center px-6 py-4 border-b border-zinc-100 bg-zinc-50/50">
-              <h3 className="font-bold text-zinc-900">{isNewWinner ? "Tambah Pemenang" : "Edit Pemenang"}</h3>
+              <h3 className="font-bold text-zinc-900">{isNewWinner ? "Add Winner" : "Edit Winner"}</h3>
               <button onClick={() => setEditingWinner(null)} className="text-zinc-400 hover:text-zinc-700"><X size={18} /></button>
             </div>
             <form onSubmit={handleSaveWinner} className="p-6 space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-zinc-700 mb-1">Event / Lomba Puncak Acara</label>
+                <label className="block text-xs font-semibold text-zinc-700 mb-1">Event / Competition</label>
                 <input
                   type="text"
                   value={editingWinner.event}
                   onChange={(e) => setEditingWinner({...editingWinner, event: e.target.value})}
-                  placeholder="Contoh: Badminton, Fun Run..."
+                  placeholder="e.g. Badminton, Fun Run..."
                   className="w-full border border-zinc-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900"
                   required
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-zinc-700 mb-1">Kategori</label>
+                <label className="block text-xs font-semibold text-zinc-700 mb-1">Category</label>
                 <select
                   value={editingWinner.category}
                   onChange={(e) => setEditingWinner({ ...editingWinner, category: e.target.value })}
                   className="w-full border border-zinc-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900 bg-white"
                   required
                 >
-                  <option value="-">Tidak Ada / Umum</option>
-                  <option value="Single Putra">Single Putra (Badminton)</option>
-                  <option value="Single Putri">Single Putri (Badminton)</option>
-                  <option value="Ganda Campuran">Ganda Campuran (Badminton)</option>
+                  <option value="-">None / General</option>
+                  <option value="Men's Singles">Men's Singles (Badminton)</option>
+                  <option value="Women's Singles">Women's Singles (Badminton)</option>
+                  <option value="Mixed Doubles">Mixed Doubles (Badminton)</option>
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-semibold text-zinc-700 mb-1">Posisi / Gelar</label>
+                <label className="block text-xs font-semibold text-zinc-700 mb-1">Position / Title</label>
                 <select
                   value={editingWinner.position}
                   onChange={(e) => setEditingWinner({ ...editingWinner, position: e.target.value })}
                   className="w-full border border-zinc-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900 bg-white"
                   required
                 >
-                  <option value="Juara 1">Juara 1</option>
-                  <option value="Juara 2">Juara 2</option>
-                  <option value="Juara 3">Juara 3</option>
+                  <option value="1st Place">1st Place</option>
+                  <option value="2nd Place">2nd Place</option>
+                  <option value="3rd Place">3rd Place</option>
                   <option value="Best of the Best">Best of the Best</option>
-                  <option value="Favorit">Favorit</option>
-                  <option value="Pemenang">Pemenang</option>
+                  <option value="Favorite">Favorite</option>
+                  <option value="Winner">Winner</option>
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-semibold text-zinc-700 mb-1">Nama Pemenang / Tim</label>
+                <label className="block text-xs font-semibold text-zinc-700 mb-1">Winner / Team Name</label>
                 <input 
                   type="text" 
                   value={editingWinner.name} 
                   onChange={(e) => setEditingWinner({...editingWinner, name: e.target.value})}
-                  placeholder="Nama lengkap atau nama tim"
+                  placeholder="Full name or team name"
                   className="w-full border border-zinc-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900"
                   required
                 />
               </div>
               <div className="pt-4 flex justify-end gap-2">
-                <button type="button" onClick={() => setEditingWinner(null)} className="px-4 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-100 rounded-lg">Batal</button>
+                <button type="button" onClick={() => setEditingWinner(null)} className="px-4 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-100 rounded-lg">Cancel</button>
                 <button type="submit" disabled={savingWinner} className="px-4 py-2 text-sm font-medium text-white bg-zinc-900 hover:bg-zinc-800 rounded-lg flex items-center gap-2">
-                  {savingWinner && <Loader2 size={14} className="animate-spin" />} Simpan
+                  {savingWinner && <Loader2 size={14} className="animate-spin" />} Save
                 </button>
               </div>
             </form>
