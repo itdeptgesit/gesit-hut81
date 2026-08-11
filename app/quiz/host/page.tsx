@@ -7,6 +7,9 @@ import clsx from "clsx";
 import { Trophy, Users, Play, ArrowRight, RotateCcw, ShieldAlert, Loader2, QrCode, CheckCircle2, Crown, Sparkles } from "lucide-react";
 import QRCode from "react-qr-code";
 import Link from "next/link";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
 
 const ANSWER_COLORS = [
   { bg: "bg-red-500", border: "border-red-600", shape: "▲" },
@@ -26,7 +29,7 @@ const BackgroundEffect = () => (
 export default function QuizHostPage() {
   const [state, setState] = useState<QuizState>({
     pin: null,
-    phase: "lobby",
+    phase: "idle" as QuizState["phase"],
     questions: [],
     currentQuestionIndex: 0,
     questionStartTime: null,
@@ -42,13 +45,19 @@ export default function QuizHostPage() {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
+  const router = useRouter();
+
   // Auth check on mount
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setIsAuthorized(!!session);
+      if (!session) {
+        router.replace("/admin/login");
+      } else {
+        setIsAuthorized(true);
+      }
       setAuthChecked(true);
     });
-  }, []);
+  }, [router]);
 
   const stateRef = useRef(state);
   useEffect(() => {
@@ -241,6 +250,18 @@ export default function QuizHostPage() {
 
   const participants = Object.values(state.participants);
 
+  const pageVariants = {
+    initial: { opacity: 0, scale: 0.95 },
+    in: { opacity: 1, scale: 1 },
+    out: { opacity: 0, scale: 1.05 }
+  };
+  
+  const pageTransition = {
+    type: "spring",
+    stiffness: 300,
+    damping: 30
+  };
+
   if (!authChecked) {
     return (
       <div className="min-h-screen bg-[#0A1128] flex items-center justify-center">
@@ -250,404 +271,430 @@ export default function QuizHostPage() {
   }
 
   if (!isAuthorized) {
-    return (
-      <div className="min-h-screen bg-[#0A1128] flex flex-col items-center justify-center gap-6 p-8 text-center relative overflow-hidden font-sans">
-        <BackgroundEffect />
-        <div className="relative z-10 w-20 h-20 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-center justify-center mb-2 backdrop-blur-md animate-fade-up">
-          <ShieldAlert className="text-red-500" size={40} />
-        </div>
-        <h1 className="relative z-10 text-3xl font-black text-white animate-fade-up" style={{ animationDelay: '100ms' }}>Akses Ditolak</h1>
-        <p className="relative z-10 text-white/50 max-w-md text-base animate-fade-up" style={{ animationDelay: '200ms' }}>
-          Anda harus login sebagai admin untuk membuat dan mengelola room quiz.
-        </p>
-        <Link
-          href="/admin/login"
-          className="relative z-10 bg-primary hover:bg-primary-dark text-white font-bold px-8 py-4 rounded-2xl text-lg transition-all hover:scale-105 active:scale-95 shadow-[0_0_30px_rgba(227,30,36,0.3)] mt-6 animate-fade-up"
-          style={{ animationDelay: '300ms' }}
-        >
-          Login ke Admin Panel
-        </Link>
-      </div>
-    );
+    return null; // Redirected by useEffect
   }
 
-  // --- IDLE PHASE ---
-  if (state.questions.length === 0) {
-    return (
-      <div className="min-h-screen flex flex-col relative overflow-hidden font-sans">
-        <BackgroundEffect />
-        <div className="relative z-10 flex flex-col items-center justify-center flex-1 p-6 text-center animate-fade-up">
-          <div className="bg-white/5 border border-white/10 backdrop-blur-2xl p-8 lg:p-10 rounded-[2.5rem] shadow-2xl flex flex-col items-center max-w-xl w-full">
-            <div className="w-20 h-20 bg-gradient-to-br from-primary to-primary-dark rounded-2xl flex items-center justify-center mb-6 shadow-xl shadow-primary/30 rotate-3 transition-transform hover:rotate-6">
-              <Sparkles className="text-white" size={40} />
-            </div>
-            <h1 className="text-4xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-br from-white to-white/70 tracking-tight mb-3">
-              Gesit Quiz Host
-            </h1>
-            <p className="text-white/50 text-lg mb-8 font-medium">
-              Sistem Quiz Interaktif • HUT RI ke-81
-            </p>
-            <button
-              onClick={handleStartLobby}
-              className="group relative w-full sm:w-auto overflow-hidden rounded-2xl bg-white text-[#0A1128] px-8 py-4 font-black text-xl transition-transform hover:scale-105 active:scale-95 shadow-[0_0_40px_rgba(255,255,255,0.2)]"
-            >
-              <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-black/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out" />
-              BUAT ROOM SEKARANG
-            </button>
-            <Link href="/admin" className="mt-6 text-white/40 hover:text-white/80 font-bold text-sm transition-colors">
-              ← Kembali ke Dashboard
-            </Link>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // --- LOBBY PHASE ---
-  if (state.phase === "lobby") {
-    return (
-      <div className="min-h-screen flex flex-col relative overflow-hidden font-sans">
-        <BackgroundEffect />
+  return (
+    <div className="min-h-screen flex flex-col relative font-sans bg-[#0A1128]">
+      <BackgroundEffect />
+      <AnimatePresence mode="wait">
         
-        {/* Header */}
-        <header className="relative z-10 w-full px-6 py-4 flex items-center justify-between border-b border-white/10 bg-black/20 backdrop-blur-xl">
-          <div className="flex items-center gap-3">
-             <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20">
-               <Trophy className="text-white" size={20} />
-             </div>
-             <div>
-               <h1 className="text-xl font-black text-white leading-none tracking-tight">Quiz HUT RI 81</h1>
-               <div className="flex items-center gap-2 mt-1">
-                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_10px_rgba(52,211,153,0.8)]" />
-                 <span className="text-white/60 text-xs font-bold uppercase tracking-widest">Menunggu Peserta</span>
-               </div>
-             </div>
-          </div>
-          <div className="flex items-center gap-6">
-            <div className="text-right bg-white/5 px-4 py-1.5 rounded-xl border border-white/10 backdrop-blur-md">
-              <div className="text-white/50 text-[10px] font-bold uppercase tracking-widest mb-0.5">PIN ROOM</div>
-              <div className="text-2xl font-black text-white tracking-[0.15em] leading-none">{state.pin}</div>
-            </div>
-            <button 
-              onClick={handleStartCountdown}
-              disabled={participants.length === 0}
-              className="bg-white text-[#0A1128] px-6 py-2.5 rounded-xl font-black text-base flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 active:scale-95 transition-all shadow-[0_0_30px_rgba(255,255,255,0.2)]"
-            >
-              <Play fill="currentColor" size={18} /> MULAI
-            </button>
-          </div>
-        </header>
-
-        <div className="relative z-10 flex-1 p-6 lg:p-8 grid grid-cols-1 lg:grid-cols-12 gap-8 max-w-[1400px] mx-auto w-full">
-          {/* LEFT: QR Code */}
-          <div className="lg:col-span-4 flex flex-col h-full">
-             <div className="bg-white/5 backdrop-blur-3xl border border-white/10 rounded-[2rem] p-8 flex flex-col items-center shadow-2xl relative overflow-hidden flex-1 justify-center">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 rounded-full blur-[40px]" />
-                <div className="absolute bottom-0 left-0 w-32 h-32 bg-blue-500/20 rounded-full blur-[40px]" />
-                
-                <div className="w-14 h-14 bg-white/10 rounded-xl flex items-center justify-center mb-4 shadow-inner border border-white/10">
-                  <QrCode className="text-white" size={28} />
-                </div>
-                <h2 className="text-white font-black text-xl mb-2 text-center tracking-tight">Scan untuk Join</h2>
-                <p className="text-white/50 text-center mb-6 font-medium text-sm">Gunakan kamera HP atau buka link di browser</p>
-                
-                <div className="bg-white p-4 rounded-2xl shadow-2xl mb-6 transform transition-transform hover:scale-105 duration-500 ring-4 ring-white/10">
-                  <QRCode value={`${typeof window !== 'undefined' ? window.location.origin : ''}/quiz?pin=${state.pin}`} size={200} className="rounded-lg" />
-                </div>
-                
-                <div className="w-full bg-black/40 border border-white/10 rounded-2xl p-4 text-center shadow-inner">
-                  <span className="text-white/40 text-xs font-bold uppercase tracking-widest block mb-1">URL Alternatif</span>
-                  <span className="text-white font-black text-lg tracking-wide">event.gesit.co.id/quiz</span>
-                </div>
-             </div>
-          </div>
-          
-          {/* RIGHT: Participants Grid */}
-          <div className="lg:col-span-8 bg-white/5 backdrop-blur-3xl border border-white/10 rounded-[2rem] p-8 flex flex-col shadow-2xl h-full">
-            <div className="flex items-center justify-between mb-6 pb-6 border-b border-white/10">
-              <div className="flex items-center gap-4">
-                <div className="bg-primary/20 p-3 rounded-xl shadow-inner border border-primary/30">
-                  <Users className="text-white" size={24}/>
-                </div>
-                <h2 className="text-2xl font-black text-white tracking-tight">
-                  Peserta <span className="text-white/40 ml-1">({participants.length})</span>
-                </h2>
-              </div>
-            </div>
-            
-            <div className="flex-1 overflow-y-auto pr-2 min-h-[300px]">
-              {participants.length === 0 ? (
-                <div className="h-full flex flex-col items-center justify-center text-center">
-                  <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mb-4 border border-white/10 shadow-inner">
-                    <Users size={32} className="text-white/20" />
-                  </div>
-                  <p className="text-xl font-black text-white/50 mb-2 tracking-tight">Belum ada yang join</p>
-                  <p className="text-white/30 font-medium text-sm">Peserta akan muncul di sini otomatis.</p>
-                </div>
-              ) : (
-                <div className="flex flex-wrap gap-3 content-start">
-                  {participants.map((p) => (
-                    <div 
-                      key={p.id} 
-                      className="bg-white/10 hover:bg-white/20 border border-white/20 backdrop-blur-md text-white px-4 py-2 rounded-xl font-bold text-sm flex items-center gap-3 shadow-md transition-colors"
-                    >
-                      <div className="w-6 h-6 rounded-md bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center text-xs font-black shadow-inner">
-                        {p.name.charAt(0).toUpperCase()}
-                      </div>
-                      {p.name}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // --- COUNTDOWN PHASE ---
-  if (state.phase === "countdown") {
-    return (
-      <div className="min-h-screen flex items-center justify-center relative overflow-hidden font-sans">
-        <BackgroundEffect />
-        <div className="relative z-10 flex flex-col items-center justify-center">
-          <div className="text-[15rem] md:text-[20rem] font-black text-transparent bg-clip-text bg-gradient-to-b from-white to-white/30 drop-shadow-[0_0_100px_rgba(255,255,255,0.4)] leading-none animate-pulse">
-            {timeLeft}
-          </div>
-          <p className="text-3xl font-black text-white/50 tracking-[0.2em] uppercase mt-6">Bersiaplah!</p>
-        </div>
-      </div>
-    );
-  }
-
-  const currentQ = state.questions[state.currentQuestionIndex];
-  if (!currentQ) return null;
-
-  // --- QUESTION & ANSWER PHASE ---
-  if (state.phase === "question" || state.phase === "answer") {
-    const answersCount = participants.filter(p => p.lastAnswer !== null).length;
-    const progress = (timeLeft / currentQ.timeLimit) * 100;
-
-    return (
-      <div className="min-h-screen flex flex-col relative overflow-hidden font-sans p-4 lg:p-6">
-        <BackgroundEffect />
-        
-        {/* Top Bar */}
-        <div className="relative z-10 flex justify-between items-center mb-6">
-          <div className="bg-white/10 backdrop-blur-xl border border-white/20 px-5 py-2.5 rounded-xl shadow-md">
-             <span className="text-white/60 font-bold uppercase tracking-widest text-xs">Soal</span>
-             <span className="text-white font-black text-lg ml-3">{state.currentQuestionIndex + 1} <span className="text-white/40">/ {state.questions.length}</span></span>
-          </div>
-
-          <div className="bg-black/40 backdrop-blur-xl border border-white/10 px-5 py-2.5 rounded-xl flex items-center gap-4 shadow-inner hidden md:flex">
-             <span className="text-white/50 font-bold uppercase tracking-widest text-xs">PIN</span>
-             <span className="text-white font-black text-xl tracking-[0.2em] leading-none">{state.pin}</span>
-          </div>
-          
-          <div className="flex gap-3 items-center">
-            {state.phase === "question" ? (
-              <>
-                <div className="bg-white/10 backdrop-blur-xl border border-white/20 px-5 py-2.5 rounded-xl flex items-center gap-3 shadow-md">
-                  <Users className="text-white/70" size={20} />
-                  <span className="text-white font-black text-xl">{answersCount}</span>
-                  <span className="text-white/40 text-sm font-bold">/ {participants.length}</span>
-                </div>
-                <div className={clsx(
-                  "w-14 h-14 rounded-xl flex items-center justify-center text-2xl font-black border-2 backdrop-blur-xl shadow-lg transition-all duration-300",
-                  timeLeft <= 5 ? "bg-red-500/20 border-red-500 text-red-400 animate-pulse scale-110" : "bg-white/10 border-white/30 text-white"
-                )}>
-                  {timeLeft}
-                </div>
-              </>
-            ) : (
-              <button 
-                onClick={() => updateState({ phase: state.currentQuestionIndex + 1 < state.questions.length ? "leaderboard" : "result" })}
-                className="bg-primary hover:bg-primary-dark text-white px-6 py-3 rounded-xl font-black text-lg flex items-center gap-2 shadow-[0_0_20px_rgba(227,30,36,0.4)] transition-transform hover:scale-105 active:scale-95"
-              >
-                Lanjut <ArrowRight size={20} />
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Question Area */}
-        <div className="relative z-10 flex-1 flex flex-col mb-6">
-          <div className="flex-1 bg-white rounded-[2rem] p-8 flex flex-col items-center justify-center text-center shadow-xl relative overflow-hidden border-[8px] border-white/10 bg-clip-padding">
-             {/* Progress Bar Top */}
-             {state.phase === "question" && (
-               <div className="absolute top-0 left-0 w-full h-2 bg-gray-100">
-                 <div 
-                   className={clsx("h-full transition-all linear", timeLeft <= 5 ? "bg-red-500" : "bg-primary")}
-                   style={{ width: `${progress}%`, transitionDuration: '1s' }}
-                 />
-               </div>
-             )}
-             
-             <div className="text-5xl lg:text-7xl mb-6 drop-shadow-xl">{currentQ.emoji}</div>
-             <h2 className="text-2xl md:text-3xl lg:text-4xl font-black text-[#0A1128] leading-snug max-w-5xl tracking-tight break-words">
-               {currentQ.question}
-             </h2>
-          </div>
-        </div>
-
-        {/* Options Grid */}
-        <div className="relative z-10 grid grid-cols-2 gap-4 lg:gap-6 h-auto min-h-[12rem]">
-          {currentQ.shuffledOptions.map((opt, idx) => {
-             const color = ANSWER_COLORS[idx];
-             const isCorrect = idx === currentQ.correctShuffledIndex;
-             const showCorrect = state.phase === "answer";
-             const dim = showCorrect && !isCorrect;
-             const pickedCount = participants.filter(p => p.lastAnswer === idx).length;
-
-             return (
-               <div key={idx} className={clsx(
-                 "relative rounded-[1.5rem] flex items-center p-6 lg:p-8 transition-all duration-500 border-b-4 overflow-hidden group",
-                 color.bg,
-                 color.border,
-                 dim ? "opacity-30 scale-95 grayscale-[0.8]" : "opacity-100 scale-100 shadow-xl",
-                 showCorrect && isCorrect && "ring-[8px] ring-white/50 animate-bounce"
-               )}>
-                 <div className="absolute right-[-5%] top-[-20%] text-[10rem] text-black/10 font-black pointer-events-none rotate-12 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-45">
-                   {color.shape}
-                 </div>
-
-                 <div className="w-16 h-16 bg-black/20 backdrop-blur-md rounded-xl flex items-center justify-center text-white text-3xl font-black mr-6 shrink-0 shadow-inner z-10 border border-white/20">
-                   {color.shape}
-                 </div>
-                 <span className="text-white text-xl lg:text-3xl font-black leading-tight z-10 drop-shadow-md tracking-tight break-words">{opt}</span>
-                 
-                 {showCorrect && isCorrect && (
-                   <div className="absolute top-1/2 -translate-y-1/2 right-6 w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-xl z-20 animate-fade-in">
-                     <CheckCircle2 className="text-emerald-500" size={36} />
-                   </div>
-                 )}
-                 {showCorrect && (
-                   <div className="absolute bottom-4 right-6 bg-black/60 backdrop-blur-xl text-white px-5 py-2.5 rounded-xl text-xl font-black z-20 border border-white/20 shadow-xl flex items-center gap-3">
-                     <Users size={20} className="opacity-70" />
-                     {pickedCount} 
-                   </div>
-                 )}
-               </div>
-             )
-          })}
-        </div>
-      </div>
-    );
-  }
-
-  // --- LEADERBOARD PHASE ---
-  if (state.phase === "leaderboard") {
-    const sorted = [...participants].sort((a, b) => b.score - a.score).slice(0, 5);
-    
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden font-sans p-6">
-         <BackgroundEffect />
-         
-         <div className="relative z-10 w-full max-w-4xl">
-           <div className="flex flex-col md:flex-row items-center justify-between mb-8 bg-white/10 backdrop-blur-3xl p-8 rounded-[2rem] border border-white/20 shadow-xl">
-             <div className="flex items-center gap-6">
-               <div className="w-16 h-16 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-xl flex items-center justify-center shadow-lg shadow-yellow-500/30">
-                 <Trophy className="text-white" size={32} />
-               </div>
-               <div>
-                 <h2 className="text-4xl font-black text-white tracking-tight">Leaderboard</h2>
-                 <p className="text-white/60 font-bold mt-1 text-lg uppercase tracking-widest">Top 5 Sementara</p>
-               </div>
-             </div>
-             <button 
-                onClick={() => {
-                  updateState({ currentQuestionIndex: state.currentQuestionIndex + 1, phase: "countdown" });
-                }}
-                className="mt-6 md:mt-0 bg-primary hover:bg-primary-dark text-white px-8 py-4 rounded-2xl font-black text-lg flex items-center gap-3 shadow-[0_0_20px_rgba(227,30,36,0.4)] transition-transform hover:scale-105 active:scale-95"
-              >
-                Lanjut <ArrowRight size={24} />
-              </button>
-           </div>
-           
-           <div className="flex flex-col gap-4">
-             {sorted.map((p, i) => (
-               <div 
-                 key={p.id} 
-                 className={clsx(
-                   "p-5 lg:p-6 rounded-2xl flex items-center text-white transform transition-all duration-300 hover:scale-[1.02] border backdrop-blur-xl shadow-lg",
-                   i === 0 ? "bg-gradient-to-r from-yellow-500/20 to-yellow-700/20 border-yellow-500/40" :
-                   i === 1 ? "bg-gradient-to-r from-slate-300/20 to-slate-500/20 border-slate-300/40" :
-                   i === 2 ? "bg-gradient-to-r from-amber-600/20 to-amber-800/20 border-amber-600/40" :
-                   "bg-white/5 border-white/10"
-                 )}
-               >
-                 <div className={clsx(
-                   "w-12 h-12 rounded-xl flex items-center justify-center text-2xl font-black mr-6 shadow-inner border",
-                   i === 0 ? "bg-gradient-to-br from-yellow-300 to-yellow-500 text-yellow-900 border-yellow-200" :
-                   i === 1 ? "bg-gradient-to-br from-slate-200 to-slate-400 text-slate-800 border-slate-100" :
-                   i === 2 ? "bg-gradient-to-br from-amber-500 to-amber-700 text-amber-100 border-amber-400" :
-                   "bg-white/10 text-white border-white/20"
-                 )}>
-                   {i+1}
-                 </div>
-                 <div className="text-2xl md:text-3xl font-bold flex-1 truncate tracking-tight">{p.name}</div>
-                 <div className="text-3xl md:text-4xl font-black tracking-tighter">{p.score}</div>
-               </div>
-             ))}
-           </div>
-         </div>
-      </div>
-    );
-  }
-
-  // --- RESULT PHASE ---
-  if (state.phase === "result") {
-    const sorted = [...participants].sort((a, b) => b.score - a.score);
-    const winner = sorted[0];
-
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center text-center relative overflow-hidden font-sans p-6">
-        <BackgroundEffect />
-        
-        <div className="relative z-10 w-full max-w-4xl flex flex-col items-center">
-          <div className="inline-flex items-center gap-3 bg-white/10 border border-white/20 px-8 py-3 rounded-full mb-10 shadow-xl backdrop-blur-xl">
-             <Crown className="text-yellow-400" size={24} />
-             <span className="text-white font-black tracking-[0.1em] uppercase text-lg">Hasil Akhir Quiz</span>
-          </div>
-          
-          {isSaving && (
-            <div className="bg-primary/20 border border-primary/40 text-white font-bold px-8 py-4 rounded-full mb-10 animate-pulse flex items-center gap-3 backdrop-blur-xl shadow-lg">
-               <Loader2 className="animate-spin" size={24} /> Menyimpan skor...
-            </div>
-          )}
-          {!isSaving && hasSaved && (
-            <div className="bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 font-bold px-8 py-4 rounded-full mb-10 flex items-center gap-3 backdrop-blur-xl shadow-lg">
-               <CheckCircle2 size={24} /> Skor tersimpan
-            </div>
-          )}
-
-          {winner && (
-            <div className="relative group mb-12 w-full max-w-2xl">
-              <div className="absolute inset-0 bg-yellow-400 blur-[80px] opacity-20 group-hover:opacity-40 transition-opacity duration-1000" />
-              
-              <div className="bg-gradient-to-b from-yellow-300 to-yellow-500 p-12 rounded-[3rem] text-[#0A1128] shadow-2xl relative z-10 border-[8px] border-yellow-200/60 transform transition-transform hover:scale-105 duration-500">
-                <Crown size={80} className="absolute -top-12 left-1/2 -translate-x-1/2 text-yellow-100 drop-shadow-xl" />
-                <h3 className="text-2xl font-black mb-4 uppercase tracking-[0.2em] text-[#0A1128]/70 mt-4">Juara 1</h3>
-                <div className="text-5xl md:text-6xl font-black mb-8 leading-none tracking-tighter drop-shadow-md break-words">{winner.name}</div>
-                <div className="inline-flex items-center bg-black/10 px-8 py-4 rounded-2xl border border-black/10 shadow-inner">
-                  <span className="text-5xl font-black">{winner.score}</span>
-                  <span className="text-xl font-black ml-3 opacity-80 tracking-widest uppercase">Poin</span>
-                </div>
-              </div>
-            </div>
-          )}
-
-          <button 
-            onClick={handleStartLobby}
-            className="bg-white/10 hover:bg-white/20 border border-white/20 text-white px-8 py-4 rounded-2xl font-black text-xl flex items-center gap-3 transition-all hover:scale-105 active:scale-95 backdrop-blur-xl shadow-xl"
+        {/* --- IDLE PHASE --- */}
+        {state.phase === "idle" && (
+          <motion.div 
+            key="idle" initial="initial" animate="in" exit="out" variants={pageVariants} transition={pageTransition}
+            className="relative z-10 flex flex-col items-center justify-center flex-1 p-6 text-center min-h-screen bg-zinc-50"
           >
-            <RotateCcw size={24} /> Buat Room Baru
-          </button>
-        </div>
-      </div>
-    );
-  }
+            {/* subtle decorative rings */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full border border-red-100 opacity-60" />
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full border border-red-100 opacity-80" />
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[200px] h-[200px] rounded-full border border-red-200 opacity-80" />
+            </div>
 
-  return null;
+            <div className="relative z-10 flex flex-col items-center max-w-xl w-full">
+              {/* Logo HUT RI 81 */}
+              <div className="mb-8 drop-shadow-xl">
+                <Image
+                  src="/HUTRI81_FA_Logo__Main Logo Merah Hitam Latar Putih.png"
+                  alt="HUT RI ke-81"
+                  width={180}
+                  height={180}
+                  className="object-contain"
+                />
+              </div>
+
+              <div className="inline-flex items-center gap-2 bg-primary/10 text-primary text-xs font-bold px-4 py-1.5 rounded-full mb-5 border border-primary/20">
+                <Sparkles size={12} className="fill-primary" /> QUIZ LIVE
+              </div>
+
+              <h1 className="text-4xl md:text-5xl font-black text-zinc-900 tracking-tight mb-3">
+                Gesit Quiz Host
+              </h1>
+              <p className="text-zinc-500 text-lg mb-10 font-medium">
+                Sistem Quiz Interaktif • HUT RI ke-81
+              </p>
+
+              <button
+                onClick={handleStartLobby}
+                className="group relative w-full sm:w-auto overflow-hidden rounded-2xl bg-gradient-to-b from-primary to-primary-dark text-white px-12 py-5 font-black text-xl transition-transform hover:scale-[1.02] active:scale-95 shadow-[0_8px_30px_rgba(227,30,36,0.35)] border border-red-400"
+              >
+                <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-in-out" />
+                BUAT ROOM SEKARANG
+              </button>
+
+              <Link href="/admin" className="mt-8 text-zinc-400 hover:text-zinc-700 font-semibold text-sm transition-colors flex items-center gap-2 px-4 py-2 rounded-full border border-zinc-200 bg-white hover:bg-zinc-50">
+                ← Kembali ke Dashboard
+              </Link>
+            </div>
+          </motion.div>
+        )}
+
+        {/* --- LOBBY PHASE --- */}
+        {state.phase === "lobby" && (
+          <motion.div 
+            key="lobby" initial="initial" animate="in" exit="out" variants={pageVariants} transition={pageTransition}
+            className="relative z-10 flex flex-col min-h-screen w-full bg-zinc-50"
+          >
+            {/* Header */}
+            <header className="relative z-10 w-full px-6 py-3 flex items-center justify-between border-b border-zinc-200 bg-white shadow-sm">
+              <div className="flex items-center gap-4">
+                <Image
+                  src="/HUTRI81_FA_Logo__Main Logo Merah Hitam Latar Putih.png"
+                  alt="HUT RI ke-81"
+                  width={52}
+                  height={52}
+                  className="object-contain"
+                />
+                <div>
+                  <h1 className="text-xl font-black text-zinc-900 leading-none tracking-tight">Quiz HUT RI 81</h1>
+                  <div className="flex items-center gap-2 mt-1.5">
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.8)]" />
+                    <span className="text-zinc-500 text-xs font-bold uppercase tracking-widest">Menunggu Peserta bergabung...</span>
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center gap-4">
+                <div className="text-right bg-zinc-100 px-6 py-2 rounded-xl border border-zinc-200 shadow-inner">
+                  <div className="text-zinc-400 text-[10px] font-bold uppercase tracking-widest mb-0.5">PIN ROOM</div>
+                  <div className="text-3xl font-black text-zinc-900 tracking-[0.15em] leading-none">{state.pin}</div>
+                </div>
+                <button 
+                  onClick={handleStartCountdown}
+                  disabled={participants.length === 0}
+                  className="bg-gradient-to-b from-primary to-primary-dark text-white px-8 py-3.5 rounded-xl font-black text-lg flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed hover:scale-105 active:scale-95 transition-all shadow-[0_4px_20px_rgba(227,30,36,0.35)] border border-red-400"
+                >
+                  <Play fill="currentColor" size={20} /> MULAI
+                </button>
+              </div>
+            </header>
+
+            <div className="relative z-10 flex-1 p-6 lg:p-8 grid grid-cols-1 lg:grid-cols-12 gap-6 max-w-[1400px] mx-auto w-full">
+              {/* QR Code card */}
+              <div className="lg:col-span-8 flex flex-col">
+                <div className="bg-white border border-zinc-200 rounded-[2.5rem] p-8 flex flex-col items-center shadow-lg flex-1 justify-center">
+                  <div className="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center mb-5 border border-primary/20">
+                    <QrCode className="text-primary" size={30} />
+                  </div>
+                  <h2 className="text-zinc-900 font-black text-3xl mb-2 text-center tracking-tight">Scan untuk Join</h2>
+                  <p className="text-zinc-400 text-center mb-8 font-medium text-base">Gunakan kamera HP atau buka link di browser</p>
+                  
+                  <div className="bg-white p-6 rounded-[2rem] shadow-[0_4px_30px_rgba(0,0,0,0.08)] mb-8 border border-zinc-100 transform transition-transform hover:scale-[1.02] duration-500">
+                    <QRCode value={`${typeof window !== 'undefined' ? window.location.origin : ''}/quiz?pin=${state.pin}`} size={400} className="rounded-xl" />
+                  </div>
+                  
+                  <div className="w-full bg-zinc-50 border border-zinc-200 rounded-2xl p-4 text-center flex flex-col items-center">
+                    <span className="text-zinc-400 text-xs font-bold uppercase tracking-widest block mb-1">URL Alternatif</span>
+                    <span className="text-zinc-900 font-black text-xl tracking-wide">event.gesit.co.id/quiz</span>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Participants card */}
+              <div className="lg:col-span-4 bg-white border border-zinc-200 rounded-[2.5rem] p-8 flex flex-col shadow-lg">
+                <div className="flex items-center gap-4 mb-6 pb-6 border-b border-zinc-100">
+                  <div className="bg-primary/10 p-4 rounded-2xl border border-primary/20">
+                    <Users className="text-primary" size={26}/>
+                  </div>
+                  <h2 className="text-2xl font-black text-zinc-900 tracking-tight">
+                    Peserta <span className="text-zinc-400 ml-1">({participants.length})</span>
+                  </h2>
+                </div>
+                
+                <div className="flex-1 overflow-y-auto pr-1 min-h-[300px]">
+                  {participants.length === 0 ? (
+                    <div className="h-full flex flex-col items-center justify-center text-center opacity-50">
+                      <div className="w-20 h-20 bg-zinc-100 rounded-full flex items-center justify-center mb-4 border border-zinc-200">
+                        <Users size={36} className="text-zinc-300" />
+                      </div>
+                      <p className="text-xl font-black text-zinc-500 mb-1 tracking-tight">Belum ada yang join</p>
+                      <p className="text-zinc-400 font-medium text-sm">Peserta akan muncul di sini otomatis.</p>
+                    </div>
+                  ) : (
+                    <div className="flex flex-wrap gap-3 content-start">
+                      <AnimatePresence>
+                        {participants.map((p) => (
+                          <motion.div 
+                            key={p.id} 
+                            initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+                            className="bg-zinc-50 hover:bg-zinc-100 border border-zinc-200 text-zinc-800 px-4 py-2.5 rounded-2xl font-bold text-sm flex items-center gap-3 shadow-sm transition-colors"
+                          >
+                            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center text-xs font-black text-white shadow-inner">
+                              {p.name.charAt(0).toUpperCase()}
+                            </div>
+                            {p.name}
+                          </motion.div>
+                        ))}
+                      </AnimatePresence>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        {/* --- COUNTDOWN PHASE --- */}
+        {state.phase === "countdown" && (
+          <motion.div 
+            key="countdown" initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 1.5, opacity: 0 }} transition={{ type: "spring", bounce: 0.5 }}
+            className="relative z-10 flex flex-col items-center justify-center h-screen w-full"
+          >
+            <div className="text-[20rem] font-black text-transparent bg-clip-text bg-gradient-to-b from-white to-white/30 drop-shadow-[0_0_150px_rgba(255,255,255,0.4)] leading-none">
+              {timeLeft}
+            </div>
+            <p className="text-4xl font-black text-white/50 tracking-[0.3em] uppercase mt-8">Bersiaplah!</p>
+          </motion.div>
+        )}
+
+        {/* --- QUESTION & ANSWER PHASE --- */}
+        {(state.phase === "question" || state.phase === "answer") && (
+          <motion.div 
+            key="question_answer" initial="initial" animate="in" exit="out" variants={pageVariants} transition={pageTransition}
+            className="relative z-10 flex flex-col flex-1 p-6 lg:p-8 w-full h-screen"
+          >
+            {(() => {
+              const currentQ = state.questions[state.currentQuestionIndex];
+              if (!currentQ) return null;
+              
+              const answersCount = participants.filter(p => p.lastAnswer !== null).length;
+              const progress = (timeLeft / currentQ.timeLimit) * 100;
+
+              return (
+                <>
+                  <div className="flex justify-between items-center mb-8">
+                    <div className="bg-white/10 backdrop-blur-xl border border-white/20 px-6 py-3 rounded-2xl shadow-lg">
+                       <span className="text-white/60 font-bold uppercase tracking-widest text-sm">Soal</span>
+                       <span className="text-white font-black text-2xl ml-4">{state.currentQuestionIndex + 1} <span className="text-white/40">/ {state.questions.length}</span></span>
+                    </div>
+
+                    <div className="bg-black/40 backdrop-blur-xl border border-white/10 px-6 py-3 rounded-2xl flex items-center gap-4 shadow-inner">
+                       <span className="text-white/50 font-bold uppercase tracking-widest text-sm">PIN</span>
+                       <span className="text-white font-black text-2xl tracking-[0.2em] leading-none">{state.pin}</span>
+                    </div>
+                    
+                    <div className="flex gap-4 items-center">
+                      {state.phase === "question" ? (
+                        <>
+                          <div className="bg-white/10 backdrop-blur-xl border border-white/20 px-6 py-3 rounded-2xl flex items-center gap-3 shadow-lg">
+                            <Users className="text-white/70" size={24} />
+                            <span className="text-white font-black text-2xl">{answersCount}</span>
+                            <span className="text-white/40 text-base font-bold">/ {participants.length}</span>
+                          </div>
+                          <div className={clsx(
+                            "w-16 h-16 rounded-2xl flex items-center justify-center text-3xl font-black border-2 backdrop-blur-xl shadow-xl transition-all duration-300",
+                            timeLeft <= 5 ? "bg-red-500/20 border-red-500 text-red-400 animate-pulse scale-110" : "bg-white/10 border-white/30 text-white"
+                          )}>
+                            {timeLeft}
+                          </div>
+                        </>
+                      ) : (
+                        <button 
+                          onClick={() => updateState({ phase: state.currentQuestionIndex + 1 < state.questions.length ? "leaderboard" : "result" })}
+                          className="bg-primary hover:bg-primary-dark text-white px-8 py-4 rounded-2xl font-black text-xl flex items-center gap-3 shadow-[0_0_30px_rgba(227,30,36,0.5)] transition-transform hover:scale-105 active:scale-95 border border-red-400"
+                        >
+                          Lanjut <ArrowRight size={24} />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex-1 flex flex-col mb-8">
+                    <div className="flex-1 bg-white rounded-[3rem] p-10 flex flex-col items-center justify-center text-center shadow-2xl relative overflow-hidden border-[12px] border-white/10 bg-clip-padding">
+                       {state.phase === "question" && (
+                         <div className="absolute top-0 left-0 w-full h-3 bg-gray-200">
+                           <div 
+                             className={clsx("h-full transition-all linear", timeLeft <= 5 ? "bg-red-500" : "bg-primary")}
+                             style={{ width: `${progress}%`, transitionDuration: '1s' }}
+                           />
+                         </div>
+                       )}
+                       
+                       <div className="text-7xl lg:text-8xl mb-8 drop-shadow-2xl">{currentQ.emoji}</div>
+                       <h2 className="text-3xl md:text-5xl lg:text-6xl font-black text-[#0A1128] leading-tight max-w-6xl tracking-tight break-words">
+                         {currentQ.question}
+                       </h2>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-6 min-h-[16rem]">
+                    {currentQ.shuffledOptions.map((opt, idx) => {
+                       const color = ANSWER_COLORS[idx];
+                       const isCorrect = idx === currentQ.correctShuffledIndex;
+                       const showCorrect = state.phase === "answer";
+                       const dim = showCorrect && !isCorrect;
+                       const pickedCount = participants.filter(p => p.lastAnswer === idx).length;
+
+                       return (
+                         <div key={idx} className={clsx(
+                           "relative rounded-[2rem] flex items-center p-8 transition-all duration-500 border-b-8 overflow-hidden group",
+                           color.bg, color.border,
+                           dim ? "opacity-30 scale-95 grayscale" : "opacity-100 scale-100 shadow-[0_10px_30px_rgba(0,0,0,0.3)]",
+                           showCorrect && isCorrect && "ring-[10px] ring-white/50 animate-pulse"
+                         )}>
+                           <div className="absolute right-[-5%] top-[-20%] text-[12rem] text-black/10 font-black pointer-events-none rotate-12 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-45">
+                             {color.shape}
+                           </div>
+
+                           <div className="w-20 h-20 bg-black/20 backdrop-blur-md rounded-2xl flex items-center justify-center text-white text-4xl font-black mr-8 shrink-0 shadow-inner z-10 border border-white/20">
+                             {color.shape}
+                           </div>
+                           <span className="text-white text-2xl lg:text-4xl font-black leading-tight z-10 drop-shadow-md tracking-tight break-words">{opt}</span>
+                           
+                           {showCorrect && isCorrect && (
+                             <motion.div 
+                               initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring" }}
+                               className="absolute top-1/2 -translate-y-1/2 right-8 w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-2xl z-20"
+                             >
+                               <CheckCircle2 className="text-emerald-500" size={48} />
+                             </motion.div>
+                           )}
+                           {showCorrect && (
+                             <div className="absolute bottom-6 right-8 bg-black/70 backdrop-blur-xl text-white px-6 py-3 rounded-2xl text-2xl font-black z-20 border border-white/20 shadow-xl flex items-center gap-3">
+                               <Users size={24} className="opacity-70" />
+                               {pickedCount} 
+                             </div>
+                           )}
+                         </div>
+                       )
+                    })}
+                  </div>
+                </>
+              );
+            })()}
+          </motion.div>
+        )}
+
+        {/* --- LEADERBOARD PHASE --- */}
+        {state.phase === "leaderboard" && (
+          <motion.div 
+            key="leaderboard" initial="initial" animate="in" exit="out" variants={pageVariants} transition={pageTransition}
+            className="relative z-10 flex flex-col items-center justify-center h-screen p-6 w-full max-w-5xl mx-auto"
+          >
+            {(() => {
+              const sorted = [...participants].sort((a, b) => b.score - a.score).slice(0, 5);
+              return (
+                <div className="w-full">
+                  <div className="flex flex-col md:flex-row items-center justify-between mb-10 bg-white/10 backdrop-blur-3xl p-8 rounded-[2.5rem] border border-white/20 shadow-2xl">
+                    <div className="flex items-center gap-6">
+                      <div className="w-20 h-20 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-2xl flex items-center justify-center shadow-lg shadow-yellow-500/30 border border-yellow-200">
+                        <Trophy className="text-white" size={40} />
+                      </div>
+                      <div>
+                        <h2 className="text-5xl font-black text-white tracking-tight drop-shadow-md">Leaderboard</h2>
+                        <p className="text-white/60 font-bold mt-2 text-xl uppercase tracking-widest">Top 5 Sementara</p>
+                      </div>
+                    </div>
+                    <button 
+                       onClick={() => updateState({ currentQuestionIndex: state.currentQuestionIndex + 1, phase: "countdown" })}
+                       className="mt-6 md:mt-0 bg-primary hover:bg-primary-dark text-white px-10 py-5 rounded-2xl font-black text-xl flex items-center gap-3 shadow-[0_0_30px_rgba(227,30,36,0.5)] transition-transform hover:scale-105 active:scale-95 border border-red-400"
+                     >
+                       Soal Berikutnya <ArrowRight size={24} />
+                     </button>
+                  </div>
+                  
+                  <div className="flex flex-col gap-5">
+                    <AnimatePresence>
+                      {sorted.map((p, i) => (
+                        <motion.div 
+                          key={p.id}
+                          initial={{ x: 50, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: i * 0.1, type: "spring" }}
+                          className={clsx(
+                            "p-6 lg:p-8 rounded-[2rem] flex items-center text-white transform transition-all duration-300 border backdrop-blur-xl shadow-xl",
+                            i === 0 ? "bg-gradient-to-r from-yellow-500/20 to-yellow-700/20 border-yellow-500/40 scale-105 z-10" :
+                            i === 1 ? "bg-gradient-to-r from-slate-300/20 to-slate-500/20 border-slate-300/40" :
+                            i === 2 ? "bg-gradient-to-r from-amber-600/20 to-amber-800/20 border-amber-600/40" :
+                            "bg-white/5 border-white/10"
+                          )}
+                        >
+                          <div className={clsx(
+                            "w-16 h-16 rounded-2xl flex items-center justify-center text-3xl font-black mr-8 shadow-inner border",
+                            i === 0 ? "bg-gradient-to-br from-yellow-300 to-yellow-500 text-yellow-900 border-yellow-200" :
+                            i === 1 ? "bg-gradient-to-br from-slate-200 to-slate-400 text-slate-800 border-slate-100" :
+                            i === 2 ? "bg-gradient-to-br from-amber-500 to-amber-700 text-amber-100 border-amber-400" :
+                            "bg-white/10 text-white border-white/20"
+                          )}>
+                            {i+1}
+                          </div>
+                          <div className="text-3xl md:text-4xl font-bold flex-1 truncate tracking-tight">{p.name}</div>
+                          <div className="text-4xl md:text-5xl font-black tracking-tighter drop-shadow-md">{p.score}</div>
+                        </motion.div>
+                      ))}
+                    </AnimatePresence>
+                  </div>
+                </div>
+              );
+            })()}
+          </motion.div>
+        )}
+
+        {/* --- RESULT PHASE --- */}
+        {state.phase === "result" && (
+          <motion.div 
+            key="result" initial="initial" animate="in" exit="out" variants={pageVariants} transition={pageTransition}
+            className="relative z-10 flex flex-col items-center justify-center text-center h-screen p-6 w-full"
+          >
+            {(() => {
+              const sorted = [...participants].sort((a, b) => b.score - a.score);
+              const winner = sorted[0];
+
+              return (
+                <div className="w-full max-w-4xl flex flex-col items-center">
+                  <motion.div 
+                    initial={{ y: -50, opacity: 0 }} animate={{ y: 0, opacity: 1 }}
+                    className="inline-flex items-center gap-4 bg-white/10 border border-white/20 px-10 py-4 rounded-full mb-12 shadow-2xl backdrop-blur-xl"
+                  >
+                     <Crown className="text-yellow-400" size={32} />
+                     <span className="text-white font-black tracking-[0.2em] uppercase text-2xl">Hasil Akhir Quiz</span>
+                  </motion.div>
+                  
+                  {isSaving && (
+                    <div className="bg-primary/20 border border-primary/40 text-white font-bold px-8 py-4 rounded-full mb-10 animate-pulse flex items-center gap-3 backdrop-blur-xl shadow-lg">
+                       <Loader2 className="animate-spin" size={24} /> Menyimpan skor...
+                    </div>
+                  )}
+                  {!isSaving && hasSaved && (
+                    <motion.div 
+                      initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring" }}
+                      className="bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 font-bold px-8 py-4 rounded-full mb-10 flex items-center gap-3 backdrop-blur-xl shadow-lg"
+                    >
+                       <CheckCircle2 size={24} /> Skor tersimpan ke Database
+                    </motion.div>
+                  )}
+
+                  {winner && (
+                    <motion.div 
+                      initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ delay: 0.2, type: "spring", bounce: 0.4 }}
+                      className="relative group mb-16 w-full max-w-2xl"
+                    >
+                      <div className="absolute inset-0 bg-yellow-400 blur-[100px] opacity-30 group-hover:opacity-50 transition-opacity duration-1000" />
+                      
+                      <div className="bg-gradient-to-b from-yellow-300 to-yellow-500 p-16 rounded-[4rem] text-[#0A1128] shadow-[0_20px_50px_rgba(234,179,8,0.3)] relative z-10 border-[10px] border-yellow-200/80 transform transition-transform hover:scale-105 duration-500">
+                        <Crown size={100} className="absolute -top-16 left-1/2 -translate-x-1/2 text-yellow-100 drop-shadow-2xl" />
+                        <h3 className="text-3xl font-black mb-6 uppercase tracking-[0.3em] text-[#0A1128]/70 mt-6">Juara 1</h3>
+                        <div className="text-7xl md:text-8xl font-black mb-10 leading-none tracking-tighter drop-shadow-md break-words">{winner.name}</div>
+                        <div className="inline-flex items-center bg-black/10 px-10 py-6 rounded-3xl border border-black/10 shadow-inner">
+                          <span className="text-6xl font-black">{winner.score}</span>
+                          <span className="text-2xl font-black ml-4 opacity-80 tracking-widest uppercase">Poin</span>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+
+                  <motion.button 
+                    initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1 }}
+                    onClick={handleStartLobby}
+                    className="bg-white/10 hover:bg-white/20 border border-white/20 text-white px-10 py-5 rounded-2xl font-black text-2xl flex items-center gap-3 transition-all hover:scale-105 active:scale-95 backdrop-blur-xl shadow-2xl"
+                  >
+                    <RotateCcw size={28} /> Buat Room Baru
+                  </motion.button>
+                </div>
+              );
+            })()}
+          </motion.div>
+        )}
+
+      </AnimatePresence>
+    </div>
+  );
 }

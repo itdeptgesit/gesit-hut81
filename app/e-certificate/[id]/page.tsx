@@ -1,15 +1,15 @@
-import { supabase } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase";
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { CheckCircle, ShieldCheck, Calendar, Trophy, User, ArrowLeft, Award } from "lucide-react";
 
 // Server component to verify certificate
-export default async function VerifyCertificatePage({ params }: { params: { id: string } }) {
-  const { id } = params;
+export default async function VerifyCertificatePage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
 
   // Fetch the winner data by ID
-  const { data: winner, error } = await supabase
+  const { data: winner, error } = await supabaseAdmin
     .from("winners")
     .select("*")
     .eq("id", id)

@@ -423,90 +423,141 @@ export default function AdminDashboard() {
     { icon: <Award size={16} />, label: "E-Sertifikat" },
   ];
 
-  const Sidebar = () => (
-    <aside className="flex flex-col h-full bg-white border-r border-zinc-200">
-      <div className="flex items-center gap-3 px-6 h-16 border-b border-zinc-100 shrink-0">
-        <div className="w-8 h-8 bg-zinc-900 rounded-lg flex items-center justify-center">
-          <Image src="/gesit_logo.png" alt="GESIT" width={18} height={18} className="object-contain mix-blend-multiply brightness-0 invert" />
-        </div>
-        <div>
-          <p className="text-sm font-semibold text-zinc-900 leading-none">GESIT</p>
-          <p className="text-[11px] text-zinc-400 mt-0.5">Admin Panel</p>
-        </div>
-      </div>
-      <nav className="flex-1 p-3 space-y-1">
-        <p className="text-[10px] font-semibold text-zinc-400 uppercase tracking-widest px-3 mb-3 mt-2">Menu</p>
-        {navItems.map((item) => (
-          <button 
-            key={item.label} 
-            onClick={() => setActiveTab(item.label)}
-            className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === item.label ? "bg-zinc-900 text-white" : "text-zinc-500 hover:bg-zinc-50 hover:text-zinc-900"}`}
-          >
-            {item.icon} {item.label}
-          </button>
-        ))}
-        <div className="pt-4">
-          <p className="text-[10px] font-semibold text-zinc-400 uppercase tracking-widest px-3 mb-3">Aksi Cepat</p>
-          <Link href="/quiz/host" target="_blank" className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-zinc-500 hover:bg-zinc-50 hover:text-zinc-900 transition-colors">
-            <Monitor size={16} /> Layar Quiz Host
-            <ExternalLink size={12} className="ml-auto" />
-          </Link>
-          <Link href="/" target="_blank" className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-zinc-500 hover:bg-zinc-50 hover:text-zinc-900 transition-colors">
-            <Circle size={16} /> Website Utama
-            <ExternalLink size={12} className="ml-auto" />
-          </Link>
-        </div>
-      </nav>
-      <div className="p-3 border-t border-zinc-100">
-        <div className="flex items-center gap-3 px-3 py-2 mb-1">
-          <div className="w-7 h-7 rounded-full bg-zinc-900 flex items-center justify-center shrink-0">
-            <span className="text-white text-xs font-bold">{adminEmail?.[0]?.toUpperCase()}</span>
-          </div>
-          <span className="text-xs text-zinc-500 truncate flex-1">{adminEmail}</span>
-        </div>
-        <button onClick={handleLogout} className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-zinc-500 hover:bg-red-50 hover:text-red-600 transition-colors">
-          <LogOut size={15} /> Keluar
-        </button>
-      </div>
-    </aside>
-  );
-
   return (
-    <div className="min-h-screen bg-zinc-50 flex">
-      <div className="hidden lg:block w-60 shrink-0 fixed inset-y-0 left-0 z-40">
-        <Sidebar />
-      </div>
-      <header className="lg:hidden fixed top-0 left-0 right-0 z-40 h-14 bg-white border-b border-zinc-200 flex items-center justify-between px-4">
-        <div className="flex items-center gap-2.5">
-          <div className="w-7 h-7 bg-zinc-900 rounded-lg flex items-center justify-center">
-            <Image src="/gesit_logo.png" alt="GESIT" width={16} height={16} className="object-contain mix-blend-multiply brightness-0 invert" />
+    <div className="min-h-screen bg-zinc-50 flex flex-col relative overflow-hidden">
+      {/* Background Watermark */}
+      <div 
+        className="fixed inset-0 z-0 pointer-events-none opacity-[0.03] mix-blend-multiply"
+        style={{ 
+          backgroundImage: "url('/HUTRI81_FA_Logo__Main%20Logo%20Merah%20Hitam%20Latar%20Putih.png')",
+          backgroundPosition: 'bottom right',
+          backgroundRepeat: 'no-repeat',
+          backgroundSize: '600px'
+        }}
+      />
+      
+      <header className="fixed top-0 left-0 right-0 z-40 bg-white/80 backdrop-blur-xl border-b border-zinc-200 shadow-sm transition-all flex flex-col">
+        {/* Top Tier: Logo & Actions */}
+        <div className="flex items-center justify-between h-16 px-4 md:px-6 max-w-[1400px] w-full mx-auto">
+          {/* Logo Section */}
+          <div className="flex items-center gap-3 relative z-10">
+            <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shrink-0 shadow-sm border border-zinc-100">
+              <Image src="/gesit_logo.png" alt="GESIT" width={32} height={32} className="object-contain" />
+            </div>
+            <span className="font-black text-zinc-900 tracking-tight text-lg hidden sm:block">GESIT<span className="text-zinc-400 font-medium ml-1 text-sm">Admin</span></span>
           </div>
-          <span className="text-sm font-semibold text-zinc-900">Admin Panel</span>
+
+          {/* Right Profile & Actions */}
+          <div className="flex items-center gap-2 md:gap-4 shrink-0">
+            <div className="hidden lg:flex items-center gap-2 pr-4 border-r border-zinc-200">
+              <Link href="/quiz/host" target="_blank" className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 transition-all duration-300">
+                <Monitor size={14} /> <span>Quiz Host</span>
+              </Link>
+              <Link href="/" target="_blank" className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 transition-all duration-300">
+                <Circle size={14} /> <span>Web Utama</span>
+              </Link>
+            </div>
+            
+            <div className="hidden md:flex items-center gap-3 pr-4 border-r border-zinc-200">
+              <div className="flex flex-col items-end">
+                <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider leading-none">Admin</span>
+                <span className="text-xs font-semibold text-zinc-700 truncate max-w-[120px]">{adminEmail}</span>
+              </div>
+              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-zinc-800 to-zinc-900 text-white flex items-center justify-center shrink-0 shadow-sm border border-zinc-700">
+                <span className="text-xs font-bold">{adminEmail?.[0]?.toUpperCase()}</span>
+              </div>
+            </div>
+            
+            <button onClick={handleLogout} className="text-zinc-400 hover:text-red-600 transition-all duration-300 p-2 rounded-full hover:bg-red-50" title="Keluar">
+              <LogOut size={18} />
+            </button>
+            
+            {/* Mobile menu toggle button */}
+            <button 
+              onClick={() => setSidebarOpen(!sidebarOpen)} 
+              className={`lg:hidden flex items-center justify-center w-10 h-10 rounded-full transition-colors ${sidebarOpen ? 'bg-zinc-100 text-zinc-900' : 'text-zinc-500 hover:bg-zinc-50'}`}
+            >
+              {sidebarOpen ? (
+                <X size={20} strokeWidth={2.5} />
+              ) : (
+                <div className="flex flex-col gap-1.5 items-center justify-center">
+                  <div className="w-5 h-0.5 bg-current rounded-full" />
+                  <div className="w-5 h-0.5 bg-current rounded-full" />
+                  <div className="w-5 h-0.5 bg-current rounded-full" />
+                </div>
+              )}
+            </button>
+          </div>
         </div>
-        <div className="flex items-center gap-3">
-          <button onClick={() => setSidebarOpen(!sidebarOpen)} className="text-zinc-500 text-sm font-medium">Menu</button>
-          <button onClick={handleLogout} className="text-zinc-400 hover:text-zinc-600 transition-colors p-1">
-            <LogOut size={18} />
-          </button>
-        </div>
-      </header>
-      {sidebarOpen && (
-        <div className="lg:hidden fixed top-14 left-0 right-0 bg-white border-b border-zinc-200 z-30 p-4 shadow-xl">
-          <div className="space-y-2">
+
+        {/* Bottom Tier: Navigation Tabs (Desktop only) */}
+        <div className="hidden lg:flex w-full bg-white/50 border-t border-zinc-200/50">
+          <nav className="flex items-center gap-2 max-w-[1400px] w-full mx-auto px-4 md:px-6 h-12 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             {navItems.map((item) => (
               <button 
                 key={item.label} 
-                onClick={() => { setActiveTab(item.label); setSidebarOpen(false); }}
-                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium ${activeTab === item.label ? "bg-zinc-900 text-white" : "text-zinc-500"}`}
+                onClick={() => setActiveTab(item.label)}
+                className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-semibold transition-all duration-300 whitespace-nowrap ${
+                  activeTab === item.label 
+                    ? "bg-zinc-900 text-white shadow-sm" 
+                    : "text-zinc-500 hover:bg-zinc-200 hover:text-zinc-900"
+                }`}
               >
-                {item.icon} {item.label}
+                {item.icon} <span>{item.label}</span>
               </button>
             ))}
-          </div>
+          </nav>
         </div>
+      </header>
+
+      {/* Mobile Floating Menu Dropdown */}
+      {sidebarOpen && (
+        <>
+          <div className="lg:hidden fixed inset-0 z-30 bg-zinc-900/20 backdrop-blur-sm transition-opacity" onClick={() => setSidebarOpen(false)} />
+          <div className="lg:hidden fixed top-20 left-4 right-4 bg-white/95 backdrop-blur-xl border border-zinc-200 rounded-2xl z-40 p-2 shadow-2xl shadow-zinc-900/10 animate-in slide-in-from-top-4 fade-in duration-200 max-h-[calc(100vh-6rem)] overflow-y-auto">
+            <div className="space-y-1 p-2">
+              <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest px-3 mb-3">Menu Utama</p>
+              {navItems.map((item) => (
+                <button 
+                  key={item.label} 
+                  onClick={() => { setActiveTab(item.label); setSidebarOpen(false); }}
+                  className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-semibold transition-all ${
+                    activeTab === item.label 
+                      ? "bg-zinc-900 text-white shadow-md shadow-zinc-900/10" 
+                      : "text-zinc-500 hover:bg-zinc-50 hover:text-zinc-900"
+                  }`}
+                >
+                  {item.icon} {item.label}
+                </button>
+              ))}
+              
+              <div className="pt-4 mt-2 border-t border-zinc-100">
+                <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest px-3 mb-3">Aksi Cepat</p>
+                <Link href="/quiz/host" target="_blank" className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-semibold text-zinc-500 hover:bg-zinc-50 hover:text-zinc-900 transition-colors">
+                  <Monitor size={18} /> Layar Quiz Host
+                </Link>
+                <Link href="/" target="_blank" className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-semibold text-zinc-500 hover:bg-zinc-50 hover:text-zinc-900 transition-colors">
+                  <Circle size={18} /> Website Utama
+                </Link>
+              </div>
+              
+              <div className="pt-4 mt-2 border-t border-zinc-100 md:hidden block px-3 pb-2">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-zinc-800 to-zinc-900 text-white flex items-center justify-center shrink-0 shadow-sm">
+                    <span className="text-xs font-bold">{adminEmail?.[0]?.toUpperCase()}</span>
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-xs font-bold text-zinc-900 truncate max-w-[200px]">{adminEmail}</span>
+                    <span className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">Admin GESIT</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </>
       )}
 
-      <main className="flex-1 lg:pl-60 pt-14 lg:pt-0 min-w-0">
+      <main className="flex-1 pt-16 lg:pt-[112px] min-w-0">
         <div className="max-w-[1200px] mx-auto p-6 lg:p-8 space-y-8">
           <div className="flex items-center justify-between pt-2">
             <div>
