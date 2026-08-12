@@ -23,7 +23,7 @@ export default function ScoreboardPage() {
   const [teams, setTeams] = useState<Team[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const allZero = scores.length > 0 && scores.every(s => s.score === 0);
+  const allZero = scores.length > 0 && scores.every((s) => s.score === 0);
 
   useEffect(() => {
     fetchScores();
@@ -32,7 +32,9 @@ export default function ScoreboardPage() {
       .channel("scoreboard:group_scores")
       .on("postgres_changes", { event: "*", schema: "public", table: "group_scores" }, fetchScores)
       .subscribe();
-    return () => { supabase.removeChannel(channel); };
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const fetchTeams = async () => {
@@ -58,163 +60,225 @@ export default function ScoreboardPage() {
   // Podium order: 2nd, 1st, 3rd
   const podiumOrder = [top3[1], top3[0], top3[2]].filter(Boolean);
   const podiumPositions = [
-    { height: "h-28", badge: "🥈", color: "from-zinc-300 to-zinc-400", textColor: "text-zinc-800", order: 1, label: "2nd" },
-    { height: "h-40", badge: "🥇", color: "from-yellow-400 to-amber-500", textColor: "text-yellow-900", order: 0, label: "1st" },
-    { height: "h-20", badge: "🥉", color: "from-amber-600 to-orange-600", textColor: "text-amber-100", order: 2, label: "3rd" },
+    { height: "h-24 md:h-28", badge: "🥈", color: "from-slate-300 via-zinc-200 to-slate-400", border: "border-slate-300", textColor: "text-slate-800", order: 1, label: "2nd" },
+    { height: "h-32 md:h-36", badge: "🥇", color: "from-amber-300 via-yellow-400 to-amber-500", border: "border-yellow-300 shadow-yellow-300/50", textColor: "text-amber-950", order: 0, label: "1st" },
+    { height: "h-20 md:h-22", badge: "🥉", color: "from-amber-600 via-amber-700 to-orange-700", border: "border-amber-600", textColor: "text-amber-100", order: 2, label: "3rd" },
   ];
 
   return (
     <div
-      className="min-h-screen w-full font-sans overflow-y-auto flex flex-col"
+      className="h-screen max-h-screen w-screen overflow-hidden flex flex-col justify-between p-3 md:p-5 lg:p-6 font-sans relative select-none"
       style={{
         backgroundImage: "url('/bg.png')",
         backgroundSize: "cover",
         backgroundPosition: "center",
-        backgroundAttachment: "fixed",
         backgroundRepeat: "no-repeat",
       }}
     >
-      {/* Subtle overlay */}
-      <div className="fixed inset-0 bg-white/20 z-0 pointer-events-none" />
+      {/* Dynamic Ambient Background Overlay */}
+      <div className="absolute inset-0 bg-gradient-to-b from-white/40 via-white/20 to-white/50 backdrop-blur-[2px] z-0 pointer-events-none" />
 
       {/* ── HEADER ── */}
-      <header className="relative z-10 flex items-center justify-between px-8 md:px-24 lg:px-32 pt-10 pb-3 w-full">
+      <header className="relative z-10 flex items-center justify-between px-3 md:px-8 py-2 w-full shrink-0 border-b border-white/40 bg-white/30 backdrop-blur-md rounded-2xl shadow-sm">
+        {/* Left Logo */}
         <div className="flex items-center gap-3">
-          <Image src="/gesit_logo.png" alt="GESIT" width={72} height={72} className="object-contain drop-shadow-md" />
+          <Image
+            src="/gesit_logo.png"
+            alt="GESIT Logo"
+            width={64}
+            height={64}
+            className="w-11 h-11 md:w-14 md:h-14 object-contain filter drop-shadow-md transition-transform hover:scale-105"
+          />
         </div>
 
-        <div className="absolute left-1/2 -translate-x-1/2 text-center">
-          <h1 className="text-3xl md:text-5xl font-black uppercase tracking-tight text-[#102A4C] leading-none">
+        {/* Title Center */}
+        <div className="flex flex-col items-center text-center">
+          <div className="flex items-center gap-2">
+            <span className="inline-block w-2.5 h-2.5 rounded-full bg-[#E31E24] animate-ping" />
+            <span className="text-[10px] md:text-xs font-black uppercase tracking-[0.25em] text-[#E31E24] bg-red-50 border border-red-200/80 px-2.5 py-0.5 rounded-full shadow-sm">
+              Live Scoreboard
+            </span>
+          </div>
+          <h1 className="text-2xl md:text-3xl lg:text-4xl font-black uppercase tracking-tight text-[#102A4C] leading-none mt-1">
             🏆 KLASEMEN <span className="text-[#E31E24]">FUN GAMES</span>
           </h1>
-          <p className="text-[11px] font-bold uppercase tracking-[0.3em] text-[#102A4C]/50 mt-1">Live Scoreboard</p>
         </div>
 
+        {/* Right Logo */}
         <div className="flex items-center gap-3">
-          <Image src="/hutri81_logo.png" alt="HUT RI 81" width={180} height={180} className="object-contain drop-shadow-md" />
+          <Image
+            src="/HUTRI81.png"
+            alt="HUT RI 81"
+            width={160}
+            height={55}
+            className="w-28 h-9 md:w-36 md:h-11 object-contain filter drop-shadow-md"
+          />
         </div>
       </header>
 
-      {/* ── MAIN ── */}
-      <main className="relative z-10 flex-1 w-full max-w-5xl mx-auto px-6 pb-8 flex flex-col gap-8">
-
+      {/* ── MAIN CONTENT ── */}
+      <main className="relative z-10 flex-1 min-h-0 w-full max-w-7xl mx-auto py-3 px-2 flex flex-col justify-center">
         {loading ? (
-          <div className="flex-1 flex flex-col items-center justify-center gap-4">
-            <div className="w-14 h-14 border-4 border-[#E31E24]/20 border-t-[#E31E24] rounded-full animate-spin" />
-            <p className="text-[#102A4C]/50 font-semibold">Memuat klasemen...</p>
+          <div className="flex-1 flex flex-col items-center justify-center gap-3">
+            <div className="w-12 h-12 border-4 border-[#E31E24]/20 border-t-[#E31E24] rounded-full animate-spin" />
+            <p className="text-[#102A4C]/60 font-bold text-sm tracking-wide">Memuat klasemen live...</p>
           </div>
         ) : scores.length === 0 ? (
-          <div className="flex-1 flex flex-col items-center justify-center bg-white/50 rounded-3xl border border-white/80">
-            <p className="text-[#102A4C]/40 font-semibold text-xl">Belum ada skor</p>
+          <div className="flex-1 flex flex-col items-center justify-center bg-white/60 backdrop-blur-md rounded-3xl border border-white/80 shadow-lg">
+            <p className="text-[#102A4C]/50 font-bold text-lg">Belum ada skor terdaftar</p>
           </div>
         ) : allZero ? (
-          /* ── ALL ZERO: show roster ── */
-          <div className="flex flex-col gap-6 pt-4">
-            <div className="text-center">
-              <p className="text-[#102A4C]/50 font-bold uppercase tracking-widest text-sm">Fun Games belum dimulai · Daftar Kelompok</p>
+          /* ── PRE-GAME ROSTER (ALL ZERO SCORE) ── */
+          <div className="flex flex-col h-full min-h-0 justify-between gap-2.5">
+            {/* Subtitle Bar */}
+            <div className="flex items-center justify-center gap-3 shrink-0">
+              <div className="h-px bg-gradient-to-r from-transparent via-[#102A4C]/20 to-transparent flex-1" />
+              <span className="text-xs md:text-sm font-black uppercase tracking-widest text-[#102A4C]/70 bg-white/70 backdrop-blur-sm px-4 py-1 rounded-full border border-white/80 shadow-sm">
+                📢 Fun Games Belum Dimulai · Daftar Kelompok Participant
+              </span>
+              <div className="h-px bg-gradient-to-r from-transparent via-[#102A4C]/20 to-transparent flex-1" />
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+            {/* Responsive Columns Grid (Fits Screen Seamlessly) */}
+            <div className="flex-1 min-h-0 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
               {scores.map((group, idx) => {
-                const team = teams.find(t =>
-                  t.team_name.toLowerCase().replace(/\s+/g, "") ===
-                  group.group_name.toLowerCase().replace(/\s+/g, "")
+                const team = teams.find(
+                  (t) =>
+                    t.team_name.toLowerCase().replace(/\s+/g, "") ===
+                    group.group_name.toLowerCase().replace(/\s+/g, "")
                 );
                 const memberList = team?.members
-                  ? team.members.split(",").map(m => m.trim()).filter(Boolean)
+                  ? team.members.split(",").map((m) => m.trim()).filter(Boolean)
                   : [];
                 const captain = team?.captain || "";
 
                 return (
                   <motion.div
                     key={group.id}
-                    initial={{ opacity: 0, y: 20 }}
+                    initial={{ opacity: 0, y: 15 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: idx * 0.05 }}
-                    className="bg-white/60 backdrop-blur-sm border border-white/80 rounded-2xl p-5 shadow-md hover:shadow-lg transition-shadow"
+                    transition={{ delay: idx * 0.04 }}
+                    className="bg-white/75 backdrop-blur-md border border-white/90 rounded-2xl p-3 lg:p-3.5 shadow-lg hover:shadow-xl hover:bg-white/85 transition-all duration-300 flex flex-col min-h-0 justify-between group"
                   >
-                    {/* Group header */}
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className="w-9 h-9 rounded-lg bg-[#102A4C] flex items-center justify-center font-black text-white text-sm shrink-0">
-                        {idx + 1}
+                    {/* Group Card Header */}
+                    <div className="flex items-center justify-between pb-2 border-b border-[#102A4C]/10 shrink-0">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-7 h-7 md:w-8 md:h-8 rounded-xl bg-gradient-to-br from-[#102A4C] to-[#1e3a5f] flex items-center justify-center font-black text-white text-xs md:text-sm shadow-md shrink-0">
+                          {idx + 1}
+                        </div>
+                        <h3 className="font-black uppercase text-[#102A4C] text-sm md:text-base tracking-tight leading-none group-hover:text-[#E31E24] transition-colors">
+                          {group.group_name}
+                        </h3>
                       </div>
-                      <h3 className="font-black uppercase text-[#102A4C] text-base tracking-tight">{group.group_name}</h3>
+                      {memberList.length > 0 && (
+                        <span className="text-[10px] font-extrabold text-[#102A4C]/40 bg-[#102A4C]/5 px-2 py-0.5 rounded-md uppercase tracking-wider">
+                          {memberList.length} Anggota
+                        </span>
+                      )}
                     </div>
 
-                    {/* Members */}
-                    {memberList.length > 0 ? (
-                      <ul className="space-y-1.5">
-                        {memberList.map((member, mIdx) => (
-                          <li key={mIdx} className="flex items-center gap-2">
-                            <div className="w-1.5 h-1.5 rounded-full bg-[#E31E24]/60 shrink-0" />
-                            <span className={`text-sm font-semibold text-[#102A4C]/80 ${
-                              member === captain ? "font-black text-[#E31E24]" : ""
-                            }`}>
-                              {member}{member === captain ? " ★" : ""}
-                            </span>
-                          </li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <p className="text-sm text-[#102A4C]/30 italic">Anggota belum terdaftar</p>
-                    )}
+                    {/* Member List (Structured 2-Column Compact Layout) */}
+                    <div className="flex-1 min-h-0 overflow-hidden py-1.5 flex flex-col justify-center">
+                      {memberList.length > 0 ? (
+                        <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-2 gap-y-1">
+                          {memberList.map((member, mIdx) => (
+                            <li
+                              key={mIdx}
+                              className="flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg transition-colors hover:bg-slate-100/50"
+                            >
+                              <span className="w-1.5 h-1.5 rounded-full bg-[#E31E24]/60 shrink-0" />
+                              <span
+                                className="text-[11px] lg:text-xs leading-tight truncate font-semibold text-[#102A4C]/85"
+                                title={member}
+                              >
+                                {member}
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p className="text-xs text-[#102A4C]/40 italic text-center py-4">
+                          Anggota belum terdaftar
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Card Footer Status */}
+                    <div className="pt-1.5 border-t border-[#102A4C]/5 text-[10px] font-bold text-[#102A4C]/40 flex justify-between items-center shrink-0">
+                      <span>Status: Ready</span>
+                      <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                    </div>
                   </motion.div>
                 );
               })}
             </div>
-            <p className="text-center text-[10px] text-[#102A4C]/30 font-bold uppercase tracking-widest">★ = Kapten kelompok</p>
           </div>
         ) : (
-          <>
-            {/* ── PODIUM TOP 3 ── */}
+          /* ── LIVE SCOREBOARD (PODIUM + RANK LIST) ── */
+          <div className="flex flex-col h-full min-h-0 justify-between gap-3">
+            {/* TOP 3 PODIUM */}
             {top3.length > 0 && (
-              <div className="flex items-end justify-center gap-4 pt-4">
+              <div className="flex items-end justify-center gap-3 md:gap-6 pt-2 shrink-0">
                 {podiumOrder.map((group, idx) => {
                   if (!group) return null;
-                  
-                  // Hitung peringkat asli (mengatasi seri/tie)
-                  const actualRank = scores.filter(s => s.score > group.score).length;
-                  
-                  // Ambil podium styles berdasarkan peringkat asli, fallback ke 3rd
-                  const pos = podiumPositions.find(p => p.order === actualRank) || podiumPositions.find(p => p.order === 2)!;
-                  
+
+                  // Rank calculation
+                  const actualRank = scores.filter((s) => s.score > group.score).length;
+                  const pos =
+                    podiumPositions.find((p) => p.order === actualRank) ||
+                    podiumPositions.find((p) => p.order === 2)!;
+
                   return (
                     <motion.div
                       key={group.id}
-                      initial={{ opacity: 0, y: 40 }}
+                      initial={{ opacity: 0, y: 35 }}
                       animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: idx * 0.1, type: "spring", stiffness: 260, damping: 22 }}
-                      className="flex flex-col items-center justify-end flex-1 max-w-[200px]"
+                      transition={{
+                        delay: idx * 0.08,
+                        type: "spring",
+                        stiffness: 260,
+                        damping: 22,
+                      }}
+                      className="flex flex-col items-center justify-end flex-1 max-w-[220px]"
                     >
-                      {/* Card above podium */}
-                      <div className={`
-                        w-full rounded-2xl p-4 text-center mb-2 border shadow-xl
-                        ${actualRank === 0
-                          ? "bg-white border-yellow-300 shadow-yellow-200/60 shadow-2xl"
-                          : actualRank === 1
-                          ? "bg-white border-zinc-200 shadow-zinc-100"
-                          : "bg-white border-amber-200 shadow-amber-100"}
-                      `}>
-                        <div className="text-3xl mb-1">{pos.badge}</div>
-                        <p className={`font-black uppercase text-sm md:text-base leading-tight ${actualRank === 0 ? "text-[#102A4C]" : "text-[#102A4C]/80"}`}>
+                      {/* Floating Card */}
+                      <div
+                        className={`w-full rounded-2xl p-3 md:p-4 text-center mb-2 border shadow-xl backdrop-blur-md transition-transform duration-300 hover:scale-[1.02] ${
+                          actualRank === 0
+                            ? "bg-gradient-to-b from-white to-amber-50/80 border-amber-300 shadow-amber-200/50 ring-2 ring-amber-300/30"
+                            : actualRank === 1
+                            ? "bg-gradient-to-b from-white to-slate-50/80 border-slate-200 shadow-slate-200/50"
+                            : "bg-gradient-to-b from-white to-orange-50/80 border-amber-200 shadow-orange-100"
+                        }`}
+                      >
+                        <div className="text-2xl md:text-3xl mb-0.5">{pos.badge}</div>
+                        <p
+                          className={`font-black uppercase text-xs md:text-sm lg:text-base leading-tight truncate ${
+                            actualRank === 0 ? "text-[#102A4C]" : "text-[#102A4C]/80"
+                          }`}
+                        >
                           {group.group_name}
                         </p>
                         <motion.p
                           key={group.score}
-                          initial={{ scale: 1.4, color: "#E31E24" }}
+                          initial={{ scale: 1.3, color: "#E31E24" }}
                           animate={{ scale: 1, color: "#102A4C" }}
-                          transition={{ duration: 0.4 }}
-                          className={`font-black leading-none mt-1 ${actualRank === 0 ? "text-4xl" : "text-3xl"}`}
+                          transition={{ duration: 0.3 }}
+                          className={`font-black leading-none mt-1 ${
+                            actualRank === 0 ? "text-3xl md:text-4xl text-[#102A4C]" : "text-2xl md:text-3xl text-[#102A4C]"
+                          }`}
                         >
                           {group.score.toLocaleString()}
                         </motion.p>
-                        <p className="text-[10px] font-bold text-[#102A4C]/30 uppercase tracking-widest">poin</p>
+                        <p className="text-[9px] md:text-[10px] font-extrabold text-[#102A4C]/40 uppercase tracking-widest mt-0.5">
+                          PTS
+                        </p>
                       </div>
-                      {/* Podium block */}
-                      <div className={`
-                        w-full rounded-t-xl flex items-center justify-center font-black text-lg
-                        bg-gradient-to-b ${pos.color} ${pos.textColor} ${pos.height}
-                        shadow-lg border-t-2 border-white/50
-                      `}>
+
+                      {/* Podium Stand */}
+                      <div
+                        className={`w-full rounded-t-2xl flex items-center justify-center font-black text-sm md:text-base bg-gradient-to-b ${pos.color} ${pos.textColor} ${pos.height} ${pos.border} shadow-lg border-t-2`}
+                      >
                         {pos.label}
                       </div>
                     </motion.div>
@@ -223,79 +287,86 @@ export default function ScoreboardPage() {
               </div>
             )}
 
-            {/* ── DIVIDER ── */}
+            {/* RANK 4+ LEADERBOARD LIST */}
             {rest.length > 0 && (
-              <div className="flex items-center gap-3">
-                <div className="flex-1 h-px bg-[#102A4C]/15" />
-                <span className="text-xs font-bold text-[#102A4C]/40 uppercase tracking-widest">Peringkat Lainnya</span>
-                <div className="flex-1 h-px bg-[#102A4C]/15" />
+              <div className="flex-1 min-h-0 flex flex-col justify-end">
+                <div className="flex items-center gap-2 mb-1.5 shrink-0">
+                  <div className="flex-1 h-px bg-[#102A4C]/15" />
+                  <span className="text-[10px] font-extrabold text-[#102A4C]/50 uppercase tracking-widest bg-white/50 px-3 py-0.5 rounded-full border border-white/60">
+                    Peringkat Lainnya
+                  </span>
+                  <div className="flex-1 h-px bg-[#102A4C]/15" />
+                </div>
+
+                <div className="rounded-2xl overflow-hidden border border-white/80 shadow-md bg-white/65 backdrop-blur-md divide-y divide-[#102A4C]/10 flex flex-col justify-around">
+                  <AnimatePresence>
+                    {rest.map((group, idx) => {
+                      const rank = idx + 4;
+                      return (
+                        <motion.div
+                          key={group.id}
+                          layout
+                          initial={{ opacity: 0, x: -15 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0 }}
+                          transition={{ delay: idx * 0.03 }}
+                          className="flex items-center gap-3 px-4 py-2 hover:bg-white/60 transition-colors"
+                        >
+                          <div className="w-7 h-7 rounded-lg bg-[#102A4C]/10 flex items-center justify-center font-black text-[#102A4C]/60 text-sm shrink-0">
+                            {rank}
+                          </div>
+                          <p className="flex-1 font-black uppercase text-[#102A4C] text-sm md:text-base tracking-tight truncate">
+                            {group.group_name}
+                          </p>
+
+                          {/* Progress Bar */}
+                          <div className="hidden sm:flex flex-1 max-w-[180px] h-2 rounded-full bg-[#102A4C]/10 overflow-hidden">
+                            <motion.div
+                              className="h-full rounded-full bg-gradient-to-r from-[#E31E24]/70 to-[#E31E24]"
+                              initial={{ width: 0 }}
+                              animate={{
+                                width: `${
+                                  scores[0]?.score
+                                    ? Math.round((group.score / scores[0].score) * 100)
+                                    : 0
+                                }%`,
+                              }}
+                              transition={{ duration: 0.6, ease: "easeOut" }}
+                            />
+                          </div>
+
+                          <div className="text-right shrink-0 min-w-[70px]">
+                            <motion.span
+                              key={group.score}
+                              initial={{ scale: 1.2, color: "#E31E24" }}
+                              animate={{ scale: 1, color: "#102A4C" }}
+                              transition={{ duration: 0.3 }}
+                              className="font-black text-xl md:text-2xl text-[#102A4C] block leading-none"
+                            >
+                              {group.score.toLocaleString()}
+                            </motion.span>
+                            <span className="text-[9px] font-extrabold uppercase tracking-widest text-[#102A4C]/40">
+                              PTS
+                            </span>
+                          </div>
+                        </motion.div>
+                      );
+                    })}
+                  </AnimatePresence>
+                </div>
               </div>
             )}
-
-            {/* ── RANK 4+ TABLE ── */}
-            {rest.length > 0 && (
-              <div className="rounded-2xl overflow-hidden border border-white/60 shadow-lg bg-white/50 backdrop-blur-sm">
-                <AnimatePresence>
-                  {rest.map((group, idx) => {
-                    const rank = idx + 4;
-                    return (
-                      <motion.div
-                        key={group.id}
-                        layout
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ delay: idx * 0.04 }}
-                        className={`flex items-center gap-4 px-6 py-4 ${idx < rest.length - 1 ? "border-b border-[#102A4C]/10" : ""} hover:bg-white/40 transition-colors`}
-                      >
-                        {/* Rank */}
-                        <div className="w-9 h-9 rounded-lg bg-[#102A4C]/10 flex items-center justify-center font-black text-[#102A4C]/50 text-lg shrink-0">
-                          {rank}
-                        </div>
-
-                        {/* Name */}
-                        <p className="flex-1 font-black uppercase text-[#102A4C] text-lg md:text-xl tracking-tight">{group.group_name}</p>
-
-                        {/* Red accent bar */}
-                        <div className="hidden md:flex flex-1 max-w-[200px] h-2 rounded-full bg-[#102A4C]/10 overflow-hidden">
-                          <motion.div
-                            className="h-full rounded-full bg-[#E31E24]/50"
-                            initial={{ width: 0 }}
-                            animate={{ width: `${scores[0]?.score ? Math.round((group.score / scores[0].score) * 100) : 0}%` }}
-                            transition={{ duration: 0.8, ease: "easeOut" }}
-                          />
-                        </div>
-
-                        {/* Score */}
-                        <div className="text-right shrink-0">
-                          <motion.span
-                            key={group.score}
-                            initial={{ scale: 1.3, color: "#E31E24" }}
-                            animate={{ scale: 1, color: "#102A4C" }}
-                            transition={{ duration: 0.4 }}
-                            className="font-black text-3xl md:text-4xl text-[#102A4C] block leading-none"
-                          >
-                            {group.score.toLocaleString()}
-                          </motion.span>
-                          <span className="text-[10px] font-bold uppercase tracking-widest text-[#102A4C]/30">poin</span>
-                        </div>
-                      </motion.div>
-                    );
-                  })}
-                </AnimatePresence>
-              </div>
-            )}
-          </>
+          </div>
         )}
       </main>
 
-
       {/* ── FOOTER ── */}
-      <footer className="relative z-10 pb-5 text-center">
-        <p className="text-[11px] font-bold text-[#102A4C]/30 uppercase tracking-widest">
-          GESIT HUT RI 81 · Fun Games Day · Live Update
+      <footer className="relative z-10 py-1.5 text-center shrink-0 border-t border-white/30 bg-white/20 backdrop-blur-xs rounded-xl">
+        <p className="text-[10px] md:text-[11px] font-extrabold text-[#102A4C]/40 uppercase tracking-widest">
+          GESIT HUT RI 81 · Fun Games Live Portal · Auto-Synchronized
         </p>
       </footer>
     </div>
   );
 }
+

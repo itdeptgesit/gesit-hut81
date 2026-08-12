@@ -29,7 +29,7 @@ export default function Hero() {
           className="mb-6 md:mb-8"
         >
           <Image
-            src="/hutri81_logo.png"
+            src="/HUTRI81.png"
             alt="Logo HUT RI ke-81"
             width={190}
             height={190}
