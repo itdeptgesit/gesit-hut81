@@ -11,18 +11,37 @@ interface GroupScore {
   score: number;
 }
 
+interface Team {
+  team_id: number;
+  team_name: string;
+  captain: string;
+  members: string;
+}
+
 export default function ScoreboardPage() {
   const [scores, setScores] = useState<GroupScore[]>([]);
+  const [teams, setTeams] = useState<Team[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const allZero = scores.length > 0 && scores.every(s => s.score === 0);
 
   useEffect(() => {
     fetchScores();
+    fetchTeams();
     const channel = supabase
       .channel("scoreboard:group_scores")
       .on("postgres_changes", { event: "*", schema: "public", table: "group_scores" }, fetchScores)
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, []);
+
+  const fetchTeams = async () => {
+    try {
+      const res = await fetch("/api/teams");
+      const data = await res.json();
+      if (data.teams) setTeams(data.teams);
+    } catch {}
+  };
 
   const fetchScores = async () => {
     const { data } = await supabase
@@ -87,6 +106,62 @@ export default function ScoreboardPage() {
         ) : scores.length === 0 ? (
           <div className="flex-1 flex flex-col items-center justify-center bg-white/50 rounded-3xl border border-white/80">
             <p className="text-[#102A4C]/40 font-semibold text-xl">Belum ada skor</p>
+          </div>
+        ) : allZero ? (
+          /* ── ALL ZERO: show roster ── */
+          <div className="flex flex-col gap-6 pt-4">
+            <div className="text-center">
+              <p className="text-[#102A4C]/50 font-bold uppercase tracking-widest text-sm">Fun Games belum dimulai · Daftar Kelompok</p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {scores.map((group, idx) => {
+                const team = teams.find(t =>
+                  t.team_name.toLowerCase().replace(/\s+/g, "") ===
+                  group.group_name.toLowerCase().replace(/\s+/g, "")
+                );
+                const memberList = team?.members
+                  ? team.members.split(",").map(m => m.trim()).filter(Boolean)
+                  : [];
+                const captain = team?.captain || "";
+
+                return (
+                  <motion.div
+                    key={group.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: idx * 0.05 }}
+                    className="bg-white/60 backdrop-blur-sm border border-white/80 rounded-2xl p-5 shadow-md hover:shadow-lg transition-shadow"
+                  >
+                    {/* Group header */}
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-9 h-9 rounded-lg bg-[#102A4C] flex items-center justify-center font-black text-white text-sm shrink-0">
+                        {idx + 1}
+                      </div>
+                      <h3 className="font-black uppercase text-[#102A4C] text-base tracking-tight">{group.group_name}</h3>
+                    </div>
+
+                    {/* Members */}
+                    {memberList.length > 0 ? (
+                      <ul className="space-y-1.5">
+                        {memberList.map((member, mIdx) => (
+                          <li key={mIdx} className="flex items-center gap-2">
+                            <div className="w-1.5 h-1.5 rounded-full bg-[#E31E24]/60 shrink-0" />
+                            <span className={`text-sm font-semibold text-[#102A4C]/80 ${
+                              member === captain ? "font-black text-[#E31E24]" : ""
+                            }`}>
+                              {member}{member === captain ? " ★" : ""}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-sm text-[#102A4C]/30 italic">Anggota belum terdaftar</p>
+                    )}
+                  </motion.div>
+                );
+              })}
+            </div>
+            <p className="text-center text-[10px] text-[#102A4C]/30 font-bold uppercase tracking-widest">★ = Kapten kelompok</p>
           </div>
         ) : (
           <>
@@ -213,6 +288,7 @@ export default function ScoreboardPage() {
           </>
         )}
       </main>
+
 
       {/* ── FOOTER ── */}
       <footer className="relative z-10 pb-5 text-center">
