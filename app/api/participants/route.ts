@@ -14,6 +14,7 @@ export async function GET() {
     if (error) throw error;
 
     const participants: Participant[] = (data || []).map((row) => ({
+      id: row.id,
       registration_id: row.registration_id,
       timestamp: row.created_at,
       name: row.name,

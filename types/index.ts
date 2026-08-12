@@ -1,4 +1,5 @@
 export interface Participant {
+  id?: string;
   registration_id: string;
   timestamp: string;
   name: string;

@@ -315,6 +315,12 @@ export default function Home() {
         <div className="max-w-[1100px] mx-auto px-4 md:px-8 overflow-x-auto">
           <TournamentBracket />
         </div>
+        <FadeIn className="max-w-[1100px] mx-auto px-4 md:px-8 mt-12 flex justify-center">
+          <Link href="/badminton/live" target="_blank" className="inline-flex items-center gap-3 px-8 py-4 bg-primary text-white font-bold rounded-full hover:bg-primary/90 transition-all shadow-lg hover:shadow-xl hover:-translate-y-1">
+            <span className="w-2.5 h-2.5 bg-white rounded-full animate-pulse" />
+            LIHAT LIVE SCOREBOARD
+          </Link>
+        </FadeIn>
       </section>
 
       {/* ─── PARTICIPANT SECTION ─── */}

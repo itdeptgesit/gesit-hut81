@@ -112,20 +112,29 @@ function StatCard({ icon, label, value, delta }: { icon: React.ReactNode; label:
   );
 }
 
-function SlotBox({ slotNumber, type = "bracket", participants, category, onDrop, onRemove }: any) {
+function SlotBox({ slotNumber, type = "bracket", participants, category, onDrop, onRemove, selectedParticipantId, onTapSlot }: any) {
   const p = participants.find((x: any) => 
     x.category === category && 
     (type === "bracket" ? x.bracket_position === slotNumber : x.final_position === slotNumber)
   );
   const [isDragOver, setIsDragOver] = useState(false);
+  const hasSelection = !!selectedParticipantId;
 
   const label = type === "final" ? `Final ${slotNumber}` : `Slot ${slotNumber}`;
+
+  const handleSlotClick = () => {
+    if (hasSelection && !p) {
+      // Mobile tap-to-place: place selected participant into this empty slot
+      onTapSlot(selectedParticipantId, slotNumber, type);
+    }
+  };
 
   return (
     <div 
       onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
       onDragLeave={() => setIsDragOver(false)}
       onDrop={(e) => { setIsDragOver(false); onDrop(e, slotNumber, type); }}
+      onClick={handleSlotClick}
       className={`relative w-full p-4 rounded-xl border-2 transition-all ${
         p 
           ? type === "final" 
@@ -135,9 +144,13 @@ function SlotBox({ slotNumber, type = "bracket", participants, category, onDrop,
             ? type === "final"
               ? "bg-red-900/20 border-red-500 border-dashed"
               : "bg-zinc-700 border-zinc-400 border-dashed" 
-            : type === "final"
-              ? "bg-zinc-900/50 border-red-900/30 border-dashed hover:border-red-700"
-              : "bg-zinc-800/50 border-zinc-700 border-dashed hover:border-zinc-500 hover:bg-zinc-800"
+            : hasSelection && !p
+              ? type === "final"
+                ? "bg-red-900/30 border-red-400 border-dashed cursor-pointer animate-pulse"
+                : "bg-blue-900/30 border-blue-400 border-dashed cursor-pointer animate-pulse"
+              : type === "final"
+                ? "bg-zinc-900/50 border-red-900/30 border-dashed hover:border-red-700"
+                : "bg-zinc-800/50 border-zinc-700 border-dashed hover:border-zinc-500 hover:bg-zinc-800"
       }`}
     >
       <div className={`absolute -top-2.5 left-4 px-2 text-[10px] font-black tracking-widest uppercase ${type === "final" ? "bg-red-950 text-red-400" : "bg-zinc-900 text-zinc-500"}`}>
@@ -157,7 +170,7 @@ function SlotBox({ slotNumber, type = "bracket", participants, category, onDrop,
             )}
           </div>
           <button 
-            onClick={() => onRemove(p.id, type)}
+            onClick={(e) => { e.stopPropagation(); onRemove(p.id, type); }}
             className="w-6 h-6 rounded-full bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white flex items-center justify-center transition-colors opacity-100 lg:opacity-0 lg:group-hover:opacity-100 shrink-0"
             title="Keluarkan dari bagan"
           >
@@ -165,8 +178,12 @@ function SlotBox({ slotNumber, type = "bracket", participants, category, onDrop,
           </button>
         </div>
       ) : (
-        <div className={`h-10 flex items-center justify-center text-xs font-medium ${type === "final" ? "text-red-900/50" : "text-zinc-500"}`}>
-          Drag nama ke sini
+        <div className={`h-10 flex items-center justify-center text-xs font-medium ${
+          hasSelection && !p
+            ? type === "final" ? "text-red-400" : "text-blue-400"
+            : type === "final" ? "text-red-900/50" : "text-zinc-500"
+        }`}>
+          {hasSelection && !p ? "Tap untuk tempatkan" : "Drag nama ke sini"}
         </div>
       )}
     </div>
@@ -215,6 +232,8 @@ export default function AdminDashboard() {
 
   // Bracket Drag & Drop States
   const [bracketCategory, setBracketCategory] = useState("Single Putra");
+  // Mobile tap-to-select state for bracket
+  const [selectedParticipantId, setSelectedParticipantId] = useState<string | null>(null);
 
   // Edit Winner Modal
   const [editingWinner, setEditingWinner] = useState<Winner | null>(null);
@@ -358,6 +377,8 @@ export default function AdminDashboard() {
 
   const handleDragStart = (e: React.DragEvent, participantId: string) => {
     e.dataTransfer.setData("participantId", participantId);
+    // Clear tap selection when dragging starts
+    setSelectedParticipantId(null);
   };
 
   const handleDropToSlot = async (e: React.DragEvent, slotNumber: string, type: "bracket" | "final") => {
@@ -375,6 +396,20 @@ export default function AdminDashboard() {
       await updateBracketPosition(existing.id, null, type);
     }
     await updateBracketPosition(participantId, slotNumber, type);
+  };
+
+  // Mobile: tap slot to place selected participant
+  const handleTapSlot = async (participantId: string, slotNumber: string, type: "bracket" | "final") => {
+    // Check if slot is occupied
+    const existing = participants.find(x => 
+      x.category === bracketCategory && 
+      (type === "bracket" ? x.bracket_position === slotNumber : x.final_position === slotNumber)
+    );
+    if (existing) {
+      await updateBracketPosition(existing.id, null, type);
+    }
+    await updateBracketPosition(participantId, slotNumber, type);
+    setSelectedParticipantId(null);
   };
 
   const handleRemoveFromSlot = async (participantId: string, type: "bracket" | "final") => {
@@ -842,7 +877,7 @@ export default function AdminDashboard() {
                     {["Single Putra", "Single Putri", "Ganda Campuran"].map(cat => (
                       <button
                         key={cat}
-                        onClick={() => setBracketCategory(cat)}
+                        onClick={() => { setBracketCategory(cat); setSelectedParticipantId(null); }}
                         className={`px-3 py-1.5 rounded-md text-xs font-bold uppercase tracking-wider transition-colors whitespace-nowrap ${bracketCategory === cat ? "bg-zinc-900 text-white" : "text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900"}`}
                       >
                         {cat}
@@ -856,7 +891,17 @@ export default function AdminDashboard() {
                   <Card className="w-full lg:w-1/3">
                     <div className="px-4 py-3 border-b border-zinc-100 bg-zinc-50/50 rounded-t-xl">
                       <h3 className="text-sm font-semibold text-zinc-900">Daftar Peserta</h3>
-                      <p className="text-[11px] text-zinc-500">Tarik ke Semi-Final atau Final</p>
+                      <p className="text-[11px] text-zinc-500">Drag (desktop) atau Tap lalu tap slot (mobile)</p>
+                      {selectedParticipantId && (
+                        <div className="mt-2 flex items-center gap-2">
+                          <div className="flex-1 text-[11px] text-blue-700 font-bold bg-blue-50 border border-blue-200 rounded-md px-2 py-1">
+                            ✓ Dipilih: {participants.find(p => p.id === selectedParticipantId)?.call_name || participants.find(p => p.id === selectedParticipantId)?.name.split(" ")[0]} — tap slot kosong
+                          </div>
+                          <button onClick={() => setSelectedParticipantId(null)} className="text-zinc-400 hover:text-zinc-600 p-1">
+                            <X size={12} />
+                          </button>
+                        </div>
+                      )}
                     </div>
                     <div className="p-3 flex flex-col gap-2 max-h-[500px] overflow-y-auto">
                       {participants.filter(p => p.category === bracketCategory).length === 0 ? (
@@ -869,7 +914,12 @@ export default function AdminDashboard() {
                               key={p.id}
                               draggable
                               onDragStart={(e) => handleDragStart(e, p.id)}
-                              className="p-3 bg-white border border-zinc-200 rounded-lg shadow-sm cursor-grab active:cursor-grabbing hover:border-zinc-400 transition-colors flex justify-between items-center group"
+                              onClick={() => setSelectedParticipantId(prev => prev === p.id ? null : p.id)}
+                              className={`p-3 border rounded-lg shadow-sm cursor-pointer transition-colors flex justify-between items-center group ${
+                                selectedParticipantId === p.id
+                                  ? "bg-blue-50 border-blue-400 ring-2 ring-blue-300"
+                                  : "bg-white border-zinc-200 hover:border-zinc-400 cursor-grab active:cursor-grabbing"
+                              }`}
                             >
                               <div className="min-w-0 pr-2">
                                 <div className="font-semibold text-sm text-zinc-900 truncate">{p.name}</div>
@@ -877,6 +927,7 @@ export default function AdminDashboard() {
                                 {p.partner && p.partner !== "-" && <div className="text-[10px] text-zinc-500 truncate">Partner: {p.partner}</div>}
                               </div>
                               <div className="shrink-0 flex flex-col gap-1 items-end">
+                                {selectedParticipantId === p.id && <span className="text-[9px] font-black text-blue-600 uppercase tracking-widest">Dipilih</span>}
                                 {p.bracket_position && <Badge variant="warning">Slot {p.bracket_position}</Badge>}
                                 {p.final_position && <Badge variant="success">Final {p.final_position}</Badge>}
                               </div>
@@ -893,7 +944,7 @@ export default function AdminDashboard() {
                     <div className="flex items-center justify-between gap-2 md:gap-4 relative z-10 w-full h-full">
                       {/* L-side Slots */}
                       <div className="flex flex-col justify-around gap-8 h-full flex-1 min-w-0 relative">
-                        <SlotBox slotNumber="1" type="bracket" participants={participants} category={bracketCategory} onDrop={handleDropToSlot} onRemove={handleRemoveFromSlot} />
+                        <SlotBox slotNumber="1" type="bracket" participants={participants} category={bracketCategory} onDrop={handleDropToSlot} onRemove={handleRemoveFromSlot} selectedParticipantId={selectedParticipantId} onTapSlot={handleTapSlot} />
                         {(() => {
                           const catPrefix = bracketCategory === "Single Putra" ? "SP" : bracketCategory === "Single Putri" ? "SPu" : "GC";
                           const s = schedules.find(x => x.match_key === `${catPrefix}_SF1`);
@@ -905,13 +956,13 @@ export default function AdminDashboard() {
                             </div>
                           );
                         })()}
-                        <SlotBox slotNumber="2" type="bracket" participants={participants} category={bracketCategory} onDrop={handleDropToSlot} onRemove={handleRemoveFromSlot} />
+                        <SlotBox slotNumber="2" type="bracket" participants={participants} category={bracketCategory} onDrop={handleDropToSlot} onRemove={handleRemoveFromSlot} selectedParticipantId={selectedParticipantId} onTapSlot={handleTapSlot} />
                       </div>
                       
                       {/* Center Final Slots */}
                       <div className="flex flex-col items-center justify-center gap-4 px-2 md:px-4 shrink-0 w-32 md:w-48 h-full">
                         {/* Final Left Box */}
-                        <SlotBox slotNumber="L" type="final" participants={participants} category={bracketCategory} onDrop={handleDropToSlot} onRemove={handleRemoveFromSlot} />
+                        <SlotBox slotNumber="L" type="final" participants={participants} category={bracketCategory} onDrop={handleDropToSlot} onRemove={handleRemoveFromSlot} selectedParticipantId={selectedParticipantId} onTapSlot={handleTapSlot} />
                         
                         <div className="flex flex-col items-center justify-center my-2">
                           <Trophy className="w-10 h-10 md:w-14 md:h-14 text-yellow-500 drop-shadow-[0_0_15px_rgba(234,179,8,0.3)] mb-2" strokeWidth={1.5} />
@@ -932,12 +983,12 @@ export default function AdminDashboard() {
                         </div>
 
                         {/* Final Right Box */}
-                        <SlotBox slotNumber="R" type="final" participants={participants} category={bracketCategory} onDrop={handleDropToSlot} onRemove={handleRemoveFromSlot} />
+                        <SlotBox slotNumber="R" type="final" participants={participants} category={bracketCategory} onDrop={handleDropToSlot} onRemove={handleRemoveFromSlot} selectedParticipantId={selectedParticipantId} onTapSlot={handleTapSlot} />
                       </div>
 
                       {/* R-side Slots */}
                       <div className="flex flex-col justify-around gap-8 h-full flex-1 min-w-0 relative">
-                        <SlotBox slotNumber="3" type="bracket" participants={participants} category={bracketCategory} onDrop={handleDropToSlot} onRemove={handleRemoveFromSlot} />
+                        <SlotBox slotNumber="3" type="bracket" participants={participants} category={bracketCategory} onDrop={handleDropToSlot} onRemove={handleRemoveFromSlot} selectedParticipantId={selectedParticipantId} onTapSlot={handleTapSlot} />
                         {(() => {
                           const catPrefix = bracketCategory === "Single Putra" ? "SP" : bracketCategory === "Single Putri" ? "SPu" : "GC";
                           const s = schedules.find(x => x.match_key === `${catPrefix}_SF2`);
@@ -949,7 +1000,7 @@ export default function AdminDashboard() {
                             </div>
                           );
                         })()}
-                        <SlotBox slotNumber="4" type="bracket" participants={participants} category={bracketCategory} onDrop={handleDropToSlot} onRemove={handleRemoveFromSlot} />
+                        <SlotBox slotNumber="4" type="bracket" participants={participants} category={bracketCategory} onDrop={handleDropToSlot} onRemove={handleRemoveFromSlot} selectedParticipantId={selectedParticipantId} onTapSlot={handleTapSlot} />
                       </div>
                     </div>
                   </Card>
