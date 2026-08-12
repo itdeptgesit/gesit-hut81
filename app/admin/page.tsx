@@ -120,7 +120,7 @@ function SlotBox({ slotNumber, type = "bracket", participants, category, onDrop,
   const [isDragOver, setIsDragOver] = useState(false);
   const hasSelection = !!selectedParticipantId;
 
-  const label = type === "final" ? `Final ${slotNumber}` : `Slot ${slotNumber}`;
+  const label = type === "final" ? (slotNumber === "W" ? "Champion" : `Final ${slotNumber}`) : `Slot ${slotNumber}`;
 
   const handleSlotClick = () => {
     if (hasSelection && !p) {
@@ -137,34 +137,52 @@ function SlotBox({ slotNumber, type = "bracket", participants, category, onDrop,
       onClick={handleSlotClick}
       className={`relative w-full p-4 rounded-xl border-2 transition-all ${
         p 
-          ? type === "final" 
-            ? "bg-red-900/40 border-red-500/50 shadow-[0_0_15px_rgba(220,38,38,0.2)] border-solid" 
-            : "bg-zinc-800 border-zinc-700 border-solid shadow-md" 
+          ? slotNumber === "W"
+            ? "bg-yellow-900/40 border-yellow-500/50 shadow-[0_0_15px_rgba(234,179,8,0.2)] border-solid"
+            : type === "final" 
+              ? "bg-red-900/40 border-red-500/50 shadow-[0_0_15px_rgba(220,38,38,0.2)] border-solid" 
+              : "bg-zinc-800 border-zinc-700 border-solid shadow-md" 
           : isDragOver 
-            ? type === "final"
-              ? "bg-red-900/20 border-red-500 border-dashed"
-              : "bg-zinc-700 border-zinc-400 border-dashed" 
-            : hasSelection && !p
-              ? type === "final"
-                ? "bg-red-900/30 border-red-400 border-dashed cursor-pointer animate-pulse"
-                : "bg-blue-900/30 border-blue-400 border-dashed cursor-pointer animate-pulse"
+            ? slotNumber === "W"
+              ? "bg-yellow-900/20 border-yellow-500 border-dashed"
               : type === "final"
-                ? "bg-zinc-900/50 border-red-900/30 border-dashed hover:border-red-700"
-                : "bg-zinc-800/50 border-zinc-700 border-dashed hover:border-zinc-500 hover:bg-zinc-800"
+                ? "bg-red-900/20 border-red-500 border-dashed"
+                : "bg-zinc-700 border-zinc-400 border-dashed" 
+            : hasSelection && !p
+              ? slotNumber === "W"
+                ? "bg-yellow-950 border-yellow-400 border-dashed cursor-pointer animate-pulse"
+                : type === "final"
+                  ? "bg-red-900/30 border-red-400 border-dashed cursor-pointer animate-pulse"
+                  : "bg-blue-900/30 border-blue-400 border-dashed cursor-pointer animate-pulse"
+              : slotNumber === "W"
+                ? "bg-zinc-900/50 border-yellow-900/30 border-dashed hover:border-yellow-700"
+                : type === "final"
+                  ? "bg-zinc-900/50 border-red-900/30 border-dashed hover:border-red-700"
+                  : "bg-zinc-800/50 border-zinc-700 border-dashed hover:border-zinc-500 hover:bg-zinc-800"
       }`}
     >
-      <div className={`absolute -top-2.5 left-4 px-2 text-[10px] font-black tracking-widest uppercase ${type === "final" ? "bg-red-950 text-red-400" : "bg-zinc-900 text-zinc-500"}`}>
+      <div className={`absolute -top-2.5 left-4 px-2 text-[10px] font-black tracking-widest uppercase ${
+        slotNumber === "W"
+          ? "bg-yellow-950 text-yellow-400"
+          : type === "final"
+            ? "bg-red-950 text-red-400"
+            : "bg-zinc-900 text-zinc-500"
+      }`}>
         {label}
       </div>
       
       {p ? (
         <div className="flex justify-between items-center group">
           <div className="min-w-0 pr-2">
-            <div className={`font-bold text-sm truncate ${type === "final" ? "text-red-100" : "text-white"}`}>
+            <div className={`font-bold text-sm truncate ${
+              slotNumber === "W" ? "text-yellow-100" : type === "final" ? "text-red-100" : "text-white"
+            }`}>
               {p.call_name || p.name.split(" ")[0]}
             </div>
             {p.partner && p.partner !== "-" && (
-              <div className={`text-[10px] truncate ${type === "final" ? "text-red-300" : "text-zinc-400"}`}>
+              <div className={`text-[10px] truncate ${
+                slotNumber === "W" ? "text-yellow-300/80" : type === "final" ? "text-red-300" : "text-zinc-400"
+              }`}>
                 & {p.partner.split(" ")[0]}
               </div>
             )}
@@ -180,8 +198,8 @@ function SlotBox({ slotNumber, type = "bracket", participants, category, onDrop,
       ) : (
         <div className={`h-10 flex items-center justify-center text-xs font-medium ${
           hasSelection && !p
-            ? type === "final" ? "text-red-400" : "text-blue-400"
-            : type === "final" ? "text-red-900/50" : "text-zinc-500"
+            ? slotNumber === "W" ? "text-yellow-400" : type === "final" ? "text-red-400" : "text-blue-400"
+            : slotNumber === "W" ? "text-yellow-900/50" : type === "final" ? "text-red-900/50" : "text-zinc-500"
         }`}>
           {hasSelection && !p ? "Tap untuk tempatkan" : "Drag nama ke sini"}
         </div>
@@ -964,8 +982,13 @@ export default function AdminDashboard() {
                         {/* Final Left Box */}
                         <SlotBox slotNumber="L" type="final" participants={participants} category={bracketCategory} onDrop={handleDropToSlot} onRemove={handleRemoveFromSlot} selectedParticipantId={selectedParticipantId} onTapSlot={handleTapSlot} />
                         
-                        <div className="flex flex-col items-center justify-center my-2">
-                          <Trophy className="w-10 h-10 md:w-14 md:h-14 text-yellow-500 drop-shadow-[0_0_15px_rgba(234,179,8,0.3)] mb-2" strokeWidth={1.5} />
+                        <div className="flex flex-col items-center justify-center my-2 w-full">
+                          <Trophy className="w-10 h-10 md:w-14 md:h-14 text-yellow-500 drop-shadow-[0_0_15px_rgba(234,179,8,0.3)] mb-2.5" strokeWidth={1.5} />
+                          
+                          <div className="w-full mb-3">
+                            <SlotBox slotNumber="W" type="final" participants={participants} category={bracketCategory} onDrop={handleDropToSlot} onRemove={handleRemoveFromSlot} selectedParticipantId={selectedParticipantId} onTapSlot={handleTapSlot} />
+                          </div>
+
                           <div className="bg-gradient-to-r from-red-600 to-red-700 text-white font-black px-2 py-1 md:px-3 md:py-1 text-[9px] md:text-[10px] tracking-widest rounded shadow-[0_0_20px_rgba(220,38,38,0.3)] text-center whitespace-nowrap">
                             GRAND FINAL
                           </div>

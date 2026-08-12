@@ -139,7 +139,7 @@ export default function BadmintonScoreCounter() {
 
 
   // Update Bracket API
-  const updateBracketFinalist = async (participantId: string, position: "L" | "R") => {
+  const updateBracketFinalist = async (participantId: string, position: "L" | "R" | "W") => {
     try {
       const p = participants.find(x => x.id === participantId);
       if (!p) return;
@@ -245,13 +245,16 @@ export default function BadmintonScoreCounter() {
     const matchOver = newSetsA === 2 || newSetsB === 2;
     if (matchOver) {
       setIsMatchOver(true);
-      // Auto update bracket if Semi Final
+      // Auto update bracket if Semi Final or Grand Final
       if (selectedMatch === "SF1") {
         const winnerP = newSetsA === 2 ? participantA : participantB;
         if (winnerP?.id) updateBracketFinalist(winnerP.id, "L");
       } else if (selectedMatch === "SF2") {
         const winnerP = newSetsA === 2 ? participantA : participantB;
         if (winnerP?.id) updateBracketFinalist(winnerP.id, "R");
+      } else if (selectedMatch === "F") {
+        const winnerP = newSetsA === 2 ? participantA : participantB;
+        if (winnerP?.id) updateBracketFinalist(winnerP.id, "W");
       }
     }
 
@@ -275,10 +278,10 @@ export default function BadmintonScoreCounter() {
       if (winner === "A") setSetsWonA(setsWonA - 1);
       if (winner === "B") setSetsWonB(setsWonB - 1);
       
-      // Revert bracket auto-update if it was a Semi Final
+      // Revert bracket auto-update if it was a Semi Final or Grand Final
       if (setsWonA === 2 || setsWonB === 2) {
         const winnerP = setsWonA === 2 ? participantA : participantB;
-        if (winnerP?.id && (selectedMatch === "SF1" || selectedMatch === "SF2")) {
+        if (winnerP?.id && (selectedMatch === "SF1" || selectedMatch === "SF2" || selectedMatch === "F")) {
           // Clear final position
           updateBracketFinalist(winnerP.id, null as any);
         }

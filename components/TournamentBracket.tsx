@@ -151,6 +151,12 @@ export default function TournamentBracket() {
     ) || null;
   };
 
+  const getWinner = (category: string): Participant | null => {
+    return participants.find(
+      (p) => p.category === category && p.final_position === "W"
+    ) || null;
+  };
+
   const getSlotData = (category: string, bracketPosition: string, defaultFloor: string): SlotData => {
     const p = getParticipant(category, bracketPosition);
     
@@ -214,65 +220,144 @@ export default function TournamentBracket() {
 
   const slots = getSlots();
 
-  const TeamBox = ({ slot }: { slot: SlotData }) => {
+  const TeamBox = ({ slot, align = "left" }: { slot: SlotData; align?: "left" | "right" }) => {
     return (
-      <div className="relative group w-full">
-        {/* Hover glow */}
-        <div className="absolute inset-0 bg-primary/15 blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl"></div>
+      <div className={clsx(
+        "flex items-center gap-2.5 py-2 px-3 rounded-lg transition-all duration-200",
+        "bg-white/[0.03] border border-white/[0.06] hover:bg-white/[0.06] hover:border-white/10",
+        align === "right" && "flex-row-reverse"
+      )}>
+        {/* Avatar */}
+        {slot.isDouble ? (
+          <div className="relative flex shrink-0">
+            <PlayerAvatar name={slot.name} photoUrl={slot.photoUrl} size="sm" />
+            <div className="-ml-2 ring-2 ring-[#0a0a0c] rounded-full">
+              <PlayerAvatar name={slot.partner || "P"} photoUrl={slot.partnerPhotoUrl} size="sm" />
+            </div>
+          </div>
+        ) : (
+          <PlayerAvatar name={slot.name} photoUrl={slot.photoUrl} size="sm" />
+        )}
 
-        <div className="relative bg-gradient-to-br from-[#1c1c1e] to-[#0f0f0f] border border-white/10 rounded-xl px-4 py-3 text-white shadow-xl group-hover:border-primary/40 transition-all duration-300">
-          {/* Header: floor label + status dot */}
+        {/* Text */}
+        <div className={clsx("flex flex-col", align === "right" && "items-end")}>
+          <span className={clsx(
+            "text-[11px] font-bold uppercase leading-tight",
+            slot.isTBD ? "text-white/20" : "text-white"
+          )}>
+            {slot.isDouble && slot.partner ? `${slot.name} & ${slot.partner}` : slot.name}
+          </span>
+          <span className="text-[9px] font-semibold text-primary/60 uppercase tracking-wider">
+            {slot.floor}
+          </span>
+        </div>
+      </div>
+    );
+  };
+
+  const FinalistBox = ({ participant, position, winner }: { participant: Participant | null; position: "L" | "R"; winner: Participant | null }) => {
+    const isTBD = !participant;
+    const isWinner = winner && participant && winner.id === participant.id;
+    const isLoser = winner && participant && winner.id !== participant.id;
+    
+    let name = "TBD";
+    let partner = "";
+    let photoUrl = "";
+    let partnerPhotoUrl = "";
+    let floor = position === "L" ? "Finalis L" : "Finalis R";
+    const isDouble = activeTab === "Ganda Campuran";
+
+    if (participant) {
+      floor = participant.floor || "";
+      if (isDouble) {
+        name = participant.call_name || participant.name.split(" ")[0];
+        partner = participant.partner && participant.partner !== "-" ? participant.partner.split(" ")[0] : "Partner";
+        photoUrl = participant.photo_url || "";
+        partnerPhotoUrl = participant.partner_photo_url || "";
+      } else {
+        name = participant.call_name || participant.name.split(" ").slice(0, 2).join(" ");
+        photoUrl = participant.photo_url || "";
+      }
+    }
+
+    return (
+      <div className="relative group w-44 shrink-0">
+        {!isTBD && !isLoser && (
+          <div className={clsx(
+            "absolute inset-0 blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl",
+            isWinner ? "bg-yellow-500/10" : "bg-red-600/10"
+          )}></div>
+        )}
+
+        <div className={clsx(
+          "relative bg-gradient-to-br from-[#1c1c1e] to-[#0f0f0f] border rounded-xl px-3.5 py-3 text-white shadow-xl transition-all duration-300",
+          isTBD 
+            ? "border-white/5 opacity-30" 
+            : isWinner
+              ? "border-yellow-500/50 shadow-[0_0_20px_rgba(234,179,8,0.2)] bg-gradient-to-br from-[#221a08] to-[#0c0a05]"
+              : isLoser
+                ? "border-white/5 opacity-30 grayscale"
+                : "border-red-500/30 group-hover:border-red-500/50 shadow-[0_0_15px_rgba(220,38,38,0.1)]"
+        )}>
           <div className="flex justify-between items-center mb-2.5">
-            <span className="text-[10px] text-primary font-black tracking-[0.25em] uppercase">{slot.floor}</span>
-            <div className={clsx("w-1.5 h-1.5 rounded-full", slot.isTBD ? "bg-white/20" : "bg-green-500 shadow-[0_0_6px_#22c55e]")}></div>
+            <span className={clsx(
+              "text-[9px] font-black tracking-widest uppercase",
+              isWinner ? "text-yellow-400" : isTBD ? "text-white/30" : "text-red-400"
+            )}>
+              {isTBD ? `FINALIS ${position}` : floor || `FINALIS ${position}`}
+            </span>
+            <div className={clsx(
+              "w-1.5 h-1.5 rounded-full",
+              isTBD 
+                ? "bg-white/20" 
+                : isWinner 
+                  ? "bg-yellow-500 shadow-[0_0_6px_#eab308]" 
+                  : "bg-red-500 shadow-[0_0_6px_#ef4444]"
+            )}></div>
           </div>
 
-          {/* Avatar + Name */}
-          <div className="flex items-center gap-3 md:gap-4">
-            {/* Avatars */}
-            {slot.isDouble ? (
-              <div className="relative flex shrink-0">
-                <div className="relative z-10">
-                  <PlayerAvatar name={slot.name} photoUrl={slot.photoUrl} size="sm" />
+          <div className="flex items-center gap-3">
+            {isTBD ? (
+              <>
+                <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center font-bold text-white/10 text-xs shrink-0">
+                  ?
                 </div>
-                <div className="-ml-3 ring-4 ring-[#1c1c1e] rounded-full relative z-20">
-                  <PlayerAvatar name={slot.partner || "P"} photoUrl={slot.partnerPhotoUrl} size="sm" />
-                </div>
-              </div>
+                <span className="text-xs font-bold text-white/20 uppercase tracking-wider">TBD</span>
+              </>
             ) : (
-              <PlayerAvatar name={slot.name} photoUrl={slot.photoUrl} size="md" />
+              <>
+                {isDouble ? (
+                  <div className="relative flex shrink-0">
+                    <div className="relative z-10">
+                      <PlayerAvatar name={name} photoUrl={photoUrl} size="sm" />
+                    </div>
+                    <div className="-ml-3 ring-4 ring-[#1c1c1e] rounded-full relative z-20">
+                      <PlayerAvatar name={partner || "P"} photoUrl={partnerPhotoUrl} size="sm" />
+                    </div>
+                  </div>
+                ) : (
+                  <PlayerAvatar name={name} photoUrl={photoUrl} size="sm" />
+                )}
+
+                <div className="flex flex-col overflow-hidden">
+                  {isDouble ? (
+                    <>
+                      <span className="text-xs font-black truncate uppercase leading-tight text-white">
+                        {name}
+                      </span>
+                      <span className="text-[10px] font-bold truncate uppercase text-white/50 leading-tight">
+                        &amp; {partner}
+                      </span>
+                    </>
+                  ) : (
+                    <span className="text-xs font-black truncate uppercase leading-tight text-white">
+                      {name}
+                    </span>
+                  )}
+                </div>
+              </>
             )}
-
-            {/* Name(s) */}
-            <div className="flex flex-col overflow-hidden">
-              {slot.isDouble ? (
-                <>
-                  <span className={clsx("text-sm font-black truncate uppercase leading-tight", slot.isTBD ? "text-white/25" : "text-white")}>
-                    {slot.name}
-                  </span>
-                  <span className="text-xs font-bold truncate uppercase text-white/50 leading-tight">
-                    &amp; {slot.partner}
-                  </span>
-                </>
-              ) : (
-                <span className={clsx("text-sm font-black truncate uppercase leading-tight", slot.isTBD ? "text-white/25" : "text-white")}>
-                  {slot.name}
-                </span>
-              )}
-            </div>
           </div>
-
-          {/* Schedule info chip */}
-          {slot.scheduleInfo && (
-            <div className="mt-3 pt-2.5 border-t border-white/5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-white/40 font-medium">
-              <span className="bg-white/5 px-1.5 py-0.5 rounded font-bold text-white/60">{slot.scheduleInfo.day}</span>
-              <span>{slot.scheduleInfo.time}</span>
-              <span className="text-primary/70 font-bold">{slot.scheduleInfo.court}</span>
-              {slot.scheduleInfo.referee && (
-                <span className="ml-auto text-white/30 font-medium">🏸 {slot.scheduleInfo.referee}</span>
-              )}
-            </div>
-          )}
         </div>
       </div>
     );
@@ -309,111 +394,123 @@ export default function TournamentBracket() {
         </div>
       </div>
 
-      {/* Bracket Container — scrollable on mobile */}
       <div className="w-full overflow-x-auto hide-scrollbar pb-6 md:pb-0">
-        <div className="bg-[#0a0a0c] border border-gray-800 rounded-3xl relative shadow-2xl min-w-[800px]">
+        <div className="bg-[#0a0a0c] border border-gray-800 rounded-3xl relative shadow-2xl" style={{ minWidth: "900px" }}>
           {/* Ambient glow */}
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-primary/5 blur-[120px] rounded-full pointer-events-none" />
 
-          <div className="p-6 md:p-10 w-full flex items-center justify-between gap-2 relative z-10">
+          <div className="p-6 md:p-10 w-full flex items-center relative z-10" style={{ gap: 0 }}>
+            {(() => {
+              const fL = getFinalist(activeTab, "L");
+              const fR = getFinalist(activeTab, "R");
+              const winner = getWinner(activeTab);
 
-            {/* LEFT BRACKET */}
-            <div className="flex items-center flex-1 min-w-0">
-              <div className="flex flex-col gap-6 flex-1 min-w-0">
-                <TeamBox slot={slots[0]} />
-                <TeamBox slot={slots[1]} />
-              </div>
-              {/* L-shaped connector */}
-              <div className="w-8 shrink-0 border-y-2 border-r-2 border-white/10 h-[100px] rounded-r-xl" />
-              <div className="w-6 shrink-0 border-b-2 border-white/10" />
-            </div>
-
-            {/* CENTER TROPHY + GRAND FINAL */}
-            <div className="flex flex-col items-center gap-4 px-3 md:px-6 relative z-20 shrink-0">
-              <div className="relative group cursor-default">
-                <div className="absolute inset-0 bg-yellow-500/25 blur-3xl rounded-full group-hover:bg-yellow-500/35 transition-all duration-500" />
-                <Trophy
-                  className="w-16 h-16 md:w-24 md:h-24 text-yellow-400 drop-shadow-[0_0_24px_rgba(250,204,21,0.7)] relative z-10 transition-transform duration-500 group-hover:scale-110"
-                  strokeWidth={1}
-                />
-              </div>
-
-              {/* Grand Final box with finalists */}
-              <div
-                className="relative p-[2px] rounded-sm shadow-[0_0_30px_rgba(227,30,36,0.2)]"
-                style={{ background: "linear-gradient(90deg, #e31e24, #b91c1c)" }}
-              >
-                <div className="bg-[#0a0a0c] px-5 md:px-8 py-3 text-center rounded-sm">
-                  <div className="tracking-widest text-sm md:text-base font-black text-white whitespace-nowrap">
-                    GRAND FINAL
+              return (
+                <>
+                  {/* LEFT SEMI-FINAL COLUMN */}
+                  <div className="flex-1 flex flex-col gap-2" style={{ minWidth: "150px", maxWidth: "180px" }}>
+                    <TeamBox slot={slots[0]} />
+                    <div className="h-px bg-white/[0.06] mx-2" />
+                    <TeamBox slot={slots[1]} />
                   </div>
-                  {/* Grand Final schedule info */}
-                  {(() => {
-                    const finalKey = getMatchKey(activeTab, "F");
-                    const finalRow = schedules.find(s => s.match_key === finalKey);
-                    if (!finalRow) return null;
-                    return (
-                      <div className="flex items-center justify-center gap-2 mt-1.5 text-[9px] text-white/40 font-medium">
-                        <span className="bg-white/5 px-1.5 py-0.5 rounded font-bold text-white/50">{finalRow.day}</span>
-                        <span>{finalRow.time}</span>
-                        <span className="text-red-400/80 font-bold">{finalRow.court}</span>
-                      </div>
-                    );
-                  })()}
-                </div>
-              </div>
 
-              {/* Finalists panel */}
-              {(() => {
-                const fL = getFinalist(activeTab, "L");
-                const fR = getFinalist(activeTab, "R");
-                if (!fL && !fR) return null;
-                return (
-                  <div className="w-full flex flex-col gap-2 mt-1">
-                    {[fL, fR].map((f, idx) =>
-                      f ? (
+                  {/* LEFT CONNECTOR: bracket brace → line */}
+                  <div className="flex items-center shrink-0" style={{ width: "48px" }}>
+                    <div className="flex-1 border-y-2 border-r-2 border-white/10 rounded-r-lg" style={{ height: "72px" }} />
+                    <div className="w-3 border-b-2 border-white/10" />
+                  </div>
+
+                  {/* LEFT FINALIST */}
+                  <div className="shrink-0">
+                    <FinalistBox participant={fL} position="L" winner={winner} />
+                  </div>
+
+                  {/* LINE: finalist → grand final */}
+                  <div className="flex-1 border-b-2 border-white/10" style={{ minWidth: "12px", maxWidth: "32px" }} />
+
+                  {/* CENTER COLUMN (GRAND FINAL & CHAMPION) */}
+                  <div className="flex flex-col items-center gap-3 px-2 relative z-20 shrink-0" style={{ width: "190px" }}>
+                    {/* Champion or Trophy icon */}
+                    {winner ? (
+                      <div className="flex flex-col items-center gap-2">
+                        <div className="relative">
+                          <div className="absolute inset-0 bg-yellow-500/25 blur-xl rounded-full" />
+                          <Trophy className="w-12 h-12 text-yellow-400 drop-shadow-[0_0_12px_rgba(250,204,21,0.6)] relative z-10" strokeWidth={1.5} />
+                        </div>
                         <div
-                          key={idx}
-                          className="flex items-center gap-2 bg-gradient-to-r from-red-950/80 to-[#0a0a0c] border border-red-800/40 rounded-lg px-3 py-2"
+                          className="w-full rounded-xl p-px"
+                          style={{ background: "linear-gradient(135deg, #eab308, #ca8a04)" }}
                         >
-                          <PlayerAvatar name={f.call_name || f.name} photoUrl={f.photo_url} size="sm" />
-                          <div className="flex flex-col min-w-0">
-                            <span className="text-white font-black text-xs uppercase tracking-wide truncate">
-                              {activeTab === "Ganda Campuran" && f.partner && f.partner !== "-"
-                                ? `${f.call_name || f.name.split(" ")[0]} & ${f.partner.split(" ")[0]}`
-                                : f.call_name || f.name.split(" ").slice(0, 2).join(" ")}
-                            </span>
-                            <span className="text-red-400 text-[9px] font-bold uppercase tracking-widest">
-                              {idx === 0 ? "Finalis" : "Finalis"}
-                            </span>
+                          <div className="bg-[#0c0a05] rounded-xl px-3 py-2 text-center">
+                            <div className="text-[8px] font-black text-yellow-400 tracking-[0.2em] uppercase mb-1">🏆 CHAMPION 🏆</div>
+                            <div className="text-[11px] font-black text-white uppercase truncate">
+                              {activeTab === "Ganda Campuran" && winner.partner && winner.partner !== "-"
+                                ? `${winner.call_name || winner.name.split(" ")[0]} & ${winner.partner.split(" ")[0]}`
+                                : winner.call_name || winner.name.split(" ").slice(0, 2).join(" ")}
+                            </div>
+                            <div className="text-[9px] text-yellow-500/60 font-semibold uppercase tracking-widest">{winner.floor}</div>
                           </div>
                         </div>
-                      ) : (
-                        <div
-                          key={idx}
-                          className="flex items-center gap-2 bg-[#0a0a0c] border border-white/5 rounded-lg px-3 py-2 opacity-40"
-                        >
-                          <div className="w-12 h-12 rounded-full bg-white/5 shrink-0" />
-                          <span className="text-white/20 font-bold text-xs uppercase tracking-wide">TBD</span>
-                        </div>
-                      )
+                      </div>
+                    ) : (
+                      <div className="relative">
+                        <div className="absolute inset-0 bg-white/5 blur-xl rounded-full" />
+                        <Trophy className="w-10 h-10 text-white/15 relative z-10" strokeWidth={1} />
+                      </div>
                     )}
+
+                    {/* GRAND FINAL Badge */}
+                    <div
+                      className="w-full rounded-xl p-px"
+                      style={{ background: "linear-gradient(135deg, #e31e24, #991b1b)" }}
+                    >
+                      <div className="bg-[#0a0a0c] rounded-xl px-3 py-2.5 text-center">
+                        <div className="text-[11px] font-black text-white tracking-[0.2em] uppercase">GRAND FINAL</div>
+                        {!winner && (
+                          <div className="text-[9px] font-bold text-red-400 tracking-widest mt-0.5 animate-pulse">VS</div>
+                        )}
+                        {winner && (
+                          <div className="text-[8px] font-bold text-green-400 tracking-wider mt-0.5 uppercase">Selesai ✓</div>
+                        )}
+                        {(() => {
+                          const finalKey = getMatchKey(activeTab, "F");
+                          const finalRow = schedules.find(s => s.match_key === finalKey);
+                          if (!finalRow) return null;
+                          return (
+                            <div className="flex items-center justify-center gap-1 mt-1.5 text-[8px] text-white/30">
+                              <span className="bg-white/5 px-1 py-0.5 rounded text-white/40 font-bold">{finalRow.day}</span>
+                              <span>{finalRow.time}</span>
+                              <span className="text-red-400/70 font-bold">{finalRow.court}</span>
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    </div>
                   </div>
-                );
-              })()}
-            </div>
 
-            {/* RIGHT BRACKET */}
-            <div className="flex items-center flex-row-reverse flex-1 min-w-0">
-              <div className="flex flex-col gap-6 flex-1 min-w-0">
-                <TeamBox slot={slots[2]} />
-                <TeamBox slot={slots[3]} />
-              </div>
-              {/* L-shaped connector */}
-              <div className="w-8 shrink-0 border-y-2 border-l-2 border-white/10 h-[100px] rounded-l-xl" />
-              <div className="w-6 shrink-0 border-b-2 border-white/10" />
-            </div>
+                  {/* LINE: grand final → right finalist */}
+                  <div className="flex-1 border-b-2 border-white/10" style={{ minWidth: "12px", maxWidth: "32px" }} />
 
+                  {/* RIGHT FINALIST */}
+                  <div className="shrink-0">
+                    <FinalistBox participant={fR} position="R" winner={winner} />
+                  </div>
+
+                  {/* RIGHT CONNECTOR: line ← bracket brace */}
+                  <div className="flex items-center shrink-0" style={{ width: "48px" }}>
+                    <div className="w-3 border-b-2 border-white/10" />
+                    <div className="flex-1 border-y-2 border-l-2 border-white/10 rounded-l-lg" style={{ height: "72px" }} />
+                  </div>
+
+                  {/* RIGHT SEMI-FINAL COLUMN */}
+                  <div className="flex-1 flex flex-col gap-2" style={{ minWidth: "150px", maxWidth: "180px" }}>
+                    <TeamBox slot={slots[2]} align="right" />
+                    <div className="h-px bg-white/[0.06] mx-2" />
+                    <TeamBox slot={slots[3]} align="right" />
+                  </div>
+                </>
+              );
+            })()}
           </div>
         </div>
       </div>
