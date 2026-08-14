@@ -113,10 +113,19 @@ function StatCard({ icon, label, value, delta }: { icon: React.ReactNode; label:
 }
 
 function SlotBox({ slotNumber, type = "bracket", participants, category, onDrop, onRemove, selectedParticipantId, onTapSlot }: any) {
-  const p = participants.find((x: any) => 
-    x.category === category && 
-    (type === "bracket" ? x.bracket_position === slotNumber : x.final_position === slotNumber)
-  );
+  const p = participants.find((x: any) => {
+    if (x.category !== category) return false;
+    if (type === "bracket") return x.bracket_position === slotNumber;
+    
+    if (x.final_position === slotNumber) return true;
+    
+    // If the slot is L or R, and the participant is the Winner (W), show them here too if they came from this side
+    if (type === "final" && (slotNumber === "L" || slotNumber === "R") && x.final_position === "W") {
+      if (slotNumber === "L" && (x.bracket_position === "1" || x.bracket_position === "2")) return true;
+      if (slotNumber === "R" && (x.bracket_position === "3" || x.bracket_position === "4")) return true;
+    }
+    return false;
+  });
   const [isDragOver, setIsDragOver] = useState(false);
   const hasSelection = !!selectedParticipantId;
 

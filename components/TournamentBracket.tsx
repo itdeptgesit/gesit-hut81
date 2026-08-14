@@ -147,7 +147,15 @@ export default function TournamentBracket() {
 
   const getFinalist = (category: string, finalPosition: "L" | "R"): Participant | null => {
     return participants.find(
-      (p) => p.category === category && p.final_position === finalPosition
+      (p) => {
+        if (p.category !== category) return false;
+        if (p.final_position === finalPosition) return true;
+        if (p.final_position === "W") {
+          if (finalPosition === "L" && (p.bracket_position === "1" || p.bracket_position === "2")) return true;
+          if (finalPosition === "R" && (p.bracket_position === "3" || p.bracket_position === "4")) return true;
+        }
+        return false;
+      }
     ) || null;
   };
 
