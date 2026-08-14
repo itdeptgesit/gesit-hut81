@@ -237,7 +237,8 @@ export default function AdminDashboard() {
   const [judges, setJudges] = useState<any[]>([]);
   const [newJudgeName, setNewJudgeName] = useState("");
   const [newJudgePin, setNewJudgePin] = useState("");
-  const [competitionTitle, setCompetitionTitle] = useState("FUN GAMES");
+  const [competitionTitle, setCompetitionTitle] = useState("Perform Yel-Yel");
+  const [timerEnd, setTimerEnd] = useState<number | null>(null);
   
   // UI States
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -247,6 +248,13 @@ export default function AdminDashboard() {
   const [editingParticipant, setEditingParticipant] = useState<Participant | null>(null);
   const [isNewParticipant, setIsNewParticipant] = useState(false);
   const [savingParticipant, setSavingParticipant] = useState(false);
+
+  // Toast Notification State
+  const [toast, setToast] = useState<{message: string, type: 'success'|'error'} | null>(null);
+  const showToast = useCallback((message: string, type: 'success'|'error' = 'success') => {
+    setToast({message, type});
+    setTimeout(() => setToast(null), 3500);
+  }, []);
 
   // Bracket Drag & Drop States
   const [bracketCategory, setBracketCategory] = useState("Single Putra");
@@ -325,7 +333,7 @@ export default function AdminDashboard() {
 
   const fetchGroupScores = useCallback(async () => {
     setGroupScoresLoading(true);
-    const { data } = await supabase.from("group_scores").select("*").order("score", { ascending: false });
+    const { data } = await supabase.from("group_scores").select("*").order("group_name", { ascending: true });
     setGroupScores(data || []);
     setGroupScoresLoading(false);
   }, []);
@@ -338,12 +346,15 @@ export default function AdminDashboard() {
   const fetchSettings = useCallback(async () => {
     const { data } = await supabase
       .from("settings")
-      .select("value")
-      .eq("key", "competition_title")
-      .single();
+      .select("key, value")
+      .in("key", ["competition_title", "timer_end"]);
       
-    if (data && data.value) {
-      setCompetitionTitle(data.value);
+    if (data) {
+      const title = data.find(d => d.key === "competition_title")?.value;
+      if (title) setCompetitionTitle(title);
+      
+      const timer = data.find(d => d.key === "timer_end")?.value;
+      if (timer) setTimerEnd(parseInt(timer));
     }
   }, []);
 
@@ -1276,6 +1287,22 @@ export default function AdminDashboard() {
                       <RefreshCw size={14} /> Sync dari Tim
                     </button>
                     <button 
+                      onClick={async () => {
+                        const newTimerEnd = timerEnd && timerEnd > Date.now() ? 0 : Date.now() + 10 * 60 * 1000;
+                        await fetch("/api/settings", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ key: "timer_end", value: newTimerEnd.toString() })
+                        });
+                        setTimerEnd(newTimerEnd);
+                      }}
+                      className={`inline-flex items-center gap-1 text-white text-xs font-medium px-3 py-1.5 rounded-lg transition-colors ${
+                        timerEnd && timerEnd > Date.now() ? "bg-red-600 hover:bg-red-700" : "bg-emerald-600 hover:bg-emerald-700"
+                      }`}
+                    >
+                      <Circle size={14} /> {timerEnd && timerEnd > Date.now() ? "Stop Timer" : "Start Timer (10m)"}
+                    </button>
+                    <button 
                       onClick={() => {
                         setIsNewGroupScore(true);
                         setEditingGroupScore({ id: "", group_name: "", score: 0 });
@@ -1314,11 +1341,7 @@ export default function AdminDashboard() {
                         {groupScores.map((g, index) => (
                           <tr key={g.id} className="hover:bg-zinc-50 transition-colors">
                             <td className="px-4 py-3 text-center">
-                              <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold ${
-                                index === 0 ? "bg-yellow-100 text-yellow-700" :
-                                index === 1 ? "bg-zinc-200 text-zinc-600" :
-                                index === 2 ? "bg-orange-100 text-orange-700" : "text-zinc-400"
-                              }`}>
+                              <span className="inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold bg-zinc-100 text-zinc-500">
                                 {index + 1}
                               </span>
                             </td>
@@ -1367,12 +1390,19 @@ export default function AdminDashboard() {
                 <div>
                   <label className="block text-sm font-semibold text-zinc-700 mb-2">Judul Lomba Saat Ini</label>
                   <div className="flex gap-2">
-                    <input 
-                      type="text" 
-                      value={competitionTitle} 
+                    <select
+                      value={competitionTitle}
                       onChange={(e) => setCompetitionTitle(e.target.value)}
-                      className="flex-1 p-2 border border-zinc-300 rounded-lg text-sm font-bold uppercase focus:ring-2 focus:ring-zinc-900 focus:outline-none"
-                    />
+                      className="flex-1 p-2 border border-zinc-300 rounded-lg text-sm font-bold uppercase focus:ring-2 focus:ring-zinc-900 focus:outline-none bg-white"
+                    >
+                      <option value="Perform Yel-Yel">Perform Yel-Yel</option>
+                      <option value="Fun Games - Quiz Challenge">Fun Games - Quiz Challenge</option>
+                      <option value="Fun Games - Word Puzzle">Fun Games - Word Puzzle</option>
+                      <option value="Fun Games - Estafet Sedotan">Fun Games - Estafet Sedotan</option>
+                      <option value="Fun Games - Cup Rush">Fun Games - Cup Rush</option>
+                      <option value="Best Costume">Best Costume</option>
+                      <option value="Potluck - Pesta Rasa Merah Putih">Potluck - Pesta Rasa Merah Putih</option>
+                    </select>
                     <button 
                       onClick={async () => {
                         const res = await fetch("/api/settings", {
@@ -1380,14 +1410,15 @@ export default function AdminDashboard() {
                           headers: { "Content-Type": "application/json" },
                           body: JSON.stringify({ key: "competition_title", value: competitionTitle })
                         });
-                        if (res.ok) alert("Judul lomba berhasil disimpan!");
+                        if (res.ok) showToast("Lomba berhasil dimainkan! Judul terupdate di Portal Juri.", "success");
+                        else showToast("Gagal memainkan lomba.", "error");
                       }}
                       className="bg-zinc-900 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-zinc-800 transition-colors"
                     >
-                      Simpan Judul
+                      Mainkan Lomba
                     </button>
                   </div>
-                  <p className="text-xs text-zinc-500 mt-1">Judul ini akan otomatis muncul di Portal Juri secara real-time.</p>
+                  <p className="text-xs text-zinc-500 mt-1">Lomba yang dimainkan akan otomatis muncul di Portal Juri secara real-time.</p>
                 </div>
 
                 <div className="border-t border-zinc-200 pt-6">
@@ -2124,6 +2155,21 @@ export default function AdminDashboard() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Global Toast Notification */}
+      {toast && (
+        <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[100] animate-in fade-in slide-in-from-top-5">
+          <div className={`flex items-center gap-3 px-5 py-3 rounded-2xl shadow-xl border-2 ${
+            toast.type === 'success' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-red-50 border-red-200 text-red-800'
+          }`}>
+            {toast.type === 'success' ? <CheckCircle2 size={20} className="text-emerald-600" /> : <X size={20} className="text-red-600" />}
+            <span className="font-bold text-sm">{toast.message}</span>
+            <button onClick={() => setToast(null)} className="ml-2 opacity-50 hover:opacity-100 transition-opacity">
+              <X size={16} />
+            </button>
           </div>
         </div>
       )}

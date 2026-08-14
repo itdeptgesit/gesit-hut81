@@ -22,20 +22,52 @@ export default function ScoreboardPage() {
   const [scores, setScores] = useState<GroupScore[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  const [timerEnd, setTimerEnd] = useState<number | null>(null);
+  const [timeLeft, setTimeLeft] = useState<number>(0);
 
   const allZero = scores.length > 0 && scores.every((s) => s.score === 0);
 
   useEffect(() => {
     fetchScores();
     fetchTeams();
+    fetchSettings();
     const channel = supabase
       .channel("scoreboard:group_scores")
       .on("postgres_changes", { event: "*", schema: "public", table: "group_scores" }, fetchScores)
       .subscribe();
+      
+    const pollSettings = setInterval(fetchSettings, 3000);
+      
     return () => {
       supabase.removeChannel(channel);
+      clearInterval(pollSettings);
     };
   }, []);
+
+  useEffect(() => {
+    if (!timerEnd || timerEnd <= Date.now()) {
+      setTimeLeft(0);
+      return;
+    }
+    
+    const interval = setInterval(() => {
+      setTimeLeft(Math.max(0, timerEnd - Date.now()));
+    }, 100);
+    
+    return () => clearInterval(interval);
+  }, [timerEnd]);
+
+  const fetchSettings = async () => {
+    try {
+      const { data } = await supabase.from("settings").select("value").eq("key", "timer_end").single();
+      if (data && data.value) {
+        setTimerEnd(parseInt(data.value));
+      } else {
+        setTimerEnd(null);
+      }
+    } catch {}
+  };
 
   const fetchTeams = async () => {
     try {
@@ -123,6 +155,14 @@ export default function ScoreboardPage() {
             <div className="w-12 h-12 border-4 border-[#E31E24]/20 border-t-[#E31E24] rounded-full animate-spin" />
             <p className="text-[#102A4C]/60 font-bold text-sm tracking-wide">Memuat klasemen live...</p>
           </div>
+        ) : timerEnd && timeLeft > 0 ? (
+          <div className="flex-1 flex flex-col items-center justify-center gap-6">
+            <h2 className="text-3xl md:text-5xl font-black text-[#102A4C] uppercase tracking-[0.2em]">Waktu Tersisa</h2>
+            <div className="font-mono text-7xl md:text-[12rem] lg:text-[16rem] leading-none font-black text-[#E31E24] drop-shadow-[0_10px_10px_rgba(227,30,36,0.2)] bg-white/50 px-12 py-8 rounded-[3rem] border-4 border-white shadow-2xl backdrop-blur-sm tracking-tighter tabular-nums">
+              {Math.floor(timeLeft / 60000).toString().padStart(2, '0')}:
+              {Math.floor((timeLeft % 60000) / 1000).toString().padStart(2, '0')}
+            </div>
+          </div>
         ) : scores.length === 0 ? (
           <div className="flex-1 flex flex-col items-center justify-center bg-white/60 backdrop-blur-md rounded-3xl border border-white/80 shadow-lg">
             <p className="text-[#102A4C]/50 font-bold text-lg">Belum ada skor terdaftar</p>
@@ -141,7 +181,9 @@ export default function ScoreboardPage() {
 
             {/* Responsive Columns Grid (Fits Screen Seamlessly) */}
             <div className="flex-1 min-h-0 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
-              {scores.map((group, idx) => {
+              {[...scores]
+                .sort((a, b) => a.group_name.localeCompare(b.group_name, undefined, { numeric: true }))
+                .map((group, idx) => {
                 const team = teams.find(
                   (t) =>
                     t.team_name.toLowerCase().replace(/\s+/g, "") ===
@@ -181,20 +223,23 @@ export default function ScoreboardPage() {
                     <div className="flex-1 min-h-0 overflow-hidden py-1.5 flex flex-col justify-center">
                       {memberList.length > 0 ? (
                         <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-2 gap-y-1">
-                          {memberList.map((member, mIdx) => (
-                            <li
-                              key={mIdx}
-                              className="flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg transition-colors hover:bg-slate-100/50"
-                            >
-                              <span className="w-1.5 h-1.5 rounded-full bg-[#E31E24]/60 shrink-0" />
-                              <span
-                                className="text-[11px] lg:text-xs leading-tight truncate font-semibold text-[#102A4C]/85"
-                                title={member}
+                          {memberList.map((member, mIdx) => {
+                            const isAbsent = member.includes("(PERDIN)") || member.includes("(Cuti)") || member.includes("(undur join date)");
+                            return (
+                              <li
+                                key={mIdx}
+                                className={`flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg transition-colors ${isAbsent ? "bg-red-50/80 hover:bg-red-100" : "hover:bg-slate-100/50"}`}
                               >
-                                {member}
-                              </span>
-                            </li>
-                          ))}
+                                <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isAbsent ? "bg-[#E31E24]" : "bg-[#E31E24]/60"}`} />
+                                <span
+                                  className={`text-[11px] lg:text-xs leading-tight truncate font-semibold ${isAbsent ? "text-[#E31E24]" : "text-[#102A4C]/85"}`}
+                                  title={member}
+                                >
+                                  {member}
+                                </span>
+                              </li>
+                            );
+                          })}
                         </ul>
                       ) : (
                         <p className="text-xs text-[#102A4C]/40 italic text-center py-4">

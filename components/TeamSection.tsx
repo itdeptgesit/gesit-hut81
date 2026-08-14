@@ -81,9 +81,15 @@ export default function TeamSection() {
                   Members
                 </span>
                 <ol className="list-decimal list-inside space-y-2 text-foreground font-medium">
-                  {selectedTeam.members.split(',').map((member, idx) => (
-                    <li key={idx} className="pl-2">{member.trim()}</li>
-                  ))}
+                  {selectedTeam.members.split(',').map((member, idx) => {
+                    const mem = member.trim();
+                    const isAbsent = mem.includes("(PERDIN)") || mem.includes("(Cuti)") || mem.includes("(undur join date)");
+                    return (
+                      <li key={idx} className={`pl-2 ${isAbsent ? "text-[#E31E24] font-bold" : ""}`}>
+                        {mem}
+                      </li>
+                    );
+                  })}
                 </ol>
               </div>
             </div>
