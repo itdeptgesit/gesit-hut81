@@ -45,7 +45,15 @@ export default function BadmintonSchedule() {
     participants.find(p => p.category === category && p.bracket_position === slot);
 
   const getByFinal = (category: string, pos: string) =>
-    participants.find(p => p.category === category && p.final_position === pos);
+    participants.find(p => {
+      if (p.category !== category) return false;
+      if (p.final_position === pos) return true;
+      if (p.final_position === "W") {
+        if (pos === "L" && (p.bracket_position === "1" || p.bracket_position === "2")) return true;
+        if (pos === "R" && (p.bracket_position === "3" || p.bracket_position === "4")) return true;
+      }
+      return false;
+    });
 
   const pName = (p: Participant, cat: string): string => {
     if (cat === "Ganda Campuran" && p.partner && p.partner !== "-") {
