@@ -268,10 +268,14 @@ export default function ScoreboardPage() {
       }
     }, 3000);
 
+    // Polling fallback: refetch scores every 5s in case realtime misses events
+    const pollScores = setInterval(fetchAll, 5000);
+
     return () => {
       supabase.removeChannel(ch1);
       supabase.removeChannel(ch2);
       clearInterval(pollSettings);
+      clearInterval(pollScores);
     };
   }, [fetchAll]);
 
