@@ -20,10 +20,17 @@ interface Team { team_id?: string; team_name: string; captain: string; members: 
 
 type CategoryKey = typeof CATEGORIES[number]["key"];
 
-function buildScores(logs: any[]): Record<CategoryKey, GroupScore[]> {
+function buildScores(logs: any[], allGroups: string[]): Record<CategoryKey, GroupScore[]> {
   const fun: Record<string, number> = {};
   const costume: Record<string, number> = {};
   const potluck: Record<string, number> = {};
+
+  // Initialize all groups with 0
+  for (const g of allGroups) {
+    fun[g] = 0;
+    costume[g] = 0;
+    potluck[g] = 0;
+  }
 
   for (const log of logs) {
     const n = log.group_name;
@@ -308,7 +315,7 @@ export default function ScoreboardPage() {
     return () => clearInterval(t);
   }, [timerEnd]);
 
-  const scores = buildScores(logs);
+  const scores = buildScores(logs, groupNames);
   const cat = CATEGORIES[catIdx];
   const catScores = scores[cat.key];
   const allZero = catScores.every(s => s.score === 0);
