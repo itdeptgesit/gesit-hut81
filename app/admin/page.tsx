@@ -1950,7 +1950,7 @@ export default function AdminDashboard() {
                 else if (log.competition === "Potluck - Pesta Rasa Merah Putih") potluckMap[log.group_name] = (potluckMap[log.group_name]||0)+log.value;
               }
               const toRanked = (m: Record<string,number>, limit = 3) => Object.entries(m).sort((a,b)=>b[1]-a[1]).slice(0,limit);
-              const POSITIONS = ["Juara 1","Juara 2","Juara 3"];
+              const POSITIONS = ["1ST PLACE","2ND PLACE","3RD PLACE"];
 
               return (
             <div className="flex flex-col lg:flex-row gap-6">
@@ -2170,7 +2170,7 @@ export default function AdminDashboard() {
                         <p className="text-[12px] text-zinc-700 font-medium mb-1" style={{ fontFamily: "var(--font-montserrat)" }}>as</p>
                       </>
                     ) : certTemplate === "fungames" ? (
-                      <div className="mb-8" /> // extra space since name is missing
+                      <div className="mb-3" /> // extra space since name is missing
                     ) : (
                       <>
                         <h2 className="text-[34px] font-bold text-[#b91c1c] uppercase tracking-widest mb-2 pb-2 border-b border-[#c49b5b]/30 px-16 inline-block leading-none" style={{ fontFamily: "var(--font-montserrat)" }}>

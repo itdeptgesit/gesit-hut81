@@ -43,7 +43,7 @@ export default async function VerifyCertificatePage({ params }: { params: Promis
       if (ranked.length > positionIndex) {
         winner = {
           name: ranked[positionIndex][0],
-          position: `Juara ${positionIndex + 1}`,
+          position: positionIndex === 0 ? "1ST PLACE" : positionIndex === 1 ? "2ND PLACE" : "3RD PLACE",
           category: targetCategory,
           event: targetEvent,
           id: id
