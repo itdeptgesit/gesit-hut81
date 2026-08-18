@@ -2020,10 +2020,10 @@ export default function AdminDashboard() {
                         <div className="space-y-1">
                           {toRanked(potluckMap, 1).map(([name, score], i) => (
                             <button key={name} type="button"
-                              onClick={() => { setCertTemplate("fungames"); setCertData({ name, category: "Potluck Nusantara", event: "HUT RI ke-81 GESIT Fun Games", position: "THE WINNER", date: "19 August 2026" }); }}
+                              onClick={() => { setCertTemplate("fungames"); setCertData({ name, category: "Potluck Nusantara", event: "HUT RI ke-81 GESIT Fun Games", position: "BEST OF THE BEST", date: "19 August 2026" }); }}
                               className={`w-full text-left px-3 py-2 rounded-lg border text-xs transition-all ${certData.name === name && certData.category === "Potluck Nusantara" ? "bg-emerald-700 text-white border-emerald-700" : "bg-white border-zinc-200 hover:border-emerald-400 text-zinc-700"}`}>
                               <span className="font-bold">🥇 {name}</span>
-                              <span className="text-[10px] ml-2 opacity-60">THE WINNER</span>
+                              <span className="text-[10px] ml-2 opacity-60">BEST OF THE BEST</span>
                             </button>
                           ))}
                         </div>
@@ -2072,10 +2072,10 @@ export default function AdminDashboard() {
                           <span className="text-[9px] font-bold text-center leading-tight">BEST OF THE BEST</span>
                         </button>
                         <button type="button"
-                          onClick={() => { setCertWinnerId(""); setCertTemplate("fungames"); setCertData({ name: "", category: "Potluck Nusantara", event: "HUT RI ke-81 GESIT Fun Games", position: "THE WINNER", date: "19 August 2026" }); }}
+                          onClick={() => { setCertWinnerId(""); setCertTemplate("fungames"); setCertData({ name: "", category: "Potluck Nusantara", event: "HUT RI ke-81 GESIT Fun Games", position: "BEST OF THE BEST", date: "19 August 2026" }); }}
                           className="flex flex-col items-center justify-center p-1.5 border border-zinc-200 rounded-lg hover:bg-emerald-700 hover:text-white hover:border-emerald-700 transition-colors text-zinc-600">
                           <span className="text-xs mb-0.5">🍽️</span>
-                          <span className="text-[9px] font-bold text-center leading-tight">THE WINNER</span>
+                          <span className="text-[9px] font-bold text-center leading-tight">BEST OF THE BEST</span>
                         </button>
                       </div>
                     </div>
@@ -2154,7 +2154,13 @@ export default function AdminDashboard() {
                   style={{ 
                     width: "800px", 
                     height: "565px",
-                    backgroundImage: certTemplate === "fungames" ? "url('/E-CERTIFICATE-2.jpg')" : "url('/E-CERTIFICATE-1.jpg')",
+                    backgroundImage: certTemplate === "fungames"
+                      ? certData.category === "Best Costume"
+                        ? "url('/E-CERTIFICATE-4.jpg')"
+                        : certData.category === "Potluck Nusantara"
+                          ? "url('/E-CERTIFICATE-5.jpg')"
+                          : "url('/E-CERTIFICATE-3.jpg')"
+                      : "url('/E-CERTIFICATE-1.jpg')",
                     backgroundSize: "cover",
                     backgroundPosition: "center"
                   }}
@@ -2193,11 +2199,11 @@ export default function AdminDashboard() {
                     )}
                     
                     <h3 
-                      className="font-black text-[#b91c1c] uppercase leading-none mb-1" 
+                      className="font-black text-[#b91c1c] uppercase leading-none mb-1 whitespace-nowrap" 
                       style={{ 
                         fontFamily: "var(--font-saira)",
-                        fontSize: (certData.position || "1st PLACE").length > 10 ? "26px" : "34px",
-                        letterSpacing: (certData.position || "1st PLACE").length > 10 ? "0.08em" : "0.2em",
+                        fontSize: "34px",
+                        letterSpacing: (certData.position || "1st PLACE").length > 12 ? "0.08em" : "0.2em",
                       }}
                     >
                       {certData.position || "1st PLACE"}
@@ -2206,7 +2212,9 @@ export default function AdminDashboard() {
                     {/* Category - hidden when "-" */}
                     {(certData.category && certData.category !== "-") ? (
                       <h4 className="text-[14px] font-bold text-[#b91c1c] uppercase tracking-[0.15em] mb-2" style={{ fontFamily: "var(--font-montserrat)" }}>
-                        {certTemplate === "fungames" ? `GESIT ${certData.category}` : certData.category}
+                        {certTemplate === "fungames" 
+                          ? (certData.category === "Potluck Nusantara" ? "POTLUCK – PESTA RASA MERAH PUTIH" : `GESIT ${certData.category}`) 
+                          : certData.category}
                       </h4>
                     ) : (
                       <div className="mb-2" />
@@ -2220,7 +2228,7 @@ export default function AdminDashboard() {
                     </div>
 
                     <h4 className="text-[16px] font-bold text-[#0B1A3A] uppercase tracking-wide mb-0.5" style={{ fontFamily: "var(--font-montserrat)" }}>
-                      {certTemplate === "fungames" ? "HUT RI KE-81" : (certData.event || "GESIT INTERNAL 17TH AUGUST EVENT 2026")}
+                      {certTemplate === "fungames" ? "HUT REPUBLIK INDONESIA KE-81" : (certData.event || "GESIT INTERNAL 17TH AUGUST EVENT 2026")}
                     </h4>
 
                     <p className="text-[13px] font-bold text-[#b91c1c] italic tracking-wide mb-3" style={{ fontFamily: "var(--font-montserrat)" }}>
@@ -2228,10 +2236,24 @@ export default function AdminDashboard() {
                     </p>
                     
                     {certTemplate === "fungames" ? (
-                      <div className="text-[10px] text-zinc-700 max-w-[500px] leading-relaxed flex flex-col gap-2 font-bold" style={{ fontFamily: "var(--font-montserrat)" }}>
-                        <p>In recognition of outstanding achievement, exceptional teamwork, and remarkable sportsmanship demonstrated throughout the GESIT {certData.category} in celebration of the 81st Independence Day of the Republic of Indonesia.</p>
-                        <p>Your dedication, enthusiasm, and spirit of unity truly embody the values of sportsmanship, teamwork, and togetherness.</p>
-                      </div>
+                      certData.category === "Best Costume" ? (
+                        <div className="text-[9px] text-zinc-700 max-w-[500px] leading-[1.4] flex flex-col gap-1.5 font-bold" style={{ fontFamily: "var(--font-montserrat)" }}>
+                          <p>In recognition of outstanding creativity, enthusiasm, and team spirit demonstrated in the GESIT Best Costume competition, celebrating the 81st Independence Day of the Republic of Indonesia.</p>
+                          <p>Your passion, creativity, and sportsmanship embody the spirit of unity, togetherness, and pride that makes this celebration truly memorable.</p>
+                          <p>Congratulations on this well-deserved achievement!</p>
+                        </div>
+                      ) : certData.category === "Potluck Nusantara" ? (
+                        <div className="text-[9px] text-zinc-700 max-w-[500px] leading-[1.4] flex flex-col gap-1.5 font-bold" style={{ fontFamily: "var(--font-montserrat)" }}>
+                          <p>Awarded in recognition of outstanding creativity, presentation, taste, and the spirit of togetherness demonstrated through the Potluck – Pesta Rasa Merah Putih celebration.</p>
+                          <p>Your creativity and enthusiasm have brought the spirit of Nusantara, unity, and the colors of Indonesia to life through an unforgettable culinary experience.</p>
+                          <p>Congratulations on Your Well-Deserved Achievement!</p>
+                        </div>
+                      ) : (
+                        <div className="text-[9px] text-zinc-700 max-w-[500px] leading-[1.4] flex flex-col gap-1.5 font-bold" style={{ fontFamily: "var(--font-montserrat)" }}>
+                          <p>In recognition of outstanding achievement, exceptional teamwork, and remarkable sportsmanship demonstrated throughout the GESIT {certData.category} in celebration of the 81st Independence Day of the Republic of Indonesia.</p>
+                          <p>Your dedication, enthusiasm, and spirit of unity truly embody the values of sportsmanship, teamwork, and togetherness.</p>
+                        </div>
+                      )
                     ) : (
                       <p className="text-[11px] text-zinc-600 max-w-[420px] leading-relaxed font-medium" style={{ fontFamily: "var(--font-montserrat)" }}>
                         In recognition of outstanding achievement, sportsmanship,<br/>
@@ -2283,7 +2305,7 @@ export default function AdminDashboard() {
                         { slug: "fun-games-2nd-place", category: "Fun Games", position: "2ND PLACE", icon: "🎮" },
                         { slug: "fun-games-3rd-place", category: "Fun Games", position: "3RD PLACE", icon: "🎮" },
                         { slug: "best-costume-best-of-the-best", category: "Best Costume", position: "BEST OF THE BEST", icon: "👗" },
-                        { slug: "potluck-nusantara-the-winner", category: "Potluck Nusantara", position: "THE WINNER", icon: "🍽️" },
+                        { slug: "potluck-nusantara-best-of-the-best", category: "Potluck Nusantara", position: "BEST OF THE BEST", icon: "🍽️" },
                       ].map(item => (
                         <tr key={item.slug}>
                           <td className="px-4 py-3 font-medium text-zinc-900">

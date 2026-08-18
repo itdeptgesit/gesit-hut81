@@ -5,7 +5,7 @@ import { CheckCircle, ShieldCheck, Trophy, User, ArrowLeft, Award, X } from "luc
 export default async function VerifyCertificatePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
-  const isDynamicSlug = ["fun-games-1st-place", "fun-games-2nd-place", "fun-games-3rd-place", "best-costume-best-of-the-best", "potluck-nusantara-the-winner"].includes(id);
+  const isDynamicSlug = ["fun-games-1st-place", "fun-games-2nd-place", "fun-games-3rd-place", "best-costume-best-of-the-best", "potluck-nusantara-best-of-the-best"].includes(id);
 
   let winner = null;
 
@@ -31,8 +31,8 @@ export default async function VerifyCertificatePage({ params }: { params: Promis
     if (id.startsWith("best-costume")) targetCategory = "Best Costume";
     else if (id.startsWith("potluck-nusantara")) targetCategory = "Potluck Nusantara";
 
-    const positionIndex = id.includes("-1st-place") || id === "best-costume-best-of-the-best" || id === "potluck-nusantara-the-winner" ? 0 : id.includes("-2nd-place") ? 1 : 2;
-    const posStr = id === "best-costume-best-of-the-best" ? "BEST OF THE BEST" : id === "potluck-nusantara-the-winner" ? "THE WINNER" : positionIndex === 0 ? "1ST PLACE" : positionIndex === 1 ? "2ND PLACE" : "3RD PLACE";
+    const positionIndex = id.includes("-1st-place") || id === "best-costume-best-of-the-best" || id === "potluck-nusantara-best-of-the-best" ? 0 : id.includes("-2nd-place") ? 1 : 2;
+    const posStr = id === "best-costume-best-of-the-best" ? "BEST OF THE BEST" : id === "potluck-nusantara-best-of-the-best" ? "BEST OF THE BEST" : positionIndex === 0 ? "1ST PLACE" : positionIndex === 1 ? "2ND PLACE" : "3RD PLACE";
 
     if (overrideName) {
       winner = {
