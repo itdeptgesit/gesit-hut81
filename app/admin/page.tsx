@@ -1504,6 +1504,63 @@ export default function AdminDashboard() {
               </div>
             </Card>
 
+            {/* Rekap Skor per Kategori */}
+            {scoreLogs.length > 0 && (() => {
+              const FG = ["Perform Yel-Yel","Fun Games - Quiz Challenge","Fun Games - Word Puzzle","Fun Games - Estafet Sedotan","Fun Games - Cup Rush"];
+              const funMap: Record<string,number> = {};
+              const costumeMap: Record<string,number> = {};
+              const potluckMap: Record<string,number> = {};
+              for (const log of scoreLogs) {
+                if (log.value <= 0) continue;
+                if (FG.includes(log.competition)) funMap[log.group_name] = (funMap[log.group_name]||0)+log.value;
+                else if (log.competition === "Best Costume") costumeMap[log.group_name] = (costumeMap[log.group_name]||0)+log.value;
+                else if (log.competition === "Potluck - Pesta Rasa Merah Putih") potluckMap[log.group_name] = (potluckMap[log.group_name]||0)+log.value;
+              }
+              const toRows = (m: Record<string,number>) => Object.entries(m).sort((a,b)=>b[1]-a[1]);
+              return (
+                <Card>
+                  <CardHeader title="Rekap Skor per Kategori" description="Fun Games diakumulasi dari semua lomba. Best Costume & Potluck terpisah dan tidak tercampur." />
+                  <div className="p-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="border border-zinc-200 rounded-xl overflow-hidden">
+                      <div className="bg-[#102A4C] px-4 py-2.5 text-white text-xs font-black uppercase tracking-widest">🎮 Fun Games</div>
+                      {toRows(funMap).length === 0 ? <p className="text-xs text-zinc-400 text-center py-6">Belum ada nilai</p> : (
+                        <table className="w-full text-sm"><tbody>{toRows(funMap).map(([name,score],i) => (
+                          <tr key={name} className="border-t border-zinc-100 hover:bg-zinc-50">
+                            <td className="px-3 py-2 text-zinc-400 text-xs font-bold">{i+1}</td>
+                            <td className="px-2 py-2 font-semibold text-zinc-800 text-xs">{name}</td>
+                            <td className="px-3 py-2 text-right font-black text-[#102A4C]">{score.toLocaleString()}</td>
+                          </tr>
+                        ))}</tbody></table>
+                      )}
+                    </div>
+                    <div className="border border-purple-200 rounded-xl overflow-hidden">
+                      <div className="bg-purple-700 px-4 py-2.5 text-white text-xs font-black uppercase tracking-widest">👗 Best Costume</div>
+                      {toRows(costumeMap).length === 0 ? <p className="text-xs text-zinc-400 text-center py-6">Belum ada nilai</p> : (
+                        <table className="w-full text-sm"><tbody>{toRows(costumeMap).map(([name,score],i) => (
+                          <tr key={name} className="border-t border-purple-50 hover:bg-purple-50">
+                            <td className="px-3 py-2 text-purple-300 text-xs font-bold">{i+1}</td>
+                            <td className="px-2 py-2 font-semibold text-zinc-800 text-xs">{name}</td>
+                            <td className="px-3 py-2 text-right font-black text-purple-700">{score.toLocaleString()}</td>
+                          </tr>
+                        ))}</tbody></table>
+                      )}
+                    </div>
+                    <div className="border border-emerald-200 rounded-xl overflow-hidden">
+                      <div className="bg-emerald-700 px-4 py-2.5 text-white text-xs font-black uppercase tracking-widest">🍽️ Potluck Nusantara</div>
+                      {toRows(potluckMap).length === 0 ? <p className="text-xs text-zinc-400 text-center py-6">Belum ada nilai</p> : (
+                        <table className="w-full text-sm"><tbody>{toRows(potluckMap).map(([name,score],i) => (
+                          <tr key={name} className="border-t border-emerald-50 hover:bg-emerald-50">
+                            <td className="px-3 py-2 text-emerald-300 text-xs font-bold">{i+1}</td>
+                            <td className="px-2 py-2 font-semibold text-zinc-800 text-xs">{name}</td>
+                            <td className="px-3 py-2 text-right font-black text-emerald-700">{score.toLocaleString()}</td>
+                          </tr>
+                        ))}</tbody></table>
+                      )}
+                    </div>
+                  </div>
+                </Card>
+              );
+            })()}
 
             {/* Pengaturan Kompetisi & Juri */}
             <Card>
