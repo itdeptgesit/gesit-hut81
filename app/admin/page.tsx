@@ -2151,31 +2151,38 @@ export default function AdminDashboard() {
                     {/* Category - hidden when "-" */}
                     {(certData.category && certData.category !== "-") ? (
                       <h4 className="text-[14px] font-bold text-[#b91c1c] uppercase tracking-[0.15em] mb-2" style={{ fontFamily: "var(--font-montserrat)" }}>
-                        {certData.category}
+                        {certTemplate === "fungames" ? `GESIT ${certData.category}` : certData.category}
                       </h4>
                     ) : (
                       <div className="mb-2" />
                     )}
 
                     {/* Gold Divider */}
-                    <div className="flex items-center gap-3 w-full max-w-[380px] mb-3">
+                    <div className="flex items-center gap-3 w-full max-w-[380px] mb-2">
                       <div className="h-[1px] bg-[#c49b5b] flex-1" />
                       <div className="w-1.5 h-1.5 rotate-45 bg-[#c49b5b]" />
                       <div className="h-[1px] bg-[#c49b5b] flex-1" />
                     </div>
 
-                    <h4 className="text-[17px] font-bold text-[#0B1A3A] uppercase tracking-wide mb-0.5" style={{ fontFamily: "var(--font-montserrat)" }}>
-                      {certData.event || "GESIT INTERNAL 17TH AUGUST EVENT 2026"}
+                    <h4 className="text-[16px] font-bold text-[#0B1A3A] uppercase tracking-wide mb-0.5" style={{ fontFamily: "var(--font-montserrat)" }}>
+                      {certTemplate === "fungames" ? "HUT RI 81st ANNIVERSARY" : (certData.event || "GESIT INTERNAL 17TH AUGUST EVENT 2026")}
                     </h4>
 
-                    <p className="text-[14px] font-bold text-[#b91c1c] italic tracking-wide mb-2" style={{ fontFamily: "var(--font-montserrat)" }}>
+                    <p className="text-[13px] font-bold text-[#b91c1c] italic tracking-wide mb-3" style={{ fontFamily: "var(--font-montserrat)" }}>
                       "GESIT Bersatu dalam Sportivitas"
                     </p>
                     
-                    <p className="text-[11px] text-zinc-600 max-w-[420px] leading-relaxed" style={{ fontFamily: "var(--font-montserrat)" }}>
-                      In recognition of outstanding achievement, sportsmanship,<br/>
-                      and dedication throughout the competition.
-                    </p>
+                    {certTemplate === "fungames" ? (
+                      <div className="text-[10px] text-zinc-700 max-w-[500px] leading-relaxed flex flex-col gap-2 font-bold" style={{ fontFamily: "var(--font-montserrat)" }}>
+                        <p>In recognition of outstanding achievement, exceptional teamwork, and remarkable sportsmanship demonstrated throughout the GESIT {certData.category}.</p>
+                        <p>Your dedication, enthusiasm, and spirit of unity have truly embodied the values of sportsmanship and togetherness.</p>
+                      </div>
+                    ) : (
+                      <p className="text-[11px] text-zinc-600 max-w-[420px] leading-relaxed font-medium" style={{ fontFamily: "var(--font-montserrat)" }}>
+                        In recognition of outstanding achievement, sportsmanship,<br/>
+                        and dedication throughout the competition.
+                      </p>
+                    )}
 
                     {/* QR Code */}
                     <div className="absolute bottom-6 right-16 bg-white p-1.5 rounded-lg border border-zinc-200 shadow-sm flex flex-col items-center">
