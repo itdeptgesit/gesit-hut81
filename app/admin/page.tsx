@@ -6,7 +6,7 @@ import { supabase } from "@/lib/supabase";
 import {
   LogOut, Users, Trophy, Monitor, RefreshCw,
   ExternalLink, Loader2, LayoutDashboard, Gamepad2,
-  TrendingUp, Circle, Edit2, Plus, Trash2, X, Award, Download, Calendar, BookOpen, CheckCircle2, BarChart2
+  TrendingUp, Circle, Edit2, Plus, Trash2, X, Award, Download, Calendar, BookOpen, CheckCircle2, BarChart2, ClipboardList
 } from "lucide-react";
 import { toPng } from "html-to-image";
 import { QRCodeSVG } from "qrcode.react";
