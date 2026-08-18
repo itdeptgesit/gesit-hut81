@@ -604,6 +604,12 @@ export default function JudgePortal() {
                       className="bg-amber-500 hover:bg-amber-600 disabled:opacity-40 text-white font-black px-5 py-3 rounded-xl shadow-md shadow-amber-200 transition-all active:scale-95 text-sm whitespace-nowrap">
                       Berikan ✓
                     </button>
+                    <button onClick={() => handleScoreUpdate(group.id, "reset", group.group_name)}
+                      disabled={updatingId === group.id || !sessionScores[group.id]}
+                      className="bg-zinc-200 hover:bg-red-100 disabled:opacity-40 text-zinc-600 hover:text-red-600 font-black px-4 py-3 rounded-xl transition-all active:scale-95 text-sm whitespace-nowrap"
+                      title="Reset poin sesi ini ke 0">
+                      Reset
+                    </button>
                   </div>
                 ) : config ? (
                   /* Quick-tap buttons for Fun Games */

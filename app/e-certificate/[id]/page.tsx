@@ -43,7 +43,7 @@ export default async function VerifyCertificatePage({ params }: { params: Promis
         id: id
       };
     } else {
-      const { data: scoreLogs } = await supabaseAdmin.from("score_logs").select("*").gt("value", 0);
+      const { data: scoreLogs } = await supabaseAdmin.from("score_logs").select("*");
     if (scoreLogs) {
       const FG_COMPS = ["Perform Yel-Yel","Fun Games - Quiz Challenge","Fun Games - Word Puzzle","Fun Games - Estafet Sedotan","Fun Games - Cup Rush"];
       const funMap: Record<string,number> = {};
@@ -51,9 +51,9 @@ export default async function VerifyCertificatePage({ params }: { params: Promis
       const potluckMap: Record<string,number> = {};
       
       for (const log of scoreLogs) {
-        if (FG_COMPS.includes(log.competition)) funMap[log.group_name] = (funMap[log.group_name]||0)+log.value;
-        else if (log.competition === "Best Costume") costumeMap[log.group_name] = (costumeMap[log.group_name]||0)+log.value;
-        else if (log.competition === "Potluck - Pesta Rasa Merah Putih") potluckMap[log.group_name] = (potluckMap[log.group_name]||0)+log.value;
+        if (FG_COMPS.includes(log.competition)) funMap[log.group_name] = Math.max(0, (funMap[log.group_name]||0)+log.value);
+        else if (log.competition === "Best Costume") costumeMap[log.group_name] = Math.max(0, (costumeMap[log.group_name]||0)+log.value);
+        else if (log.competition === "Potluck - Pesta Rasa Merah Putih") potluckMap[log.group_name] = Math.max(0, (potluckMap[log.group_name]||0)+log.value);
       }
       
       const toRanked = (m: Record<string,number>) => Object.entries(m).sort((a,b)=>b[1]-a[1]);
