@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { supabase } from "@/lib/supabase";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
@@ -43,6 +43,64 @@ function buildScores(logs: any[]): Record<CategoryKey, GroupScore[]> {
   return { fun: toArr(fun), costume: toArr(costume), potluck: toArr(potluck) };
 }
 
+// Returns 0-based actual rank considering ties (e.g. two groups with same top score both get rank 0)
+function getActualRank(scores: GroupScore[], group: GroupScore): number {
+  return scores.filter(s => s.score > group.score).length;
+}
+
+function rankLabel(rank: number): string {
+  if (rank === 0) return "1st";
+  if (rank === 1) return "2nd";
+  if (rank === 2) return "3rd";
+  return `${rank + 1}th`;
+}
+
+// Confetti particle
+function ConfettiParticle({ x, delay, color, size }: { x: number; delay: number; color: string; size: number }) {
+  return (
+    <motion.div
+      className="absolute top-0 rounded-sm pointer-events-none"
+      style={{ left: `${x}%`, width: size, height: size * 0.6, background: color }}
+      initial={{ y: -30, opacity: 1, rotate: 0, scaleX: 1 }}
+      animate={{ y: "105vh", opacity: [1, 1, 1, 0], rotate: 720 * (Math.random() > 0.5 ? 1 : -1), scaleX: [1, -1, 1, -1, 1] }}
+      transition={{ duration: 2.5 + Math.random() * 2, delay, ease: "easeIn" }}
+    />
+  );
+}
+
+function PartyCelebration({ trigger }: { trigger: number }) {
+  const COLORS = ["#E31E24", "#FFD700", "#102A4C", "#ffffff", "#F97316", "#34D399", "#A78BFA", "#06B6D4"];
+  const particles = useMemo(() =>
+    Array.from({ length: 100 }, (_, i) => ({
+      id: i,
+      x: Math.random() * 100,
+      delay: Math.random() * 2.5,
+      color: COLORS[Math.floor(Math.random() * COLORS.length)],
+      size: Math.random() * 10 + 6,
+    })),
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  [trigger]);
+
+  return (
+    <div className="fixed inset-0 pointer-events-none z-50 overflow-hidden">
+      {particles.map(p => <ConfettiParticle key={p.id} x={p.x} delay={p.delay} color={p.color} size={p.size} />)}
+      {/* Central banner */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.5, y: 40 }}
+        animate={{ opacity: [0, 1, 1, 0], scale: [0.5, 1.05, 1, 0.9], y: [40, 0, 0, -20] }}
+        transition={{ duration: 5, times: [0, 0.1, 0.8, 1] }}
+        className="absolute inset-0 flex items-center justify-center"
+      >
+        <div className="bg-white/90 backdrop-blur-xl rounded-3xl px-10 py-7 shadow-2xl border-4 border-[#E31E24] text-center">
+          <div className="text-5xl mb-2">🎉</div>
+          <p className="text-3xl font-black text-[#102A4C] uppercase tracking-tight">Fun Games</p>
+          <p className="text-xl font-black text-[#E31E24] uppercase tracking-widest">Selesai!</p>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
 const podiumPositions = [
   { color: "from-slate-300 via-zinc-200 to-slate-400", border: "border-slate-300", h: "h-24 md:h-28", order: 1 },
   { color: "from-amber-300 via-yellow-400 to-amber-500", border: "border-yellow-300 shadow-yellow-300/50", h: "h-32 md:h-36", order: 0 },
@@ -63,8 +121,11 @@ function Podium({ scores, accent, catKey }: { scores: GroupScore[]; accent: stri
     <div className="flex items-end justify-center gap-3 md:gap-6 pt-2 shrink-0">
       {podiumOrder.map((group, idx) => {
         if (!group) return null;
-        const rank = scores.findIndex(s => s.group_name === group.group_name);
-        const pos = podiumPositions.find(p => p.order === rank) ?? podiumPositions[2];
+        const rank = getActualRank(scores, group);
+        // Style: rank 0 = gold, rank 1 = silver, rank 2 = bronze, else fallback
+        const pos = rank === 0 ? podiumPositions[1] : rank === 1 ? podiumPositions[0] : podiumPositions[2];
+        // Height: if tied at rank 0, use 1st-place height for all tied
+        const height = rank === 0 ? podiumPositions[1].h : rank === 1 ? podiumPositions[0].h : podiumPositions[2].h;
         return (
           <motion.div key={group.group_name} initial={{ opacity: 0, y: 35 }} animate={{ opacity: 1, y: 0 }}
             transition={{ delay: idx * 0.08, type: "spring", stiffness: 260, damping: 22 }}
@@ -77,8 +138,8 @@ function Podium({ scores, accent, catKey }: { scores: GroupScore[]; accent: stri
               </motion.p>
               <p className="text-[9px] font-extrabold text-slate-500 uppercase tracking-widest mt-0.5">PTS</p>
             </div>
-            <div className={`w-full rounded-t-2xl flex items-center justify-center font-black text-sm bg-gradient-to-b text-white ${pos.color} ${pos.h} ${pos.border} shadow-lg border-t-2`}>
-              {rank + 1}{rank === 0 ? "st" : rank === 1 ? "nd" : "rd"}
+            <div className={`w-full rounded-t-2xl flex items-center justify-center font-black text-sm bg-gradient-to-b text-white ${pos.color} ${height} ${pos.border} shadow-lg border-t-2`}>
+              {rankLabel(rank)}
             </div>
           </motion.div>
         );
@@ -170,10 +231,13 @@ export default function ScoreboardPage() {
   const [timeLeft, setTimeLeft] = useState(0);
   const [catIdx, setCatIdx] = useState(0);
   const [activeCompetition, setActiveCompetition] = useState<string | null>(null);
+  const [partyTrigger, setPartyTrigger] = useState(0);
+  const [showParty, setShowParty] = useState(false);
+  const prevCompRef = useRef<string | null>(null);
 
   const fetchAll = useCallback(async () => {
     const [logsRes, groupsRes, teamsRes] = await Promise.all([
-      supabase.from("score_logs").select("*").gt("value", 0),
+      supabase.from("score_logs").select("*"),
       supabase.from("group_scores").select("group_name").order("group_name"),
       supabase.from("teams").select("*").order("team_id", { ascending: true }),
     ]);
@@ -224,7 +288,16 @@ export default function ScoreboardPage() {
     return () => clearInterval(t);
   }, [activeCompetition]);
 
-  // Timer countdown
+  // Party trigger: when Cup Rush ends (competition changes away from it)
+  useEffect(() => {
+    if (prevCompRef.current === "Fun Games - Cup Rush" && activeCompetition !== "Fun Games - Cup Rush") {
+      setPartyTrigger(t => t + 1);
+      setShowParty(true);
+      const timer = setTimeout(() => setShowParty(false), 8000);
+      return () => clearTimeout(timer);
+    }
+    prevCompRef.current = activeCompetition;
+  }, [activeCompetition]);
   useEffect(() => {
     if (!timerEnd || timerEnd <= Date.now()) { setTimeLeft(0); return; }
     const t = setInterval(() => setTimeLeft(Math.max(0, timerEnd - Date.now())), 100);
@@ -237,6 +310,8 @@ export default function ScoreboardPage() {
   const allZero = catScores.every(s => s.score === 0);
 
   return (
+    <>
+      {showParty && <PartyCelebration trigger={partyTrigger} />}
     <div className="h-screen max-h-screen w-screen overflow-hidden flex flex-col justify-between p-3 md:p-5 font-sans relative select-none transition-all duration-500"
       style={{ backgroundImage: `url('${cat.bgImage}')`, backgroundSize: "cover", backgroundPosition: "center" }}>
 
@@ -307,5 +382,6 @@ export default function ScoreboardPage() {
         </p>
       </footer>
     </div>
+    </>
   );
 }
