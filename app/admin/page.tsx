@@ -1968,6 +1968,7 @@ export default function AdminDashboard() {
               const POSITIONS = ["1ST PLACE","2ND PLACE","3RD PLACE"];
 
               return (
+            <>
             <div className="flex flex-col lg:flex-row gap-6">
               {/* Form Section */}
               <Card className="w-full lg:w-1/3 p-6 h-fit">
