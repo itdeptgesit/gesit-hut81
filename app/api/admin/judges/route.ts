@@ -55,3 +55,23 @@ export async function DELETE(req: Request) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
+
+export async function PATCH(req: Request) {
+  try {
+    const body = await req.json();
+    const { id, name, pin } = body;
+
+    if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
+
+    const { data, error } = await supabaseAdmin
+      .from("judges")
+      .update({ name, pin })
+      .eq("id", id)
+      .select();
+
+    if (error) throw error;
+    return NextResponse.json(data?.[0]);
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 });
+  }
+}

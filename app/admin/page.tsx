@@ -246,6 +246,8 @@ export default function AdminDashboard() {
   const [judges, setJudges] = useState<any[]>([]);
   const [newJudgeName, setNewJudgeName] = useState("");
   const [newJudgePin, setNewJudgePin] = useState("");
+  const [editingJudgeId, setEditingJudgeId] = useState<string | null>(null);
+  const [editingJudgeData, setEditingJudgeData] = useState({ name: "", pin: "" });
   const [competitionTitle, setCompetitionTitle] = useState("Perform Yel-Yel");
   const [timerEnd, setTimerEnd] = useState<number | null>(null);
 
@@ -1562,20 +1564,73 @@ export default function AdminDashboard() {
                       <tbody>
                         {judges.map(j => (
                           <tr key={j.id} className="border-b border-zinc-100 last:border-0 hover:bg-zinc-50 transition-colors">
-                            <td className="px-4 py-3 font-bold text-zinc-900">{j.name}</td>
-                            <td className="px-4 py-3 text-zinc-600"><Badge>{j.pin}</Badge></td>
-                            <td className="px-4 py-3 text-right">
-                              <button 
-                                onClick={async () => {
-                                  if (!confirm("Hapus juri ini? Juri tidak akan bisa login lagi dengan PIN ini.")) return;
-                                  await fetch(`/api/admin/judges?id=${j.id}`, { method: "DELETE" });
-                                  fetchJudges();
-                                }}
-                                className="text-red-600 hover:text-red-800 p-1"
-                              >
-                                <Trash2 size={16} />
-                              </button>
-                            </td>
+                            {editingJudgeId === j.id ? (
+                              <>
+                                <td className="px-4 py-2">
+                                  <input type="text" value={editingJudgeData.name} onChange={e => setEditingJudgeData(prev => ({ ...prev, name: e.target.value }))} className="w-full p-1.5 border border-zinc-300 rounded text-sm focus:ring-1 focus:ring-zinc-900 focus:outline-none" />
+                                </td>
+                                <td className="px-4 py-2">
+                                  <input type="text" value={editingJudgeData.pin} onChange={e => setEditingJudgeData(prev => ({ ...prev, pin: e.target.value }))} className="w-full sm:w-24 p-1.5 border border-zinc-300 rounded text-sm font-mono focus:ring-1 focus:ring-zinc-900 focus:outline-none" />
+                                </td>
+                                <td className="px-4 py-2 text-right">
+                                  <div className="flex items-center justify-end gap-2">
+                                    <button 
+                                      onClick={async () => {
+                                        if (!editingJudgeData.name || !editingJudgeData.pin) return;
+                                        const res = await fetch("/api/admin/judges", {
+                                          method: "PATCH",
+                                          headers: { "Content-Type": "application/json" },
+                                          body: JSON.stringify({ id: j.id, name: editingJudgeData.name, pin: editingJudgeData.pin })
+                                        });
+                                        if (res.ok) {
+                                          setEditingJudgeId(null);
+                                          fetchJudges();
+                                        } else {
+                                          alert("Gagal mengupdate juri. Mungkin PIN sudah digunakan.");
+                                        }
+                                      }}
+                                      className="text-emerald-600 hover:text-emerald-800 p-1"
+                                      title="Simpan"
+                                    >
+                                      <CheckCircle2 size={16} />
+                                    </button>
+                                    <button onClick={() => setEditingJudgeId(null)} className="text-zinc-400 hover:text-zinc-600 p-1" title="Batal">
+                                      <X size={16} />
+                                    </button>
+                                  </div>
+                                </td>
+                              </>
+                            ) : (
+                              <>
+                                <td className="px-4 py-3 font-bold text-zinc-900">{j.name}</td>
+                                <td className="px-4 py-3 text-zinc-600"><Badge>{j.pin}</Badge></td>
+                                <td className="px-4 py-3 text-right">
+                                  <div className="flex items-center justify-end gap-2">
+                                    <button 
+                                      onClick={() => {
+                                        setEditingJudgeId(j.id);
+                                        setEditingJudgeData({ name: j.name, pin: j.pin });
+                                      }}
+                                      className="text-blue-600 hover:text-blue-800 p-1"
+                                      title="Edit Juri"
+                                    >
+                                      <Edit2 size={16} />
+                                    </button>
+                                    <button 
+                                      onClick={async () => {
+                                        if (!confirm("Hapus juri ini? Juri tidak akan bisa login lagi dengan PIN ini.")) return;
+                                        await fetch(`/api/admin/judges?id=${j.id}`, { method: "DELETE" });
+                                        fetchJudges();
+                                      }}
+                                      className="text-red-600 hover:text-red-800 p-1"
+                                      title="Hapus Juri"
+                                    >
+                                      <Trash2 size={16} />
+                                    </button>
+                                  </div>
+                                </td>
+                              </>
+                            )}
                           </tr>
                         ))}
                         {judges.length === 0 && (
