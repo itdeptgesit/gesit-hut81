@@ -248,6 +248,9 @@ export default function AdminDashboard() {
   const [newJudgePin, setNewJudgePin] = useState("");
   const [competitionTitle, setCompetitionTitle] = useState("Perform Yel-Yel");
   const [timerEnd, setTimerEnd] = useState<number | null>(null);
+
+  const [scoreLogs, setScoreLogs] = useState<any[]>([]);
+  const [scoreLogsLoading, setScoreLogsLoading] = useState(true);
   
   // UI States
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -367,6 +370,15 @@ export default function AdminDashboard() {
     }
   }, []);
 
+  const fetchScoreLogs = useCallback(async () => {
+    setScoreLogsLoading(true);
+    const res = await fetch("/api/score-logs?limit=50");
+    if (res.ok) {
+      setScoreLogs(await res.json());
+    }
+    setScoreLogsLoading(false);
+  }, []);
+
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (user) setAdminEmail(user.email || "");
@@ -379,7 +391,8 @@ export default function AdminDashboard() {
     fetchGroupScores();
     fetchJudges();
     fetchSettings();
-  }, [fetchParticipants, fetchScores, fetchWinners, fetchSchedules, fetchQuestions, fetchGroupScores, fetchJudges, fetchSettings]);
+    fetchScoreLogs();
+  }, [fetchParticipants, fetchScores, fetchWinners, fetchSchedules, fetchQuestions, fetchGroupScores, fetchJudges, fetchSettings, fetchScoreLogs]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -626,6 +639,23 @@ export default function AdminDashboard() {
       console.error(err);
     }
   };
+
+  const handleDeleteScoreLog = async (id: string, groupName: string, value: number) => {
+    if (!confirm(`Reset nilai +${value} untuk ${groupName}? Skor di scoreboard akan otomatis berkurang.`)) return;
+    try {
+      const res = await fetch(`/api/score-logs?id=${id}`, { method: "DELETE" });
+      if (res.ok) {
+        await fetchScoreLogs();
+        await fetchGroupScores(); // Update scoreboard as well
+      } else {
+        alert("Gagal mereset nilai.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Terjadi kesalahan.");
+    }
+  };
+
 
   const handleQuickScoreUpdate = async (id: string, diff: number) => {
     const group = groupScores.find(g => g.id === id);
@@ -1391,6 +1421,69 @@ export default function AdminDashboard() {
                 )}
               </div>
             </Card>
+
+            {/* Riwayat Nilai & Reset */}
+            <Card>
+              <CardHeader 
+                title="Riwayat Nilai (Terbaru)" 
+                description="Semua nilai yang masuk dari Portal Juri. Admin dapat membatalkan/reset nilai jika terjadi kesalahan."
+                action={
+                  <button onClick={fetchScoreLogs} className="text-zinc-400 hover:text-zinc-600 p-1 transition-colors rounded">
+                    <RefreshCw size={14} className={scoreLogsLoading ? "animate-spin" : ""} />
+                  </button>
+                }
+              />
+              <div className="p-2">
+                {scoreLogsLoading ? (
+                  <div className="flex justify-center py-12"><Loader2 size={24} className="animate-spin text-zinc-400" /></div>
+                ) : scoreLogs.length === 0 ? (
+                  <div className="text-center py-12">
+                    <ClipboardList size={32} className="text-zinc-200 mx-auto mb-2" />
+                    <p className="text-sm text-zinc-400">Belum ada riwayat nilai.</p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto max-h-[400px] overflow-y-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="text-[11px] uppercase tracking-wider text-zinc-400 bg-zinc-50 border-y border-zinc-200 sticky top-0 z-10">
+                          <th className="px-4 py-3 text-left font-medium">Waktu</th>
+                          <th className="px-4 py-3 text-left font-medium">Lomba</th>
+                          <th className="px-4 py-3 text-left font-medium">Kelompok</th>
+                          <th className="px-4 py-3 text-left font-medium">Juri</th>
+                          <th className="px-4 py-3 text-center font-medium">Nilai</th>
+                          <th className="px-4 py-3 text-right font-medium">Aksi</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-zinc-100">
+                        {scoreLogs.map((log) => (
+                          <tr key={log.id} className="hover:bg-zinc-50 transition-colors">
+                            <td className="px-4 py-3 text-zinc-500 text-xs">
+                              {new Date(log.created_at).toLocaleString("id-ID", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
+                            </td>
+                            <td className="px-4 py-3 text-zinc-700 text-xs">{log.competition}</td>
+                            <td className="px-4 py-3 font-bold text-zinc-900">{log.group_name}</td>
+                            <td className="px-4 py-3 text-zinc-600 text-xs">{log.judge_name || "—"}</td>
+                            <td className="px-4 py-3 text-center">
+                              <span className="font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-lg text-xs">+{log.value}</span>
+                            </td>
+                            <td className="px-4 py-3 text-right">
+                              <button 
+                                onClick={() => handleDeleteScoreLog(log.id, log.group_name, log.value)}
+                                className="text-red-500 hover:text-white hover:bg-red-500 p-1.5 rounded-md transition-colors"
+                                title="Reset / Hapus Nilai"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </Card>
+
 
             {/* Pengaturan Kompetisi & Juri */}
             <Card>
