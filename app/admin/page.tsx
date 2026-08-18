@@ -1248,82 +1248,157 @@ export default function AdminDashboard() {
             </Card>
           )}
 
-          {activeTab === "Manajemen Pemenang" && (
-            <Card>
-              <CardHeader
-                title="Daftar Pemenang (Hall of Fame)"
-                description="Kelola siapa saja yang menjuarai perlombaan"
-                action={
-                  <div className="flex items-center gap-2">
-                    <button onClick={fetchWinners} className="text-zinc-400 hover:text-zinc-600 p-1 transition-colors rounded">
-                      <RefreshCw size={14} className={winnersLoading ? "animate-spin" : ""} />
-                    </button>
-                    <button 
-                      onClick={() => {
-                        setIsNewWinner(true);
-                        setEditingWinner({ id: "", event: "", category: "-", position: "Juara 1", name: "" });
-                      }}
-                      className="inline-flex items-center gap-1 bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-medium px-3 py-1.5 rounded-lg transition-colors"
-                    >
-                      <Plus size={14} /> Tambah Data
+          {activeTab === "Manajemen Pemenang" && (() => {
+              const FG_COMPS = ["Perform Yel-Yel","Fun Games - Quiz Challenge","Fun Games - Word Puzzle","Fun Games - Estafet Sedotan","Fun Games - Cup Rush"];
+              const funMap: Record<string,number> = {};
+              const costumeMap: Record<string,number> = {};
+              const potluckMap: Record<string,number> = {};
+              for (const log of scoreLogs) {
+                if (log.value <= 0) continue;
+                if (FG_COMPS.includes(log.competition)) funMap[log.group_name] = (funMap[log.group_name]||0)+log.value;
+                else if (log.competition === "Best Costume") costumeMap[log.group_name] = (costumeMap[log.group_name]||0)+log.value;
+                else if (log.competition === "Potluck - Pesta Rasa Merah Putih") potluckMap[log.group_name] = (potluckMap[log.group_name]||0)+log.value;
+              }
+              const toRanked = (m: Record<string,number>) => Object.entries(m).sort((a,b)=>b[1]-a[1]).slice(0,3);
+              const MEDALS = ["🥇","🥈","🥉"];
+              const POSITIONS = ["Juara 1","Juara 2","Juara 3"];
+              const MEDAL_STYLES = [
+                "bg-amber-50 border-amber-200 text-amber-800",
+                "bg-zinc-50 border-zinc-200 text-zinc-700",
+                "bg-orange-50 border-orange-200 text-orange-800"
+              ];
+
+              const categories = [
+                { key: "fun",     label: "Fun Games",         emoji: "🎮", color: "#102A4C", bg: "bg-[#102A4C]", ranked: toRanked(funMap),     hasScore: Object.keys(funMap).length > 0 },
+                { key: "costume", label: "Best Costume",      emoji: "👗", color: "#7C3AED", bg: "bg-purple-700", ranked: toRanked(costumeMap),  hasScore: Object.keys(costumeMap).length > 0 },
+                { key: "potluck", label: "Potluck Nusantara", emoji: "🍽️", color: "#065F46", bg: "bg-emerald-700", ranked: toRanked(potluckMap), hasScore: Object.keys(potluckMap).length > 0 },
+              ];
+
+              return (
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h2 className="text-base font-bold text-zinc-900">Pemenang Berdasarkan Skor</h2>
+                      <p className="text-xs text-zinc-500 mt-0.5">Ranking otomatis dari riwayat penilaian juri. Refresh data skor untuk memperbarui.</p>
+                    </div>
+                    <button onClick={fetchScoreLogs} className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border border-zinc-200 bg-white hover:bg-zinc-50 transition-colors text-zinc-600">
+                      <RefreshCw size={13} className={scoreLogsLoading ? "animate-spin" : ""} /> Refresh Skor
                     </button>
                   </div>
-                }
-              />
-              <div className="p-2">
-                {winnersLoading ? (
-                  <div className="flex justify-center py-12"><Loader2 size={24} className="animate-spin text-zinc-400" /></div>
-                ) : winners.length === 0 ? (
-                  <div className="text-center py-12">
-                    <Trophy size={32} className="text-zinc-200 mx-auto mb-2" />
-                    <p className="text-sm text-zinc-400">Belum ada data pemenang terdaftar</p>
-                  </div>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="text-[11px] uppercase tracking-wider text-zinc-400 bg-zinc-50 border-y border-zinc-200">
-                          <th className="px-4 py-3 text-left font-medium">Event</th>
-                          <th className="px-4 py-3 text-left font-medium">Kategori</th>
-                          <th className="px-4 py-3 text-left font-medium">Posisi / Gelar</th>
-                          <th className="px-4 py-3 text-left font-medium">Nama Pemenang</th>
-                          <th className="px-4 py-3 text-right font-medium">Aksi</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-zinc-100">
-                        {winners.map((w) => (
-                          <tr key={w.id} className="hover:bg-zinc-50 transition-colors">
-                            <td className="px-4 py-3 font-medium text-zinc-900">{w.event}</td>
-                            <td className="px-4 py-3 text-zinc-700">{w.category}</td>
-                            <td className="px-4 py-3">
-                              <Badge>{w.position}</Badge>
-                            </td>
-                            <td className="px-4 py-3 font-bold text-zinc-900">{w.name}</td>
-                            <td className="px-4 py-3 text-right">
-                              <div className="flex items-center justify-end gap-2">
-                                <button 
-                                  onClick={() => { setIsNewWinner(false); setEditingWinner({ ...w }); }}
-                                  className="text-blue-600 hover:text-blue-800 p-1"
-                                >
-                                  <Edit2 size={14} />
-                                </button>
-                                <button 
-                                  onClick={() => handleDeleteWinner(w.id)}
-                                  className="text-red-600 hover:text-red-800 p-1"
-                                >
-                                  <Trash2 size={14} />
-                                </button>
+
+                  {scoreLogsLoading ? (
+                    <div className="flex justify-center py-16"><Loader2 size={28} className="animate-spin text-zinc-300" /></div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      {categories.map(cat => (
+                        <div key={cat.key} className="rounded-2xl border border-zinc-200 overflow-hidden shadow-sm">
+                          {/* Category Header */}
+                          <div className={`${cat.bg} px-5 py-4 text-white`}>
+                            <div className="text-lg font-black">{cat.emoji} {cat.label}</div>
+                            <div className="text-xs text-white/60 mt-0.5">Top 3 Kelompok</div>
+                          </div>
+
+                          {/* Ranked List */}
+                          <div className="divide-y divide-zinc-100">
+                            {!cat.hasScore ? (
+                              <div className="py-10 text-center text-zinc-400">
+                                <Trophy size={28} className="mx-auto mb-2 text-zinc-200" />
+                                <p className="text-sm">Belum ada penilaian</p>
                               </div>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </div>
-            </Card>
-          )}
+                            ) : cat.ranked.length === 0 ? (
+                              <div className="py-10 text-center text-zinc-400 text-sm">Tidak ada data</div>
+                            ) : (
+                              cat.ranked.map(([name, score], i) => (
+                                <div key={name} className={`flex items-center gap-3 px-4 py-3.5 ${i === 0 ? "bg-amber-50/50" : ""}`}>
+                                  <div className={`w-9 h-9 rounded-xl border flex items-center justify-center text-lg font-black shrink-0 ${MEDAL_STYLES[i]}`}>
+                                    {MEDALS[i]}
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="font-bold text-zinc-900 text-sm truncate">{name}</p>
+                                    <p className="text-xs text-zinc-400">{POSITIONS[i]} · {score.toLocaleString()} poin</p>
+                                  </div>
+                                </div>
+                              ))
+                            )}
+                          </div>
+
+                          {/* Footer note */}
+                          {cat.hasScore && (
+                            <div className="px-4 py-3 bg-zinc-50 border-t border-zinc-100">
+                              <p className="text-[11px] text-zinc-400">Ranking dihitung otomatis dari total nilai yang masuk.</p>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Legacy winners table (for Badminton & other events) */}
+                  <Card>
+                    <CardHeader
+                      title="Pemenang Badminton & Lainnya"
+                      description="Pemenang lomba badminton dan kategori lain yang diinput manual."
+                      action={
+                        <div className="flex items-center gap-2">
+                          <button onClick={fetchWinners} className="text-zinc-400 hover:text-zinc-600 p-1 transition-colors rounded">
+                            <RefreshCw size={14} className={winnersLoading ? "animate-spin" : ""} />
+                          </button>
+                          <button
+                            onClick={() => {
+                              setIsNewWinner(true);
+                              setEditingWinner({ id: "", event: "", category: "-", position: "Juara 1", name: "" });
+                            }}
+                            className="inline-flex items-center gap-1 bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-medium px-3 py-1.5 rounded-lg transition-colors"
+                          >
+                            <Plus size={14} /> Tambah Data
+                          </button>
+                        </div>
+                      }
+                    />
+                    <div className="p-2">
+                      {winnersLoading ? (
+                        <div className="flex justify-center py-12"><Loader2 size={24} className="animate-spin text-zinc-400" /></div>
+                      ) : winners.length === 0 ? (
+                        <div className="text-center py-12">
+                          <Trophy size={32} className="text-zinc-200 mx-auto mb-2" />
+                          <p className="text-sm text-zinc-400">Belum ada data pemenang terdaftar</p>
+                        </div>
+                      ) : (
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-sm">
+                            <thead>
+                              <tr className="text-[11px] uppercase tracking-wider text-zinc-400 bg-zinc-50 border-y border-zinc-200">
+                                <th className="px-4 py-3 text-left font-medium">Event</th>
+                                <th className="px-4 py-3 text-left font-medium">Kategori</th>
+                                <th className="px-4 py-3 text-left font-medium">Posisi</th>
+                                <th className="px-4 py-3 text-left font-medium">Nama Pemenang</th>
+                                <th className="px-4 py-3 text-right font-medium">Aksi</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-zinc-100">
+                              {winners.map((w) => (
+                                <tr key={w.id} className="hover:bg-zinc-50 transition-colors">
+                                  <td className="px-4 py-3 font-medium text-zinc-900">{w.event}</td>
+                                  <td className="px-4 py-3 text-zinc-700">{w.category}</td>
+                                  <td className="px-4 py-3"><Badge>{w.position}</Badge></td>
+                                  <td className="px-4 py-3 font-bold text-zinc-900">{w.name}</td>
+                                  <td className="px-4 py-3 text-right">
+                                    <div className="flex items-center justify-end gap-2">
+                                      <button onClick={() => { setIsNewWinner(false); setEditingWinner({ ...w }); }} className="text-blue-600 hover:text-blue-800 p-1"><Edit2 size={14} /></button>
+                                      <button onClick={() => handleDeleteWinner(w.id)} className="text-red-600 hover:text-red-800 p-1"><Trash2 size={14} /></button>
+                                    </div>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
+                    </div>
+                  </Card>
+                </div>
+              );
+            })()}
 
           {activeTab === "Scoreboard Kelompok" && (
             <div className="space-y-6">
@@ -1862,103 +1937,167 @@ export default function AdminDashboard() {
             </Card>
           )}
 
-          {activeTab === "E-Sertifikat" && (
+          {activeTab === "E-Sertifikat" && (() => {
+              // Compute auto winners from scoreLogs
+              const FG_COMPS = ["Perform Yel-Yel","Fun Games - Quiz Challenge","Fun Games - Word Puzzle","Fun Games - Estafet Sedotan","Fun Games - Cup Rush"];
+              const funMap: Record<string,number> = {};
+              const costumeMap: Record<string,number> = {};
+              const potluckMap: Record<string,number> = {};
+              for (const log of scoreLogs) {
+                if (log.value <= 0) continue;
+                if (FG_COMPS.includes(log.competition)) funMap[log.group_name] = (funMap[log.group_name]||0)+log.value;
+                else if (log.competition === "Best Costume") costumeMap[log.group_name] = (costumeMap[log.group_name]||0)+log.value;
+                else if (log.competition === "Potluck - Pesta Rasa Merah Putih") potluckMap[log.group_name] = (potluckMap[log.group_name]||0)+log.value;
+              }
+              const toRanked = (m: Record<string,number>) => Object.entries(m).sort((a,b)=>b[1]-a[1]).slice(0,3);
+              const POSITIONS = ["Juara 1","Juara 2","Juara 3"];
+
+              return (
             <div className="flex flex-col lg:flex-row gap-6">
               {/* Form Section */}
               <Card className="w-full lg:w-1/3 p-6 h-fit">
                 <h2 className="text-lg font-bold text-zinc-900 mb-4">Buat E-Sertifikat</h2>
                 <div className="space-y-4">
+
+                  {/* Quick Pick from Auto Winners */}
                   <div>
-                    <label className="block text-xs font-semibold text-zinc-700 mb-1">Pilih dari Pemenang (Opsional)</label>
-                    <select 
-                      value={certWinnerId}
-                      onChange={(e) => {
-                        setCertWinnerId(e.target.value);
-                        if (e.target.value) {
-                          const w = winners.find(x => x.id === e.target.value);
-                          if (w) setCertData({ name: w.name, category: w.category, event: w.event, position: w.position, date: "19 August 2026" });
-                        }
-                      }}
-                      className="w-full border border-zinc-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-zinc-900 bg-white"
-                    >
-                      <option value="">-- Pilih Pemenang --</option>
-                      {winners.map(w => (
-                        <option key={w.id} value={w.id}>{w.name} - {w.position} ({w.event})</option>
-                      ))}
-                    </select>
+                    <label className="block text-xs font-semibold text-zinc-700 mb-2">Pilih Pemenang Cepat</label>
+                    
+                    {/* Fun Games */}
+                    {toRanked(funMap).length > 0 && (
+                      <div className="mb-3">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-[#102A4C] mb-1.5">🎮 Fun Games</p>
+                        <div className="space-y-1">
+                          {toRanked(funMap).map(([name, score], i) => (
+                            <button key={name} type="button"
+                              onClick={() => { setCertTemplate("fungames"); setCertData({ name, category: "Fun Games", event: "HUT RI ke-81 GESIT Fun Games", position: POSITIONS[i], date: "19 August 2026" }); }}
+                              className={`w-full text-left px-3 py-2 rounded-lg border text-xs transition-all ${certData.name === name && certData.category === "Fun Games" ? "bg-[#102A4C] text-white border-[#102A4C]" : "bg-white border-zinc-200 hover:border-[#102A4C] text-zinc-700"}`}>
+                              <span className="font-bold">{["🥇","🥈","🥉"][i]} {name}</span>
+                              <span className="text-[10px] ml-2 opacity-60">{POSITIONS[i]}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Best Costume */}
+                    {toRanked(costumeMap).length > 0 && (
+                      <div className="mb-3">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-purple-700 mb-1.5">👗 Best Costume</p>
+                        <div className="space-y-1">
+                          {toRanked(costumeMap).map(([name, score], i) => (
+                            <button key={name} type="button"
+                              onClick={() => { setCertTemplate("fungames"); setCertData({ name, category: "Best Costume", event: "HUT RI ke-81 GESIT Fun Games", position: POSITIONS[i], date: "19 August 2026" }); }}
+                              className={`w-full text-left px-3 py-2 rounded-lg border text-xs transition-all ${certData.name === name && certData.category === "Best Costume" ? "bg-purple-700 text-white border-purple-700" : "bg-white border-zinc-200 hover:border-purple-400 text-zinc-700"}`}>
+                              <span className="font-bold">{["🥇","🥈","🥉"][i]} {name}</span>
+                              <span className="text-[10px] ml-2 opacity-60">{POSITIONS[i]}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Potluck */}
+                    {toRanked(potluckMap).length > 0 && (
+                      <div className="mb-3">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-emerald-700 mb-1.5">🍽️ Potluck Nusantara</p>
+                        <div className="space-y-1">
+                          {toRanked(potluckMap).map(([name, score], i) => (
+                            <button key={name} type="button"
+                              onClick={() => { setCertTemplate("fungames"); setCertData({ name, category: "Potluck Nusantara", event: "HUT RI ke-81 GESIT Fun Games", position: POSITIONS[i], date: "19 August 2026" }); }}
+                              className={`w-full text-left px-3 py-2 rounded-lg border text-xs transition-all ${certData.name === name && certData.category === "Potluck Nusantara" ? "bg-emerald-700 text-white border-emerald-700" : "bg-white border-zinc-200 hover:border-emerald-400 text-zinc-700"}`}>
+                              <span className="font-bold">{["🥇","🥈","🥉"][i]} {name}</span>
+                              <span className="text-[10px] ml-2 opacity-60">{POSITIONS[i]}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Badminton winners */}
+                    {winners.length > 0 && (
+                      <div>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-1.5">🏸 Badminton</p>
+                        <select
+                          value={certWinnerId}
+                          onChange={(e) => {
+                            setCertWinnerId(e.target.value);
+                            if (e.target.value) {
+                              const w = winners.find(x => x.id === e.target.value);
+                              if (w) { setCertTemplate("badminton"); setCertData({ name: w.name, category: w.category, event: w.event, position: w.position, date: "19 August 2026" }); }
+                            }
+                          }}
+                          className="w-full border border-zinc-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-zinc-900 bg-white"
+                        >
+                          <option value="">-- Pilih Pemenang Badminton --</option>
+                          {winners.map(w => (
+                            <option key={w.id} value={w.id}>{w.name} - {w.position} ({w.event})</option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
                   </div>
-                  <div className="border-t border-zinc-100 my-4"></div>
+
+                  <div className="border-t border-zinc-100 my-1"></div>
+
                   {/* Template Selector */}
                   <div>
-                    <label className="block text-xs font-semibold text-zinc-700 mb-1">Certificate Template</label>
+                    <label className="block text-xs font-semibold text-zinc-700 mb-1">Template</label>
                     <div className="grid grid-cols-2 gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setCertTemplate("badminton")}
-                        className={`flex flex-col items-center gap-1 p-2 rounded-lg border-2 text-xs font-semibold transition-all ${
-                          certTemplate === "badminton" ? "border-red-600 bg-red-50 text-red-700" : "border-zinc-200 text-zinc-500 hover:border-zinc-400"
-                        }`}
-                      >
+                      <button type="button" onClick={() => setCertTemplate("badminton")}
+                        className={`flex flex-col items-center gap-1 p-2 rounded-lg border-2 text-xs font-semibold transition-all ${certTemplate === "badminton" ? "border-red-600 bg-red-50 text-red-700" : "border-zinc-200 text-zinc-500 hover:border-zinc-400"}`}>
                         <span>🏸</span> Badminton
                       </button>
-                      <button
-                        type="button"
-                        onClick={() => setCertTemplate("fungames")}
-                        className={`flex flex-col items-center gap-1 p-2 rounded-lg border-2 text-xs font-semibold transition-all ${
-                          certTemplate === "fungames" ? "border-red-600 bg-red-50 text-red-700" : "border-zinc-200 text-zinc-500 hover:border-zinc-400"
-                        }`}
-                      >
+                      <button type="button" onClick={() => setCertTemplate("fungames")}
+                        className={`flex flex-col items-center gap-1 p-2 rounded-lg border-2 text-xs font-semibold transition-all ${certTemplate === "fungames" ? "border-red-600 bg-red-50 text-red-700" : "border-zinc-200 text-zinc-500 hover:border-zinc-400"}`}>
                         <span>🎮</span> Fun Games
                       </button>
                     </div>
                   </div>
+
+                  {/* Manual fields */}
                   <div>
                     <label className="block text-xs font-semibold text-zinc-700 mb-1">Nama Penerima</label>
-                    <input 
-                      type="text" value={certData.name} 
+                    <input type="text" value={certData.name}
                       onChange={(e) => setCertData({...certData, name: e.target.value})}
                       className="w-full border border-zinc-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-zinc-900"
                     />
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-zinc-700 mb-1">Posisi / Gelar</label>
-                    <input 
-                      type="text" value={certData.position} 
+                    <input type="text" value={certData.position}
                       onChange={(e) => setCertData({...certData, position: e.target.value})}
                       className="w-full border border-zinc-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-zinc-900"
                     />
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-zinc-700 mb-1">Kategori</label>
-                    <input 
-                      type="text" value={certData.category} 
+                    <input type="text" value={certData.category}
                       onChange={(e) => setCertData({...certData, category: e.target.value})}
                       className="w-full border border-zinc-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-zinc-900"
                     />
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-zinc-700 mb-1">Event / Lomba</label>
-                    <input 
-                      type="text" value={certData.event} 
+                    <input type="text" value={certData.event}
                       onChange={(e) => setCertData({...certData, event: e.target.value})}
                       className="w-full border border-zinc-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-zinc-900"
                     />
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-zinc-700 mb-1">Tanggal</label>
-                    <input 
-                      type="text" value={certData.date} 
+                    <input type="text" value={certData.date}
                       onChange={(e) => setCertData({...certData, date: e.target.value})}
                       className="w-full border border-zinc-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-zinc-900"
                     />
                   </div>
                   
-                  <button 
+                  <button
                     onClick={handleDownloadCert}
                     disabled={isDownloading || !certData.name}
                     className="w-full mt-4 flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white font-medium px-4 py-2.5 rounded-lg transition-colors"
                   >
-                    {isDownloading ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />} 
+                    {isDownloading ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
                     Unduh Sertifikat (PNG)
                   </button>
                 </div>
@@ -2056,7 +2195,8 @@ export default function AdminDashboard() {
                 </p>
               </div>
             </div>
-          )}
+          );
+        })()}
         </div>
       </main>
 
