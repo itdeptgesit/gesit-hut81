@@ -2208,7 +2208,7 @@ export default function AdminDashboard() {
                     </div>
 
                     <h4 className="text-[16px] font-bold text-[#0B1A3A] uppercase tracking-wide mb-0.5" style={{ fontFamily: "var(--font-montserrat)" }}>
-                      {certTemplate === "fungames" ? "HUT RI 81st ANNIVERSARY" : (certData.event || "GESIT INTERNAL 17TH AUGUST EVENT 2026")}
+                      {certTemplate === "fungames" ? "HUT RI KE-81" : (certData.event || "GESIT INTERNAL 17TH AUGUST EVENT 2026")}
                     </h4>
 
                     <p className="text-[13px] font-bold text-[#b91c1c] italic tracking-wide mb-3" style={{ fontFamily: "var(--font-montserrat)" }}>
@@ -2217,8 +2217,8 @@ export default function AdminDashboard() {
                     
                     {certTemplate === "fungames" ? (
                       <div className="text-[10px] text-zinc-700 max-w-[500px] leading-relaxed flex flex-col gap-2 font-bold" style={{ fontFamily: "var(--font-montserrat)" }}>
-                        <p>In recognition of outstanding achievement, exceptional teamwork, and remarkable sportsmanship demonstrated throughout the GESIT {certData.category}.</p>
-                        <p>Your dedication, enthusiasm, and spirit of unity have truly embodied the values of sportsmanship and togetherness.</p>
+                        <p>In recognition of outstanding achievement, exceptional teamwork, and remarkable sportsmanship demonstrated throughout the GESIT {certData.category} in celebration of the 81st Independence Day of the Republic of Indonesia.</p>
+                        <p>Your dedication, enthusiasm, and spirit of unity truly embody the values of sportsmanship, teamwork, and togetherness.</p>
                       </div>
                     ) : (
                       <p className="text-[11px] text-zinc-600 max-w-[420px] leading-relaxed font-medium" style={{ fontFamily: "var(--font-montserrat)" }}>
