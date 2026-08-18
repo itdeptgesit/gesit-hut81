@@ -301,6 +301,8 @@ export default function AdminDashboard() {
   const [certData, setCertData] = useState({ name: "", category: "", event: "", position: "", date: "19 August 2026" });
   const certRef = useRef<HTMLDivElement>(null);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [qrOverrides, setQrOverrides] = useState<Record<string, string>>({});
+  const [isSavingOverrides, setIsSavingOverrides] = useState(false);
 
   const handleDownloadCert = async () => {
     if (!certRef.current) return;
@@ -399,6 +401,18 @@ export default function AdminDashboard() {
     setScoreLogsLoading(false);
   }, []);
 
+  const fetchQrOverrides = useCallback(async () => {
+    try {
+      const res = await fetch("/api/admin/qr-overrides");
+      if (res.ok) {
+        const data = await res.json();
+        if (data.overrides) setQrOverrides(data.overrides);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }, []);
+
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (user) setAdminEmail(user.email || "");
@@ -412,7 +426,8 @@ export default function AdminDashboard() {
     fetchJudges();
     fetchSettings();
     fetchScoreLogs();
-  }, [fetchParticipants, fetchScores, fetchWinners, fetchSchedules, fetchQuestions, fetchGroupScores, fetchJudges, fetchSettings, fetchScoreLogs]);
+    fetchQrOverrides();
+  }, [fetchParticipants, fetchScores, fetchWinners, fetchSchedules, fetchQuestions, fetchGroupScores, fetchJudges, fetchSettings, fetchScoreLogs, fetchQrOverrides]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -2248,6 +2263,81 @@ export default function AdminDashboard() {
                 </p>
               </div>
             </div>
+
+            <div className="mt-8 border-t border-zinc-200 pt-8">
+              <Card className="w-full p-6">
+                <h2 className="text-lg font-bold text-zinc-900 mb-2">Manajemen Verifikasi QR (Pasca-Event)</h2>
+                <p className="text-sm text-zinc-600 mb-6">
+                  Gunakan tabel ini untuk memperbarui atau mengunci nama pemenang yang akan muncul saat QR Code dari sertifikat cetak dipindai. Jika dikosongkan, sistem akan mencoba menghitung pemenang secara otomatis dari poin lomba.
+                </p>
+                
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm text-left">
+                    <thead className="bg-zinc-50 border-y border-zinc-200">
+                      <tr>
+                        <th className="px-4 py-3 font-semibold text-zinc-700">Kategori</th>
+                        <th className="px-4 py-3 font-semibold text-zinc-700">Posisi</th>
+                        <th className="px-4 py-3 font-semibold text-zinc-700">Nama Pemenang (Override)</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-zinc-100 bg-white">
+                      {[
+                        { slug: "fun-games-1st-place", category: "Fun Games", position: "1ST PLACE", icon: "🎮" },
+                        { slug: "fun-games-2nd-place", category: "Fun Games", position: "2ND PLACE", icon: "🎮" },
+                        { slug: "fun-games-3rd-place", category: "Fun Games", position: "3RD PLACE", icon: "🎮" },
+                        { slug: "best-costume-1st-place", category: "Best Costume", position: "1ST PLACE", icon: "👗" },
+                        { slug: "potluck-nusantara-1st-place", category: "Potluck Nusantara", position: "1ST PLACE", icon: "🍽️" },
+                      ].map(item => (
+                        <tr key={item.slug}>
+                          <td className="px-4 py-3 font-medium text-zinc-900">
+                            <span className="mr-2">{item.icon}</span>{item.category}
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className="px-2 py-1 bg-zinc-100 text-zinc-600 rounded text-xs font-bold">{item.position}</span>
+                          </td>
+                          <td className="px-4 py-3">
+                            <input 
+                              type="text"
+                              placeholder="Kosong (Auto-hitung / Belum Ditentukan)"
+                              value={qrOverrides[item.slug] || ""}
+                              onChange={(e) => setQrOverrides({...qrOverrides, [item.slug]: e.target.value})}
+                              className="w-full max-w-sm border border-zinc-300 rounded px-3 py-1.5 focus:outline-none focus:border-zinc-900"
+                            />
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                
+                <div className="mt-4 flex justify-end">
+                  <button 
+                    onClick={async () => {
+                      setIsSavingOverrides(true);
+                      try {
+                        const res = await fetch("/api/admin/qr-overrides", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ overrides: qrOverrides })
+                        });
+                        if (!res.ok) throw new Error("Gagal menyimpan");
+                        showToast("Perubahan verifikasi QR berhasil disimpan!", "success");
+                      } catch (e) {
+                        showToast("Gagal menyimpan perubahan", "error");
+                      } finally {
+                        setIsSavingOverrides(false);
+                      }
+                    }}
+                    disabled={isSavingOverrides}
+                    className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+                  >
+                    {isSavingOverrides ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+                    Simpan Perubahan
+                  </button>
+                </div>
+              </Card>
+            </div>
+          </>
           );
         })()}
         </div>

@@ -5,12 +5,45 @@ import { CheckCircle, ShieldCheck, Trophy, User, ArrowLeft, Award, X } from "luc
 export default async function VerifyCertificatePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
-  const isDynamicSlug = ["fun-games-juara-1", "fun-games-juara-2", "fun-games-juara-3", "best-costume-juara-1", "best-costume-juara-2", "best-costume-juara-3", "potluck-nusantara-juara-1", "potluck-nusantara-juara-2", "potluck-nusantara-juara-3"].includes(id);
+  const isDynamicSlug = ["fun-games-1st-place", "fun-games-2nd-place", "fun-games-3rd-place", "best-costume-1st-place", "potluck-nusantara-1st-place"].includes(id);
 
   let winner = null;
 
   if (isDynamicSlug) {
-    const { data: scoreLogs } = await supabaseAdmin.from("score_logs").select("*").gt("value", 0);
+    let overrideName = null;
+    const { data: settingsData } = await supabaseAdmin
+      .from("settings")
+      .select("value")
+      .eq("key", "qr_overrides")
+      .single();
+      
+    if (settingsData && settingsData.value) {
+      try {
+        const overrides = JSON.parse(settingsData.value);
+        if (overrides[id] && overrides[id].trim() !== "") {
+          overrideName = overrides[id].trim();
+        }
+      } catch (e) {}
+    }
+
+    let targetCategory = "Fun Games";
+    let targetEvent = "HUT RI KE-81";
+    if (id.startsWith("best-costume")) targetCategory = "Best Costume";
+    else if (id.startsWith("potluck-nusantara")) targetCategory = "Potluck Nusantara";
+
+    const positionIndex = id.includes("-1st-place") ? 0 : id.includes("-2nd-place") ? 1 : 2;
+    const posStr = positionIndex === 0 ? "1ST PLACE" : positionIndex === 1 ? "2ND PLACE" : "3RD PLACE";
+
+    if (overrideName) {
+      winner = {
+        name: overrideName,
+        position: posStr,
+        category: targetCategory,
+        event: targetEvent,
+        id: id
+      };
+    } else {
+      const { data: scoreLogs } = await supabaseAdmin.from("score_logs").select("*").gt("value", 0);
     if (scoreLogs) {
       const FG_COMPS = ["Perform Yel-Yel","Fun Games - Quiz Challenge","Fun Games - Word Puzzle","Fun Games - Estafet Sedotan","Fun Games - Cup Rush"];
       const funMap: Record<string,number> = {};
@@ -26,29 +59,21 @@ export default async function VerifyCertificatePage({ params }: { params: Promis
       const toRanked = (m: Record<string,number>) => Object.entries(m).sort((a,b)=>b[1]-a[1]);
       
       let targetMap = funMap;
-      let targetCategory = "Fun Games";
-      let targetEvent = "HUT RI ke-81 GESIT Fun Games";
-      
-      if (id.startsWith("best-costume")) {
-        targetMap = costumeMap;
-        targetCategory = "Best Costume";
-      } else if (id.startsWith("potluck-nusantara")) {
-        targetMap = potluckMap;
-        targetCategory = "Potluck Nusantara";
-      }
+      if (targetCategory === "Best Costume") targetMap = costumeMap;
+      else if (targetCategory === "Potluck Nusantara") targetMap = potluckMap;
 
       const ranked = toRanked(targetMap);
-      const positionIndex = id.endsWith("-1") ? 0 : id.endsWith("-2") ? 1 : 2;
       
       if (ranked.length > positionIndex) {
         winner = {
           name: ranked[positionIndex][0],
-          position: positionIndex === 0 ? "1ST PLACE" : positionIndex === 1 ? "2ND PLACE" : "3RD PLACE",
+          position: posStr,
           category: targetCategory,
           event: targetEvent,
           id: id
         };
       }
+    }
     }
   } else {
     // Fallback to DB lookup
