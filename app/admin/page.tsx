@@ -2162,11 +2162,23 @@ export default function AdminDashboard() {
                     
                     <p className="text-[12px] text-zinc-700 italic mb-3" style={{ fontFamily: "var(--font-montserrat)" }}>This certificate is proudly presented to</p>
                     
-                    <h2 className="text-[34px] font-bold text-[#b91c1c] uppercase tracking-widest mb-2 pb-2 border-b border-[#c49b5b]/30 px-16 inline-block leading-none" style={{ fontFamily: "var(--font-montserrat)" }}>
-                      {certData.name ? certData.name : <span style={{ borderBottom: "2px solid #b91c1c", display: "inline-block", width: "260px" }}>&nbsp;</span>}
-                    </h2>
-                    
-                    <p className="text-[12px] text-zinc-700 font-medium mb-1" style={{ fontFamily: "var(--font-montserrat)" }}>as</p>
+                    {certData.name ? (
+                      <>
+                        <h2 className="text-[34px] font-bold text-[#b91c1c] uppercase tracking-widest mb-2 pb-2 border-b border-[#c49b5b]/30 px-16 inline-block leading-none" style={{ fontFamily: "var(--font-montserrat)" }}>
+                          {certData.name}
+                        </h2>
+                        <p className="text-[12px] text-zinc-700 font-medium mb-1" style={{ fontFamily: "var(--font-montserrat)" }}>as</p>
+                      </>
+                    ) : certTemplate === "fungames" ? (
+                      <div className="mb-8" /> // extra space since name is missing
+                    ) : (
+                      <>
+                        <h2 className="text-[34px] font-bold text-[#b91c1c] uppercase tracking-widest mb-2 pb-2 border-b border-[#c49b5b]/30 px-16 inline-block leading-none" style={{ fontFamily: "var(--font-montserrat)" }}>
+                          <span style={{ borderBottom: "2px solid #b91c1c", display: "inline-block", width: "260px" }}>&nbsp;</span>
+                        </h2>
+                        <p className="text-[12px] text-zinc-700 font-medium mb-1" style={{ fontFamily: "var(--font-montserrat)" }}>as</p>
+                      </>
+                    )}
                     
                     <h3 
                       className="font-black text-[#b91c1c] uppercase leading-none mb-1" 
