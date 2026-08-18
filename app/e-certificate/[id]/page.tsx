@@ -5,22 +5,71 @@ import { CheckCircle, ShieldCheck, Trophy, User, ArrowLeft, Award, X } from "luc
 export default async function VerifyCertificatePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
-  const { data: winner, error } = await supabaseAdmin
-    .from("winners")
-    .select("*")
-    .eq("id", id)
-    .single();
+  const isDynamicSlug = ["fun-games-juara-1", "fun-games-juara-2", "fun-games-juara-3", "best-costume-juara-1", "best-costume-juara-2", "best-costume-juara-3", "potluck-nusantara-juara-1", "potluck-nusantara-juara-2", "potluck-nusantara-juara-3"].includes(id);
 
-  if (error || !winner) {
+  let winner = null;
+
+  if (isDynamicSlug) {
+    const { data: scoreLogs } = await supabaseAdmin.from("score_logs").select("*").gt("value", 0);
+    if (scoreLogs) {
+      const FG_COMPS = ["Perform Yel-Yel","Fun Games - Quiz Challenge","Fun Games - Word Puzzle","Fun Games - Estafet Sedotan","Fun Games - Cup Rush"];
+      const funMap: Record<string,number> = {};
+      const costumeMap: Record<string,number> = {};
+      const potluckMap: Record<string,number> = {};
+      
+      for (const log of scoreLogs) {
+        if (FG_COMPS.includes(log.competition)) funMap[log.group_name] = (funMap[log.group_name]||0)+log.value;
+        else if (log.competition === "Best Costume") costumeMap[log.group_name] = (costumeMap[log.group_name]||0)+log.value;
+        else if (log.competition === "Potluck - Pesta Rasa Merah Putih") potluckMap[log.group_name] = (potluckMap[log.group_name]||0)+log.value;
+      }
+      
+      const toRanked = (m: Record<string,number>) => Object.entries(m).sort((a,b)=>b[1]-a[1]);
+      
+      let targetMap = funMap;
+      let targetCategory = "Fun Games";
+      let targetEvent = "HUT RI ke-81 GESIT Fun Games";
+      
+      if (id.startsWith("best-costume")) {
+        targetMap = costumeMap;
+        targetCategory = "Best Costume";
+      } else if (id.startsWith("potluck-nusantara")) {
+        targetMap = potluckMap;
+        targetCategory = "Potluck Nusantara";
+      }
+
+      const ranked = toRanked(targetMap);
+      const positionIndex = id.endsWith("-1") ? 0 : id.endsWith("-2") ? 1 : 2;
+      
+      if (ranked.length > positionIndex) {
+        winner = {
+          name: ranked[positionIndex][0],
+          position: `Juara ${positionIndex + 1}`,
+          category: targetCategory,
+          event: targetEvent,
+          id: id
+        };
+      }
+    }
+  } else {
+    // Fallback to DB lookup
+    const { data } = await supabaseAdmin
+      .from("winners")
+      .select("*")
+      .eq("id", id)
+      .single();
+    winner = data;
+  }
+
+  if (!winner) {
     return (
       <main className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
         <div className="max-w-sm w-full bg-white rounded-2xl p-8 shadow-sm border border-gray-200 text-center">
           <div className="w-14 h-14 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-5 border border-red-100">
             <X size={28} strokeWidth={2} />
           </div>
-          <h1 className="text-lg font-bold text-gray-900 mb-2">Sertifikat Tidak Valid</h1>
+          <h1 className="text-lg font-bold text-gray-900 mb-2">Sertifikat Belum Ditetapkan</h1>
           <p className="text-sm text-gray-500 mb-6 leading-relaxed">
-            ID sertifikat tidak ditemukan. Pastikan QR code yang Anda scan berasal dari sertifikat resmi.
+            Data sertifikat belum tersedia. Jika ini dari hasil turnamen terbaru, silakan periksa kembali setelah nilai difinalisasi.
           </p>
           <Link href="/" className="inline-flex items-center gap-2 text-sm font-semibold text-gray-600 hover:text-gray-900 transition-colors">
             <ArrowLeft size={14} /> Kembali ke Beranda

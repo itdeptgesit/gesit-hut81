@@ -2094,7 +2094,7 @@ export default function AdminDashboard() {
                   
                   <button
                     onClick={handleDownloadCert}
-                    disabled={isDownloading || !certData.name}
+                    disabled={isDownloading}
                     className="w-full mt-4 flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white font-medium px-4 py-2.5 rounded-lg transition-colors"
                   >
                     {isDownloading ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
@@ -2132,7 +2132,7 @@ export default function AdminDashboard() {
                     <p className="text-[12px] text-zinc-700 italic mb-3" style={{ fontFamily: "var(--font-montserrat)" }}>This certificate is proudly presented to</p>
                     
                     <h2 className="text-[34px] font-bold text-[#b91c1c] uppercase tracking-widest mb-2 pb-2 border-b border-[#c49b5b]/30 px-16 inline-block leading-none" style={{ fontFamily: "var(--font-montserrat)" }}>
-                      {certData.name || "[WINNER NAME]"}
+                      {certData.name ? certData.name : <span style={{ borderBottom: "2px solid #b91c1c", display: "inline-block", width: "260px" }}>&nbsp;</span>}
                     </h2>
                     
                     <p className="text-[12px] text-zinc-700 font-medium mb-1" style={{ fontFamily: "var(--font-montserrat)" }}>as</p>
@@ -2181,7 +2181,10 @@ export default function AdminDashboard() {
                     <div className="absolute bottom-6 right-16 bg-white p-1.5 rounded-lg border border-zinc-200 shadow-sm flex flex-col items-center">
                       <div className="w-12 h-12 bg-zinc-100 mb-1 flex items-center justify-center">
                         <QRCodeSVG 
-                          value={certWinnerId ? `https://event.gesit.co.id/e-certificate/${certWinnerId}` : "https://event.gesit.co.id/e-certificate/00000000-0000-0000-0000-000000000000"} 
+                          value={`https://event.gesit.co.id/e-certificate/${
+                            certWinnerId || 
+                            encodeURIComponent(`${certData.category}-${certData.position}`.toLowerCase().replace(/[^a-z0-9]+/g, "-"))
+                          }`}
                           size={46} 
                           level="M" 
                         />
