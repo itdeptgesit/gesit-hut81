@@ -27,8 +27,12 @@ const montserrat = Montserrat({
 });
 
 export const metadata: Metadata = {
-  title: "GESIT 81st Independence Day",
+  title: "Gesit Event - HUT RI ke-81",
   description: "GESIT Bersatu dalam Sportivitas - Internal Company Event Portal",
+  icons: {
+    icon: "/HUTRI81.png",
+    apple: "/HUTRI81.png",
+  },
 };
 
 export default function RootLayout({

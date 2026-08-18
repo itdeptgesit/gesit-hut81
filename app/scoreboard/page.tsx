@@ -169,6 +169,7 @@ export default function ScoreboardPage() {
   const [timerEnd, setTimerEnd] = useState<number | null>(null);
   const [timeLeft, setTimeLeft] = useState(0);
   const [catIdx, setCatIdx] = useState(0);
+  const [activeCompetition, setActiveCompetition] = useState<string | null>(null);
 
   const fetchAll = useCallback(async () => {
     const [logsRes, groupsRes, teamsRes] = await Promise.all([
@@ -193,8 +194,14 @@ export default function ScoreboardPage() {
       .subscribe();
 
     const pollSettings = setInterval(async () => {
-      const { data } = await supabase.from("settings").select("value").eq("key", "timer_end").single();
-      setTimerEnd(data?.value ? parseInt(data.value) : null);
+      const { data } = await supabase.from("settings").select("key, value")
+        .in("key", ["timer_end", "competition_title"]);
+      if (data) {
+        const timerVal = data.find((d: any) => d.key === "timer_end")?.value;
+        setTimerEnd(timerVal ? parseInt(timerVal) : null);
+        const compTitle = data.find((d: any) => d.key === "competition_title")?.value;
+        setActiveCompetition(compTitle ?? null);
+      }
     }, 3000);
 
     return () => {
@@ -204,11 +211,18 @@ export default function ScoreboardPage() {
     };
   }, [fetchAll]);
 
-  // Auto-rotate categories every 12 seconds
+  // Follow active competition from settings; auto-rotate every 2 min only when no active category
   useEffect(() => {
-    const t = setInterval(() => setCatIdx(i => (i + 1) % 3), 12000);
+    const FUN_GAMES_TITLES = ["Perform Yel-Yel", "Fun Games - Quiz Challenge", "Fun Games - Word Puzzle", "Fun Games - Estafet Sedotan", "Fun Games - Cup Rush"];
+    if (activeCompetition) {
+      if (FUN_GAMES_TITLES.includes(activeCompetition)) { setCatIdx(0); return; }
+      if (activeCompetition === "Best Costume") { setCatIdx(1); return; }
+      if (activeCompetition === "Potluck - Pesta Rasa Merah Putih") { setCatIdx(2); return; }
+    }
+    // No active competition: auto-rotate every 2 minutes
+    const t = setInterval(() => setCatIdx(i => (i + 1) % 3), 120000);
     return () => clearInterval(t);
-  }, []);
+  }, [activeCompetition]);
 
   // Timer countdown
   useEffect(() => {
