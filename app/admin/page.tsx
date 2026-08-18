@@ -217,6 +217,16 @@ function SlotBox({ slotNumber, type = "bracket", participants, category, onDrop,
   );
 }
 
+const ALL_COMPETITIONS = [
+  "Perform Yel-Yel",
+  "Fun Games - Quiz Challenge",
+  "Fun Games - Word Puzzle",
+  "Fun Games - Estafet Sedotan",
+  "Fun Games - Cup Rush",
+  "Best Costume",
+  "Potluck - Pesta Rasa Merah Putih"
+];
+
 export default function AdminDashboard() {
   const router = useRouter();
   const [adminEmail, setAdminEmail] = useState("");
@@ -247,7 +257,8 @@ export default function AdminDashboard() {
   const [newJudgeName, setNewJudgeName] = useState("");
   const [newJudgePin, setNewJudgePin] = useState("");
   const [editingJudgeId, setEditingJudgeId] = useState<string | null>(null);
-  const [editingJudgeData, setEditingJudgeData] = useState({ name: "", pin: "" });
+  const [editingJudgeData, setEditingJudgeData] = useState({ name: "", pin: "", allowed: [] as string[] });
+  const [judgeAccessMap, setJudgeAccessMap] = useState<Record<string, string[]>>({});
   const [competitionTitle, setCompetitionTitle] = useState("Perform Yel-Yel");
   const [timerEnd, setTimerEnd] = useState<number | null>(null);
 
@@ -361,7 +372,7 @@ export default function AdminDashboard() {
     const { data } = await supabase
       .from("settings")
       .select("key, value")
-      .in("key", ["competition_title", "timer_end"]);
+      .in("key", ["competition_title", "timer_end", "judge_access_map"]);
       
     if (data) {
       const title = data.find(d => d.key === "competition_title")?.value;
@@ -369,6 +380,13 @@ export default function AdminDashboard() {
       
       const timer = data.find(d => d.key === "timer_end")?.value;
       if (timer) setTimerEnd(parseInt(timer));
+
+      const accessMap = data.find(d => d.key === "judge_access_map")?.value;
+      if (accessMap) {
+        try {
+          setJudgeAccessMap(JSON.parse(accessMap));
+        } catch(e) {}
+      }
     }
   }, []);
 
@@ -1566,23 +1584,64 @@ export default function AdminDashboard() {
                           <tr key={j.id} className="border-b border-zinc-100 last:border-0 hover:bg-zinc-50 transition-colors">
                             {editingJudgeId === j.id ? (
                               <>
-                                <td className="px-4 py-2">
-                                  <input type="text" value={editingJudgeData.name} onChange={e => setEditingJudgeData(prev => ({ ...prev, name: e.target.value }))} className="w-full p-1.5 border border-zinc-300 rounded text-sm focus:ring-1 focus:ring-zinc-900 focus:outline-none" />
+                                <td colSpan={2} className="px-4 py-2">
+                                  <div className="flex gap-2 mb-2">
+                                    <input type="text" value={editingJudgeData.name} onChange={e => setEditingJudgeData(prev => ({ ...prev, name: e.target.value }))} className="flex-1 p-1.5 border border-zinc-300 rounded text-sm focus:ring-1 focus:ring-zinc-900 focus:outline-none" placeholder="Nama Juri" />
+                                    <input type="text" value={editingJudgeData.pin} onChange={e => setEditingJudgeData(prev => ({ ...prev, pin: e.target.value }))} className="w-24 p-1.5 border border-zinc-300 rounded text-sm font-mono focus:ring-1 focus:ring-zinc-900 focus:outline-none" placeholder="PIN" />
+                                  </div>
+                                  <div className="text-xs font-semibold text-zinc-700 mb-1">Akses Lomba:</div>
+                                  <div className="flex flex-wrap gap-1.5">
+                                    {ALL_COMPETITIONS.map(comp => (
+                                      <button
+                                        key={comp}
+                                        onClick={() => {
+                                          setEditingJudgeData(prev => {
+                                            const isSelected = prev.allowed.includes(comp);
+                                            return {
+                                              ...prev,
+                                              allowed: isSelected ? prev.allowed.filter(c => c !== comp) : [...prev.allowed, comp]
+                                            };
+                                          });
+                                        }}
+                                        className={`px-2 py-1 rounded text-[10px] font-bold transition-colors border ${
+                                          editingJudgeData.allowed.includes(comp) 
+                                            ? "bg-emerald-100 text-emerald-700 border-emerald-200 hover:bg-emerald-200" 
+                                            : "bg-zinc-100 text-zinc-500 border-zinc-200 hover:bg-zinc-200"
+                                        }`}
+                                      >
+                                        {comp.replace("Fun Games - ", "")}
+                                      </button>
+                                    ))}
+                                    {editingJudgeData.allowed.length > 0 && (
+                                      <button onClick={() => setEditingJudgeData(prev => ({ ...prev, allowed: [] }))} className="px-2 py-1 rounded text-[10px] font-bold text-red-600 bg-red-50 hover:bg-red-100 border border-red-100">
+                                        Reset (Buka Semua)
+                                      </button>
+                                    )}
+                                  </div>
                                 </td>
-                                <td className="px-4 py-2">
-                                  <input type="text" value={editingJudgeData.pin} onChange={e => setEditingJudgeData(prev => ({ ...prev, pin: e.target.value }))} className="w-full sm:w-24 p-1.5 border border-zinc-300 rounded text-sm font-mono focus:ring-1 focus:ring-zinc-900 focus:outline-none" />
-                                </td>
-                                <td className="px-4 py-2 text-right">
-                                  <div className="flex items-center justify-end gap-2">
+                                <td className="px-4 py-2 text-right align-top">
+                                  <div className="flex items-center justify-end gap-2 mt-1">
                                     <button 
                                       onClick={async () => {
                                         if (!editingJudgeData.name || !editingJudgeData.pin) return;
+                                        
+                                        // Update judge
                                         const res = await fetch("/api/admin/judges", {
                                           method: "PATCH",
                                           headers: { "Content-Type": "application/json" },
                                           body: JSON.stringify({ id: j.id, name: editingJudgeData.name, pin: editingJudgeData.pin })
                                         });
+
                                         if (res.ok) {
+                                          // Update judge_access_map
+                                          const newMap = { ...judgeAccessMap, [j.id]: editingJudgeData.allowed };
+                                          await fetch("/api/settings", {
+                                            method: "POST",
+                                            headers: { "Content-Type": "application/json" },
+                                            body: JSON.stringify({ key: "judge_access_map", value: JSON.stringify(newMap) })
+                                          });
+                                          
+                                          setJudgeAccessMap(newMap);
                                           setEditingJudgeId(null);
                                           fetchJudges();
                                         } else {
@@ -1602,14 +1661,27 @@ export default function AdminDashboard() {
                               </>
                             ) : (
                               <>
-                                <td className="px-4 py-3 font-bold text-zinc-900">{j.name}</td>
-                                <td className="px-4 py-3 text-zinc-600"><Badge>{j.pin}</Badge></td>
-                                <td className="px-4 py-3 text-right">
-                                  <div className="flex items-center justify-end gap-2">
+                                <td className="px-4 py-3">
+                                  <div className="font-bold text-zinc-900 mb-1">{j.name}</div>
+                                  <div className="flex flex-wrap gap-1">
+                                    {(!judgeAccessMap[j.id] || judgeAccessMap[j.id].length === 0) ? (
+                                      <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-600 border border-blue-100">Semua Lomba</span>
+                                    ) : (
+                                      judgeAccessMap[j.id].map(comp => (
+                                        <span key={comp} className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-100">
+                                          {comp.replace("Fun Games - ", "")}
+                                        </span>
+                                      ))
+                                    )}
+                                  </div>
+                                </td>
+                                <td className="px-4 py-3 text-zinc-600 align-top"><Badge>{j.pin}</Badge></td>
+                                <td className="px-4 py-3 text-right align-top">
+                                  <div className="flex items-center justify-end gap-2 mt-1">
                                     <button 
                                       onClick={() => {
                                         setEditingJudgeId(j.id);
-                                        setEditingJudgeData({ name: j.name, pin: j.pin });
+                                        setEditingJudgeData({ name: j.name, pin: j.pin, allowed: judgeAccessMap[j.id] || [] });
                                       }}
                                       className="text-blue-600 hover:text-blue-800 p-1"
                                       title="Edit Juri"

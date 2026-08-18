@@ -66,32 +66,7 @@ const GAME_CONFIGS: Record<string, {
 const FUN_GAMES = ["Perform Yel-Yel", "Fun Games - Quiz Challenge", "Fun Games - Word Puzzle", "Fun Games - Estafet Sedotan", "Fun Games - Cup Rush"];
 const SPECIAL_GAMES = ["Best Costume", "Potluck - Pesta Rasa Merah Putih"];
 
-// Mapping nama juri (case-insensitive match) → daftar lomba yang boleh dinilai
-// null = akses ke semua lomba
-const JUDGE_ALLOWED_COMPETITIONS: Record<string, string[] | null> = {
-  // Yel-Yel
-  "fendra":    ["Perform Yel-Yel"],
-  "franklyn":  ["Perform Yel-Yel"],
-  // Fun Games (excl. Yel-Yel) + Potluck
-  "jave":      ["Fun Games - Quiz Challenge", "Fun Games - Word Puzzle", "Fun Games - Estafet Sedotan", "Fun Games - Cup Rush", "Potluck - Pesta Rasa Merah Putih"],
-  // Fun Games only (excl. Yel-Yel)
-  "natalia":   ["Fun Games - Quiz Challenge", "Fun Games - Word Puzzle", "Fun Games - Estafet Sedotan", "Fun Games - Cup Rush"],
-  // Potluck
-  "peng":      ["Potluck - Pesta Rasa Merah Putih"],
-  "suryadi":   ["Potluck - Pesta Rasa Merah Putih"],
-  // Best Costume
-  "yayan":     ["Best Costume"],
-  "yudha":     ["Best Costume"],
-};
-
-// Cek apakah nama juri boleh menilai lomba tertentu
-function judgeCanAccess(judgeName: string, competition: string): boolean {
-  const key = judgeName.toLowerCase().split(" ")[0]; // ambil kata pertama (nama depan)
-  const allowed = JUDGE_ALLOWED_COMPETITIONS[key];
-  if (allowed === undefined) return true; // tidak terdaftar di mapping = akses semua
-  if (allowed === null) return true;
-  return allowed.includes(competition);
-}
+// Mapping nama juri -> daftar lomba (kini dikelola lewat Admin / settings db)
 
 const WORD_PUZZLE_ANSWERS = [
   { amplop: "1", theme: "Integrity", words: ["Honest", "Fair", "Firm"] },
@@ -148,12 +123,14 @@ export default function JudgePortal() {
   const [updatingId, setUpdatingId] = useState<string | null>(null);
 
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [judgeId, setJudgeId] = useState("");
   const [judgeName, setJudgeName] = useState("");
   const [pin, setPin] = useState("");
   const [pinError, setPinError] = useState(false);
   const [loginLoading, setLoginLoading] = useState(false);
   const [competitionTitle, setCompetitionTitle] = useState("Fun Games");
   const [prevTitle, setPrevTitle] = useState("");
+  const [judgeAccessMap, setJudgeAccessMap] = useState<Record<string, string[]>>({});
   const [sessionScores, setSessionScores] = useState<Record<string, number>>({});
   const [manualInputs, setManualInputs] = useState<Record<string, string>>({});
   const [scoreLog, setScoreLog] = useState<ScoreLogEntry[]>([]);
@@ -192,18 +169,28 @@ export default function JudgePortal() {
   const fetchTitle = useCallback(async () => {
     const { data } = await supabase
       .from("settings")
-      .select("value")
-      .eq("key", "competition_title")
-      .single();
-    if (data && data.value) {
-      setCompetitionTitle(prev => {
-        if (prev !== "" && prev !== data.value) {
-          setPrevTitle(data.value);
-          setSessionScores({});
-          setManualInputs({});
-        }
-        return data.value;
-      });
+      .select("key, value")
+      .in("key", ["competition_title", "judge_access_map"]);
+
+    if (data) {
+      const title = data.find(d => d.key === "competition_title")?.value;
+      if (title) {
+        setCompetitionTitle(prev => {
+          if (prev !== "" && prev !== title) {
+            setPrevTitle(title);
+            setSessionScores({});
+            setManualInputs({});
+          }
+          return title;
+        });
+      }
+
+      const accessMapStr = data.find(d => d.key === "judge_access_map")?.value;
+      if (accessMapStr) {
+        try {
+          setJudgeAccessMap(JSON.parse(accessMapStr));
+        } catch {}
+      }
     }
   }, []);
 
@@ -303,6 +290,7 @@ export default function JudgePortal() {
       });
       if (res.ok) {
         const data = await res.json();
+        setJudgeId(data.judge.id);
         setJudgeName(data.judge.name);
         setIsAuthenticated(true);
       } else {
@@ -317,7 +305,13 @@ export default function JudgePortal() {
   const config = GAME_CONFIGS[competitionTitle];
   const isSpecial = SPECIAL_GAMES.includes(competitionTitle);
   const isFunGame = FUN_GAMES.includes(competitionTitle);
-  const hasAccess = judgeCanAccess(judgeName, competitionTitle);
+  
+  const hasAccess = (() => {
+    if (!judgeId) return true;
+    const allowed = judgeAccessMap[judgeId];
+    if (!allowed || allowed.length === 0) return true;
+    return allowed.includes(competitionTitle);
+  })();
 
   const funGameLog = scoreLog.filter(e => FUN_GAMES.includes(e.competition));
   const bestCostumeLog = scoreLog.filter(e => e.competition === "Best Costume");
