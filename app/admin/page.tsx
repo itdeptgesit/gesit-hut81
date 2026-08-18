@@ -2003,10 +2003,10 @@ export default function AdminDashboard() {
                         <div className="space-y-1">
                           {toRanked(costumeMap, 1).map(([name, score], i) => (
                             <button key={name} type="button"
-                              onClick={() => { setCertTemplate("fungames"); setCertData({ name, category: "Best Costume", event: "HUT RI ke-81 GESIT Fun Games", position: POSITIONS[i], date: "19 August 2026" }); }}
+                              onClick={() => { setCertTemplate("fungames"); setCertData({ name, category: "Best Costume", event: "HUT RI ke-81 GESIT Fun Games", position: "BEST OF THE BEST", date: "19 August 2026" }); }}
                               className={`w-full text-left px-3 py-2 rounded-lg border text-xs transition-all ${certData.name === name && certData.category === "Best Costume" ? "bg-purple-700 text-white border-purple-700" : "bg-white border-zinc-200 hover:border-purple-400 text-zinc-700"}`}>
-                              <span className="font-bold">{["🥇","🥈","🥉"][i]} {name}</span>
-                              <span className="text-[10px] ml-2 opacity-60">{POSITIONS[i]}</span>
+                              <span className="font-bold">🥇 {name}</span>
+                              <span className="text-[10px] ml-2 opacity-60">BEST OF THE BEST</span>
                             </button>
                           ))}
                         </div>
@@ -2020,10 +2020,10 @@ export default function AdminDashboard() {
                         <div className="space-y-1">
                           {toRanked(potluckMap, 1).map(([name, score], i) => (
                             <button key={name} type="button"
-                              onClick={() => { setCertTemplate("fungames"); setCertData({ name, category: "Potluck Nusantara", event: "HUT RI ke-81 GESIT Fun Games", position: POSITIONS[i], date: "19 August 2026" }); }}
+                              onClick={() => { setCertTemplate("fungames"); setCertData({ name, category: "Potluck Nusantara", event: "HUT RI ke-81 GESIT Fun Games", position: "THE WINNER", date: "19 August 2026" }); }}
                               className={`w-full text-left px-3 py-2 rounded-lg border text-xs transition-all ${certData.name === name && certData.category === "Potluck Nusantara" ? "bg-emerald-700 text-white border-emerald-700" : "bg-white border-zinc-200 hover:border-emerald-400 text-zinc-700"}`}>
-                              <span className="font-bold">{["🥇","🥈","🥉"][i]} {name}</span>
-                              <span className="text-[10px] ml-2 opacity-60">{POSITIONS[i]}</span>
+                              <span className="font-bold">🥇 {name}</span>
+                              <span className="text-[10px] ml-2 opacity-60">THE WINNER</span>
                             </button>
                           ))}
                         </div>
@@ -2065,22 +2065,18 @@ export default function AdminDashboard() {
                             <span className="text-[9px] font-bold text-center leading-tight">{pos}</span>
                           </button>
                         ))}
-                        {POSITIONS.slice(0, 1).map((pos, i) => (
-                          <button key={`cos-b-${pos}`} type="button"
-                            onClick={() => { setCertWinnerId(""); setCertTemplate("fungames"); setCertData({ name: "", category: "Best Costume", event: "HUT RI ke-81 GESIT Fun Games", position: pos, date: "19 August 2026" }); }}
-                            className="flex flex-col items-center justify-center p-1.5 border border-zinc-200 rounded-lg hover:bg-purple-700 hover:text-white hover:border-purple-700 transition-colors text-zinc-600">
-                            <span className="text-xs mb-0.5">👗</span>
-                            <span className="text-[9px] font-bold text-center leading-tight">{pos}</span>
-                          </button>
-                        ))}
-                        {POSITIONS.slice(0, 1).map((pos, i) => (
-                          <button key={`pot-b-${pos}`} type="button"
-                            onClick={() => { setCertWinnerId(""); setCertTemplate("fungames"); setCertData({ name: "", category: "Potluck Nusantara", event: "HUT RI ke-81 GESIT Fun Games", position: pos, date: "19 August 2026" }); }}
-                            className="flex flex-col items-center justify-center p-1.5 border border-zinc-200 rounded-lg hover:bg-emerald-700 hover:text-white hover:border-emerald-700 transition-colors text-zinc-600">
-                            <span className="text-xs mb-0.5">🍽️</span>
-                            <span className="text-[9px] font-bold text-center leading-tight">{pos}</span>
-                          </button>
-                        ))}
+                        <button type="button"
+                          onClick={() => { setCertWinnerId(""); setCertTemplate("fungames"); setCertData({ name: "", category: "Best Costume", event: "HUT RI ke-81 GESIT Fun Games", position: "BEST OF THE BEST", date: "19 August 2026" }); }}
+                          className="flex flex-col items-center justify-center p-1.5 border border-zinc-200 rounded-lg hover:bg-purple-700 hover:text-white hover:border-purple-700 transition-colors text-zinc-600">
+                          <span className="text-xs mb-0.5">👗</span>
+                          <span className="text-[9px] font-bold text-center leading-tight">BEST OF THE BEST</span>
+                        </button>
+                        <button type="button"
+                          onClick={() => { setCertWinnerId(""); setCertTemplate("fungames"); setCertData({ name: "", category: "Potluck Nusantara", event: "HUT RI ke-81 GESIT Fun Games", position: "THE WINNER", date: "19 August 2026" }); }}
+                          className="flex flex-col items-center justify-center p-1.5 border border-zinc-200 rounded-lg hover:bg-emerald-700 hover:text-white hover:border-emerald-700 transition-colors text-zinc-600">
+                          <span className="text-xs mb-0.5">🍽️</span>
+                          <span className="text-[9px] font-bold text-center leading-tight">THE WINNER</span>
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -2286,8 +2282,8 @@ export default function AdminDashboard() {
                         { slug: "fun-games-1st-place", category: "Fun Games", position: "1ST PLACE", icon: "🎮" },
                         { slug: "fun-games-2nd-place", category: "Fun Games", position: "2ND PLACE", icon: "🎮" },
                         { slug: "fun-games-3rd-place", category: "Fun Games", position: "3RD PLACE", icon: "🎮" },
-                        { slug: "best-costume-1st-place", category: "Best Costume", position: "1ST PLACE", icon: "👗" },
-                        { slug: "potluck-nusantara-1st-place", category: "Potluck Nusantara", position: "1ST PLACE", icon: "🍽️" },
+                        { slug: "best-costume-best-of-the-best", category: "Best Costume", position: "BEST OF THE BEST", icon: "👗" },
+                        { slug: "potluck-nusantara-the-winner", category: "Potluck Nusantara", position: "THE WINNER", icon: "🍽️" },
                       ].map(item => (
                         <tr key={item.slug}>
                           <td className="px-4 py-3 font-medium text-zinc-900">
