@@ -2016,7 +2016,7 @@ export default function AdminDashboard() {
 
                     {/* Badminton winners */}
                     {winners.length > 0 && (
-                      <div>
+                      <div className="mb-3">
                         <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-1.5">🏸 Badminton</p>
                         <select
                           value={certWinnerId}
@@ -2036,6 +2036,37 @@ export default function AdminDashboard() {
                         </select>
                       </div>
                     )}
+
+                    {/* Template Kosong (Pra-Event) */}
+                    <div className="mt-4 pt-3 border-t border-zinc-100">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-2">🖨️ Cetak Template Kosong (Pra-Event)</p>
+                      <div className="grid grid-cols-3 gap-2">
+                        {POSITIONS.map((pos, i) => (
+                          <button key={`fun-b-${pos}`} type="button"
+                            onClick={() => { setCertWinnerId(""); setCertTemplate("fungames"); setCertData({ name: "", category: "Fun Games", event: "HUT RI ke-81 GESIT Fun Games", position: pos, date: "19 August 2026" }); }}
+                            className="flex flex-col items-center justify-center p-1.5 border border-zinc-200 rounded-lg hover:bg-[#102A4C] hover:text-white hover:border-[#102A4C] transition-colors text-zinc-600">
+                            <span className="text-xs mb-0.5">🎮</span>
+                            <span className="text-[9px] font-bold text-center leading-tight">{pos}</span>
+                          </button>
+                        ))}
+                        {POSITIONS.map((pos, i) => (
+                          <button key={`cos-b-${pos}`} type="button"
+                            onClick={() => { setCertWinnerId(""); setCertTemplate("fungames"); setCertData({ name: "", category: "Best Costume", event: "HUT RI ke-81 GESIT Fun Games", position: pos, date: "19 August 2026" }); }}
+                            className="flex flex-col items-center justify-center p-1.5 border border-zinc-200 rounded-lg hover:bg-purple-700 hover:text-white hover:border-purple-700 transition-colors text-zinc-600">
+                            <span className="text-xs mb-0.5">👗</span>
+                            <span className="text-[9px] font-bold text-center leading-tight">{pos}</span>
+                          </button>
+                        ))}
+                        {POSITIONS.map((pos, i) => (
+                          <button key={`pot-b-${pos}`} type="button"
+                            onClick={() => { setCertWinnerId(""); setCertTemplate("fungames"); setCertData({ name: "", category: "Potluck Nusantara", event: "HUT RI ke-81 GESIT Fun Games", position: pos, date: "19 August 2026" }); }}
+                            className="flex flex-col items-center justify-center p-1.5 border border-zinc-200 rounded-lg hover:bg-emerald-700 hover:text-white hover:border-emerald-700 transition-colors text-zinc-600">
+                            <span className="text-xs mb-0.5">🍽️</span>
+                            <span className="text-[9px] font-bold text-center leading-tight">{pos}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                   </div>
 
                   <div className="border-t border-zinc-100 my-1"></div>
