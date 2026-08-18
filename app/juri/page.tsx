@@ -13,9 +13,11 @@ interface GroupScore {
 }
 
 interface ScoreLogEntry {
+  id: string;
   time: string;
   competition: string;
   groupName: string;
+  judgeName: string;
   value: number;
 }
 
@@ -102,6 +104,44 @@ const WORD_PUZZLE_ANSWERS = [
   { amplop: "8", theme: "Passion", words: ["Satisfaction", "Heart", "Soul"] },
 ];
 
+
+type LogColor = "emerald" | "amber" | "purple";
+
+const LOG_COLOR_MAP: Record<LogColor, { badge: string; del: string }> = {
+  emerald: { badge: "text-emerald-600 bg-emerald-50", del: "text-emerald-400 hover:text-red-500 hover:bg-red-50" },
+  amber:   { badge: "text-amber-600 bg-amber-50",     del: "text-amber-400 hover:text-red-500 hover:bg-red-50" },
+  purple:  { badge: "text-purple-600 bg-purple-50",   del: "text-purple-400 hover:text-red-500 hover:bg-red-50" },
+};
+
+function LogRow({ entry, color, onDelete }: { entry: ScoreLogEntry; color: LogColor; onDelete: () => void }) {
+  const c = LOG_COLOR_MAP[color];
+  return (
+    <div className="px-4 py-2.5 flex items-center justify-between gap-2 hover:bg-zinc-50/80 group">
+      <div className="min-w-0">
+        <p className="text-xs font-black text-zinc-900 truncate">{entry.groupName}</p>
+        <p className="text-[10px] text-zinc-400 truncate">
+          {entry.competition !== entry.groupName ? `${entry.competition} · ` : ""}{entry.time}
+          {entry.judgeName && entry.judgeName !== "—" && (
+            <span className="ml-1 text-[10px] font-semibold text-zinc-500">· 👤 {entry.judgeName}</span>
+          )}
+        </p>
+      </div>
+      <div className="flex items-center gap-1.5 shrink-0">
+        <span className={`font-black text-sm px-2 py-0.5 rounded-lg ${c.badge}`}>
+          {entry.value > 0 ? `+${entry.value}` : entry.value}
+        </span>
+        <button
+          onClick={onDelete}
+          className={`w-6 h-6 rounded-lg flex items-center justify-center transition-all opacity-0 group-hover:opacity-100 ${c.del}`}
+          title="Reset entri ini"
+        >
+          <X size={11} strokeWidth={3} />
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function JudgePortal() {
   const [groups, setGroups] = useState<GroupScore[]>([]);
   const [loading, setLoading] = useState(true);
@@ -127,10 +167,12 @@ export default function JudgePortal() {
       const res = await fetch("/api/score-logs?limit=200");
       if (res.ok) {
         const data = await res.json();
-        setScoreLog(data.map((d: { created_at: string; competition: string; group_name: string; value: number }) => ({
+        setScoreLog(data.map((d: { id: string; created_at: string; competition: string; group_name: string; judge_name: string; value: number }) => ({
+          id: d.id,
           time: new Date(d.created_at).toLocaleString("id-ID", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }),
           competition: d.competition,
           groupName: d.group_name,
+          judgeName: d.judge_name || "—",
           value: d.value
         })));
       }
@@ -428,40 +470,49 @@ export default function JudgePortal() {
               ) : scoreLog.length === 0 ? (
                 <p className="text-center text-zinc-400 text-xs py-8 font-medium">Belum ada riwayat nilai.</p>
               ) : (
-                <div className="divide-y divide-zinc-50 max-h-64 overflow-y-auto">
+                <div className="divide-y divide-zinc-50 max-h-72 overflow-y-auto">
                   {funGameLog.length > 0 && (
                     <div>
                       <p className="px-4 py-1.5 text-[10px] font-black text-zinc-400 uppercase tracking-widest bg-zinc-50 sticky top-0">🎮 Fun Games</p>
-                      {funGameLog.map((e, i) => (
-                        <div key={i} className="px-4 py-2.5 flex items-center justify-between gap-2 hover:bg-zinc-50/80">
-                          <div><p className="text-xs font-black text-zinc-900">{e.groupName}</p>
-                            <p className="text-[10px] text-zinc-400">{e.competition} · {e.time}</p></div>
-                          <span className="font-black text-emerald-600 text-sm bg-emerald-50 px-2 py-0.5 rounded-lg">+{e.value}</span>
-                        </div>
+                      {funGameLog.map((e) => (
+                        <LogRow key={e.id} entry={e} color="emerald"
+                          onDelete={async () => {
+                            if (!confirm(`Reset nilai +${e.value} untuk ${e.groupName}? Skor akan dikurangi.`)) return;
+                            await fetch(`/api/score-logs?id=${e.id}`, { method: "DELETE" });
+                            fetchScoreLog();
+                            fetchGroups();
+                          }}
+                        />
                       ))}
                     </div>
                   )}
                   {bestCostumeLog.length > 0 && (
                     <div>
                       <p className="px-4 py-1.5 text-[10px] font-black text-zinc-400 uppercase tracking-widest bg-zinc-50 sticky top-0">👗 Best Costume</p>
-                      {bestCostumeLog.map((e, i) => (
-                        <div key={i} className="px-4 py-2.5 flex items-center justify-between gap-2 hover:bg-zinc-50/80">
-                          <div><p className="text-xs font-black text-zinc-900">{e.groupName}</p>
-                            <p className="text-[10px] text-zinc-400">{e.time}</p></div>
-                          <span className="font-black text-amber-600 text-sm bg-amber-50 px-2 py-0.5 rounded-lg">+{e.value}</span>
-                        </div>
+                      {bestCostumeLog.map((e) => (
+                        <LogRow key={e.id} entry={e} color="amber"
+                          onDelete={async () => {
+                            if (!confirm(`Reset nilai +${e.value} untuk ${e.groupName}? Skor akan dikurangi.`)) return;
+                            await fetch(`/api/score-logs?id=${e.id}`, { method: "DELETE" });
+                            fetchScoreLog();
+                            fetchGroups();
+                          }}
+                        />
                       ))}
                     </div>
                   )}
                   {potluckLog.length > 0 && (
                     <div>
                       <p className="px-4 py-1.5 text-[10px] font-black text-zinc-400 uppercase tracking-widest bg-zinc-50 sticky top-0">🍽️ Potluck</p>
-                      {potluckLog.map((e, i) => (
-                        <div key={i} className="px-4 py-2.5 flex items-center justify-between gap-2 hover:bg-zinc-50/80">
-                          <div><p className="text-xs font-black text-zinc-900">{e.groupName}</p>
-                            <p className="text-[10px] text-zinc-400">{e.time}</p></div>
-                          <span className="font-black text-purple-600 text-sm bg-purple-50 px-2 py-0.5 rounded-lg">+{e.value}</span>
-                        </div>
+                      {potluckLog.map((e) => (
+                        <LogRow key={e.id} entry={e} color="purple"
+                          onDelete={async () => {
+                            if (!confirm(`Reset nilai +${e.value} untuk ${e.groupName}? Skor akan dikurangi.`)) return;
+                            await fetch(`/api/score-logs?id=${e.id}`, { method: "DELETE" });
+                            fetchScoreLog();
+                            fetchGroups();
+                          }}
+                        />
                       ))}
                     </div>
                   )}

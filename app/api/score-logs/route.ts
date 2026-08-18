@@ -41,3 +41,43 @@ export async function POST(request: Request) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json(data);
 }
+
+export async function DELETE(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const id = searchParams.get("id");
+
+  if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
+
+  // Fetch the log entry first to reverse the score
+  const { data: logEntry, error: fetchError } = await supabase
+    .from("score_logs")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+  if (fetchError || !logEntry) {
+    return NextResponse.json({ error: "Log entry not found" }, { status: 404 });
+  }
+
+  // Reverse the score on group_scores (only for positive values)
+  if (logEntry.value > 0 && logEntry.group_id) {
+    const { data: current } = await supabase
+      .from("group_scores")
+      .select("score")
+      .eq("id", logEntry.group_id)
+      .single();
+
+    if (current) {
+      await supabase
+        .from("group_scores")
+        .update({ score: Math.max(0, (current.score || 0) - logEntry.value) })
+        .eq("id", logEntry.group_id);
+    }
+  }
+
+  // Delete the log entry
+  const { error } = await supabase.from("score_logs").delete().eq("id", id);
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  return NextResponse.json({ success: true, reversed: logEntry.value });
+}
