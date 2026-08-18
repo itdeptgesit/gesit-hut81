@@ -24,32 +24,32 @@ const GAME_CONFIGS: Record<string, {
   max: number;
   criteria: string[];
   type: "buttons" | "manual";
-  buttons?: { label: string; value: number }[];
+  buttons?: { label: string; value: number | "reset" }[];
 }> = {
   "Perform Yel-Yel": {
     max: 10, type: "buttons",
     criteria: ["Kreativitas & gerakan", "Kekompakan", "Semangat, Vocal, & Intonasi"],
-    buttons: [{ label: "Undo", value: -2 }, { label: "Cukup", value: 5 }, { label: "Baik", value: 8 }, { label: "Sempurna", value: 10 }]
+    buttons: [{ label: "Reset", value: "reset" }, { label: "Cukup", value: 5 }, { label: "Baik", value: 8 }, { label: "Sempurna", value: 10 }]
   },
   "Fun Games - Quiz Challenge": {
     max: 30, type: "buttons",
     criteria: ["Wawasan & Pengetahuan", "Kecepatan berpikir, Komunikasi tim"],
-    buttons: [{ label: "Undo", value: -5 }, { label: "Cukup", value: 10 }, { label: "Baik", value: 20 }, { label: "Sempurna", value: 30 }]
+    buttons: [{ label: "Reset", value: "reset" }, { label: "Cukup", value: 10 }, { label: "Baik", value: 20 }, { label: "Sempurna", value: 30 }]
   },
   "Fun Games - Word Puzzle": {
     max: 20, type: "buttons",
     criteria: ["Pemahaman value Gesit", "Kerjasama tim", "Kekompakan Tim"],
-    buttons: [{ label: "Undo", value: -5 }, { label: "Benar 1", value: 5 }, { label: "Benar 2", value: 10 }, { label: "Benar 3", value: 20 }]
+    buttons: [{ label: "Reset", value: "reset" }, { label: "Benar 1", value: 5 }, { label: "Benar 2", value: 10 }, { label: "Benar 3", value: 20 }]
   },
   "Fun Games - Estafet Sedotan": {
     max: 30, type: "buttons",
     criteria: ["Teamwork", "Koordinasi", "Fokus & Kecepatan"],
-    buttons: [{ label: "Undo", value: -5 }, { label: "Cukup", value: 10 }, { label: "Baik", value: 20 }, { label: "Sempurna", value: 30 }]
+    buttons: [{ label: "Reset", value: "reset" }, { label: "Cukup", value: 10 }, { label: "Baik", value: 20 }, { label: "Sempurna", value: 30 }]
   },
   "Fun Games - Cup Rush": {
     max: 10, type: "buttons",
     criteria: ["Kecepatan Reaksi", "Fokus & Konsentrasi", "Strategi & Antisipasi"],
-    buttons: [{ label: "Undo", value: -2 }, { label: "Cukup", value: 5 }, { label: "Baik", value: 8 }, { label: "Sempurna", value: 10 }]
+    buttons: [{ label: "Reset", value: "reset" }, { label: "Cukup", value: 5 }, { label: "Baik", value: 8 }, { label: "Sempurna", value: 10 }]
   },
   "Best Costume": {
     max: 100, type: "manual",
@@ -63,6 +63,44 @@ const GAME_CONFIGS: Record<string, {
 
 const FUN_GAMES = ["Perform Yel-Yel", "Fun Games - Quiz Challenge", "Fun Games - Word Puzzle", "Fun Games - Estafet Sedotan", "Fun Games - Cup Rush"];
 const SPECIAL_GAMES = ["Best Costume", "Potluck - Pesta Rasa Merah Putih"];
+
+// Mapping nama juri (case-insensitive match) → daftar lomba yang boleh dinilai
+// null = akses ke semua lomba
+const JUDGE_ALLOWED_COMPETITIONS: Record<string, string[] | null> = {
+  // Yel-Yel
+  "fendra":    ["Perform Yel-Yel"],
+  "franklyn":  ["Perform Yel-Yel"],
+  // Fun Games (excl. Yel-Yel) + Potluck
+  "jave":      ["Fun Games - Quiz Challenge", "Fun Games - Word Puzzle", "Fun Games - Estafet Sedotan", "Fun Games - Cup Rush", "Potluck - Pesta Rasa Merah Putih"],
+  // Fun Games only (excl. Yel-Yel)
+  "natalia":   ["Fun Games - Quiz Challenge", "Fun Games - Word Puzzle", "Fun Games - Estafet Sedotan", "Fun Games - Cup Rush"],
+  // Potluck
+  "peng":      ["Potluck - Pesta Rasa Merah Putih"],
+  "suryadi":   ["Potluck - Pesta Rasa Merah Putih"],
+  // Best Costume
+  "yayan":     ["Best Costume"],
+  "yudha":     ["Best Costume"],
+};
+
+// Cek apakah nama juri boleh menilai lomba tertentu
+function judgeCanAccess(judgeName: string, competition: string): boolean {
+  const key = judgeName.toLowerCase().split(" ")[0]; // ambil kata pertama (nama depan)
+  const allowed = JUDGE_ALLOWED_COMPETITIONS[key];
+  if (allowed === undefined) return true; // tidak terdaftar di mapping = akses semua
+  if (allowed === null) return true;
+  return allowed.includes(competition);
+}
+
+const WORD_PUZZLE_ANSWERS = [
+  { amplop: "1", theme: "Integrity", words: ["Honest", "Fair", "Firm"] },
+  { amplop: "5", theme: "Integrity", words: ["Moral", "Ethical", "Reliable"] },
+  { amplop: "2", theme: "Respect", words: ["Understand", "Dignity", "Listen"] },
+  { amplop: "6", theme: "Respect", words: ["Polite", "Kind", "Value"] },
+  { amplop: "3", theme: "Competent", words: ["Leadership", "Problem Solving", "Communication"] },
+  { amplop: "7", theme: "Competent", words: ["Efficient", "Effective", "Technical"] },
+  { amplop: "4", theme: "Passion", words: ["Engaged", "Contribute", "Aspired"] },
+  { amplop: "8", theme: "Passion", words: ["Satisfaction", "Heart", "Soul"] },
+];
 
 export default function JudgePortal() {
   const [groups, setGroups] = useState<GroupScore[]>([]);
@@ -142,7 +180,35 @@ export default function JudgePortal() {
     };
   }, [fetchGroups, fetchTitle, fetchScoreLog]);
 
-  const handleScoreUpdate = async (id: string, diff: number, groupName: string) => {
+  const handleScoreUpdate = async (id: string, diff: number | "reset", groupName: string) => {
+    if (diff === "reset") {
+      const currentSessionScore = sessionScores[id] || 0;
+      if (currentSessionScore === 0) return; // Nothing to reset
+
+      setUpdatingId(id);
+      setSessionScores(prev => ({ ...prev, [id]: 0 }));
+
+      // Save to DB log
+      fetch("/api/score-logs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ competition: competitionTitle, group_id: id, group_name: groupName, judge_name: judgeName, value: -currentSessionScore })
+      }).then(() => fetchScoreLog()).catch(() => {});
+
+      try {
+        const res = await fetch("/api/admin/group-scores", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id, increment: -currentSessionScore }),
+        });
+        if (!res.ok) await fetchGroups();
+      } catch {
+        await fetchGroups();
+      }
+      setUpdatingId(null);
+      return;
+    }
+
     setUpdatingId(id);
     setSessionScores(prev => ({ ...prev, [id]: (prev[id] ?? 0) + diff }));
 
@@ -209,6 +275,7 @@ export default function JudgePortal() {
   const config = GAME_CONFIGS[competitionTitle];
   const isSpecial = SPECIAL_GAMES.includes(competitionTitle);
   const isFunGame = FUN_GAMES.includes(competitionTitle);
+  const hasAccess = judgeCanAccess(judgeName, competitionTitle);
 
   const funGameLog = scoreLog.filter(e => FUN_GAMES.includes(e.competition));
   const bestCostumeLog = scoreLog.filter(e => e.competition === "Best Costume");
@@ -338,6 +405,7 @@ export default function JudgePortal() {
           </div>
         </div>
 
+
         {/* Score Log Panel */}
         <AnimatePresence>
           {showLog && (
@@ -404,7 +472,20 @@ export default function JudgePortal() {
         </AnimatePresence>
 
         {/* Group Cards */}
-        {loading ? (
+        {!hasAccess ? (
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+            className="bg-white border border-zinc-200 rounded-3xl p-10 text-center shadow-sm">
+            <div className="w-16 h-16 bg-zinc-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Lock className="text-zinc-400" size={30} />
+            </div>
+            <p className="text-zinc-900 font-black text-lg uppercase tracking-tight mb-1">Akses Terbatas</p>
+            <p className="text-zinc-500 text-sm font-medium leading-snug">
+              Anda tidak memiliki akses untuk menilai<br />
+              <span className="font-bold text-[#102A4C]">{competitionTitle}</span>
+            </p>
+            <p className="text-zinc-400 text-xs mt-3">Silakan tunggu lomba yang sesuai dengan penugasan Anda.</p>
+          </motion.div>
+        ) : loading ? (
           <div className="flex justify-center py-20"><Loader2 className="animate-spin text-zinc-400" size={32} /></div>
         ) : (
           groups.map((group, idx) => (
@@ -439,6 +520,29 @@ export default function JudgePortal() {
                   </div>
                 </div>
 
+                {/* Word Puzzle Group specific Answer Key */}
+                {competitionTitle === "Fun Games - Word Puzzle" && (() => {
+                  const ans = WORD_PUZZLE_ANSWERS.find(a => a.amplop === String(idx + 1));
+                  if (!ans) return null;
+                  return (
+                    <div className="mb-4 bg-zinc-50 border border-zinc-200 rounded-xl p-3">
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="text-[9px] font-black text-zinc-500 bg-white shadow-sm border border-zinc-200 px-1.5 py-0.5 rounded uppercase">
+                          Amplop {ans.amplop} - Kunci Jawaban
+                        </span>
+                        <span className="text-[10px] font-black text-[#E31E24] uppercase tracking-wide">{ans.theme}</span>
+                      </div>
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {ans.words.map((w, wi) => (
+                          <span key={wi} className="text-[11px] font-bold text-zinc-700 bg-white shadow-sm border border-zinc-200 px-2 py-1 rounded-md">
+                            {w}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
+
                 {/* Manual input (Best Costume & Potluck) */}
                 {isSpecial ? (
                   <div className="flex gap-2 items-center">
@@ -460,7 +564,7 @@ export default function JudgePortal() {
                   /* Quick-tap buttons for Fun Games */
                   <div className="grid gap-1.5 sm:gap-2" style={{ gridTemplateColumns: `repeat(${config.buttons!.length}, 1fr)` }}>
                     {config.buttons!.map((btn, bi) => {
-                      const isUndo = btn.value < 0;
+                      const isUndo = btn.value === "reset" || (typeof btn.value === "number" && btn.value < 0);
                       const isMax = btn.value === config.max;
                       return (
                         <button key={bi} onClick={() => handleScoreUpdate(group.id, btn.value, group.group_name)}
@@ -476,7 +580,7 @@ export default function JudgePortal() {
                             {btn.label}
                           </span>
                           <span className="text-sm sm:text-base leading-none">
-                            {btn.value > 0 ? `+${btn.value}` : btn.value}
+                            {btn.value === "reset" ? "0" : ((btn.value as number) > 0 ? `+${btn.value}` : btn.value)}
                           </span>
                         </button>
                       );
