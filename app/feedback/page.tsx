@@ -2,32 +2,92 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { CheckCircle2, AlertCircle, Loader2, Send, User, Heart, Wrench, Lightbulb } from "lucide-react";
+import {
+  CheckCircle2, AlertCircle, Loader2, ChevronRight,
+  ChevronLeft, Star, Frown, Meh, Smile, SmilePlus,
+  ThumbsUp, ThumbsDown, Minus, Flag, Send
+} from "lucide-react";
 import Image from "next/image";
 
 type SatisfactionLevel = 1 | 2 | 3 | 4 | null;
 
+const SECTIONS = [
+  { id: "identity", title: "Data Diri", desc: "Perkenalkan diri Anda" },
+  { id: "satisfaction", title: "Penilaian Acara", desc: "Kepuasan terhadap acara" },
+  { id: "impact", title: "Dampak Acara", desc: "Pengaruh terhadap Anda" },
+  { id: "feedback", title: "Masukan", desc: "Saran dan ide Anda" },
+];
+
+const satisfactionOptions = [
+  { label: "Sangat Tidak Puas", icon: Frown, color: "text-red-400", bg: "bg-red-500/15 border-red-500/40 hover:bg-red-500/25", active: "bg-red-500/20 border-red-500 ring-2 ring-red-500/30 shadow-[0_0_12px_rgba(239,68,68,0.2)]" },
+  { label: "Tidak Puas", icon: Meh, color: "text-orange-400", bg: "bg-orange-500/15 border-orange-500/40 hover:bg-orange-500/25", active: "bg-orange-500/20 border-orange-500 ring-2 ring-orange-500/30 shadow-[0_0_12px_rgba(249,115,22,0.2)]" },
+  { label: "Puas", icon: Smile, color: "text-emerald-400", bg: "bg-emerald-500/15 border-emerald-500/40 hover:bg-emerald-500/25", active: "bg-emerald-500/20 border-emerald-500 ring-2 ring-emerald-500/30 shadow-[0_0_12px_rgba(52,211,153,0.2)]" },
+  { label: "Sangat Puas", icon: SmilePlus, color: "text-green-400", bg: "bg-green-500/15 border-green-500/40 hover:bg-green-500/25", active: "bg-green-500/20 border-green-500 ring-2 ring-green-500/30 shadow-[0_0_12px_rgba(74,222,128,0.2)]" },
+];
+
+const agreementOptions = [
+  { label: "Sangat Tidak Setuju", icon: ThumbsDown, color: "text-red-400", bg: "bg-red-500/15 border-red-500/40 hover:bg-red-500/25", active: "bg-red-500/20 border-red-500 ring-2 ring-red-500/30 shadow-[0_0_12px_rgba(239,68,68,0.2)]" },
+  { label: "Tidak Setuju", icon: Minus, color: "text-orange-400", bg: "bg-orange-500/15 border-orange-500/40 hover:bg-orange-500/25", active: "bg-orange-500/20 border-orange-500 ring-2 ring-orange-500/30 shadow-[0_0_12px_rgba(249,115,22,0.2)]" },
+  { label: "Setuju", icon: ThumbsUp, color: "text-emerald-400", bg: "bg-emerald-500/15 border-emerald-500/40 hover:bg-emerald-500/25", active: "bg-emerald-500/20 border-emerald-500 ring-2 ring-emerald-500/30 shadow-[0_0_12px_rgba(52,211,153,0.2)]" },
+  { label: "Sangat Setuju", icon: Star, color: "text-green-400", bg: "bg-green-500/15 border-green-500/40 hover:bg-green-500/25", active: "bg-green-500/20 border-green-500 ring-2 ring-green-500/30 shadow-[0_0_12px_rgba(74,222,128,0.2)]" },
+];
+
+function RatingGroup({
+  question,
+  value,
+  onChange,
+  options,
+}: {
+  question: string;
+  value: SatisfactionLevel;
+  onChange: (v: SatisfactionLevel) => void;
+  options: typeof satisfactionOptions;
+}) {
+  return (
+    <div className="space-y-4">
+      <p className="text-[15px] font-medium text-zinc-200 leading-relaxed">{question}</p>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {options.map((opt, idx) => {
+          const Icon = opt.icon;
+          const val = (idx + 1) as SatisfactionLevel;
+          const isSelected = value === val;
+          return (
+            <button
+              key={val}
+              type="button"
+              onClick={() => onChange(val)}
+              className={`flex flex-col items-center gap-2 py-4 px-3 rounded-xl border transition-all duration-200 ${isSelected ? opt.active : `border-zinc-700/60 bg-zinc-800/40 hover:border-zinc-600 hover:bg-zinc-700/40`}`}
+            >
+              <Icon size={22} className={isSelected ? opt.color : "text-zinc-500"} />
+              <span className={`text-xs font-semibold leading-tight text-center ${isSelected ? opt.color : "text-zinc-400"}`}>{opt.label}</span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export default function FeedbackPage() {
   const router = useRouter();
-  
-  // State for all questions
+  const [step, setStep] = useState(0);
+
+  const [participantName, setParticipantName] = useState("");
+  const [participantFloor, setParticipantFloor] = useState("");
+
   const [q1, setQ1] = useState<SatisfactionLevel>(null);
   const [q2, setQ2] = useState<SatisfactionLevel>(null);
   const [q3, setQ3] = useState<SatisfactionLevel>(null);
   const [q4, setQ4] = useState<SatisfactionLevel>(null);
   const [q5, setQ5] = useState<SatisfactionLevel>(null);
   const [q6, setQ6] = useState<SatisfactionLevel>(null);
-  
+
   const [q7, setQ7] = useState<SatisfactionLevel>(null);
   const [q8, setQ8] = useState<SatisfactionLevel>(null);
   const [q9, setQ9] = useState<SatisfactionLevel>(null);
   const [q10, setQ10] = useState<SatisfactionLevel>(null);
   const [q11, setQ11] = useState<SatisfactionLevel>(null);
-  
-  const [participantName, setParticipantName] = useState("");
-  const [participantFloor, setParticipantFloor] = useState("");
 
-  
   const [liked, setLiked] = useState("");
   const [improve, setImprove] = useState("");
   const [ideas, setIdeas] = useState("");
@@ -36,19 +96,28 @@ export default function FeedbackPage() {
   const [isSuccess, setIsSuccess] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
-  const isComplete = q1 && q2 && q3 && q4 && q5 && q6 && q7 && q8 && q9 && q10 && q11 && participantName.trim() !== "" && participantFloor !== "";
+  const stepValid = [
+    participantName.trim() !== "" && participantFloor !== "",
+    q1 && q2 && q3 && q4 && q5 && q6,
+    q7 && q8 && q9 && q10 && q11,
+    true,
+  ];
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!isComplete) {
-      setErrorMsg("Mohon lengkapi data diri dan semua pertanyaan pilihan ganda.");
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      return;
-    }
+  const totalAnswered = [
+    participantName.trim() !== "" && participantFloor !== "" ? 1 : 0,
+    [q1, q2, q3, q4, q5, q6].filter(Boolean).length,
+    [q7, q8, q9, q10, q11].filter(Boolean).length,
+    1,
+  ];
 
+  const totalRequired = [1, 6, 5, 1];
+  const overallProgress = Math.round(
+    ((totalAnswered[0] + totalAnswered[1] + totalAnswered[2]) / (totalRequired[0] + totalRequired[1] + totalRequired[2])) * 100
+  );
+
+  const handleSubmit = async () => {
     setIsSubmitting(true);
     setErrorMsg("");
-
     try {
       const res = await fetch("/api/feedback", {
         method: "POST",
@@ -56,31 +125,20 @@ export default function FeedbackPage() {
         body: JSON.stringify({
           participant_name: participantName,
           participant_floor: participantFloor,
-          q1_overall: q1,
-          q2_variety: q2,
-          q3_food: q3,
-          q4_facility: q4,
-          q5_prizes: q5,
-          q6_togetherness: q6,
-          q7_values: q7,
-          q8_pride: q8,
-          q9_networking: q9,
-          q10_motivation: q10,
-          q11_future: q11,
-          feedback_liked: liked,
-          feedback_improve: improve,
-          feedback_ideas: ideas
+          q1_overall: q1, q2_variety: q2, q3_food: q3,
+          q4_facility: q4, q5_prizes: q5, q6_togetherness: q6,
+          q7_values: q7, q8_pride: q8, q9_networking: q9,
+          q10_motivation: q10, q11_future: q11,
+          feedback_liked: liked, feedback_improve: improve, feedback_ideas: ideas,
         }),
       });
-
       if (res.ok) {
         setIsSuccess(true);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
       } else {
         const data = await res.json();
         setErrorMsg(data.error || "Gagal mengirim evaluasi.");
       }
-    } catch (err) {
+    } catch {
       setErrorMsg("Terjadi kesalahan jaringan.");
     } finally {
       setIsSubmitting(false);
@@ -89,22 +147,18 @@ export default function FeedbackPage() {
 
   if (isSuccess) {
     return (
-      <div className="min-h-screen bg-zinc-950 flex flex-col items-center justify-center p-4 relative overflow-hidden">
-        {/* Background effects */}
-        <div className="absolute inset-0 z-0 opacity-10 mix-blend-screen" style={{ backgroundImage: "url('/HUTRI81_FA_Logo__Main%20Logo%20Merah%20Hitam%20Latar%20Putih.png')", backgroundPosition: 'center', backgroundRepeat: 'no-repeat', backgroundSize: 'cover' }} />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-red-600/30 blur-[100px] rounded-full pointer-events-none z-0" />
-        
-        <div className="relative z-10 bg-white/10 backdrop-blur-2xl max-w-md w-full rounded-3xl shadow-2xl border border-white/20 p-10 text-center animate-in zoom-in-75 fade-in duration-500 ease-out slide-in-from-bottom-8">
-          <div className="w-24 h-24 bg-green-500/20 text-green-400 rounded-full flex items-center justify-center mx-auto mb-8 shadow-[0_0_30px_rgba(74,222,128,0.3)] animate-bounce">
-            <CheckCircle2 size={50} strokeWidth={2.5} />
+      <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4">
+        <div className="max-w-md w-full text-center animate-in zoom-in-90 fade-in duration-500">
+          <div className="w-24 h-24 rounded-full bg-green-500/10 border-2 border-green-500/30 flex items-center justify-center mx-auto mb-8 shadow-[0_0_40px_rgba(74,222,128,0.15)]">
+            <CheckCircle2 className="text-green-400 animate-bounce" size={44} strokeWidth={1.5} />
           </div>
-          <h2 className="text-3xl font-black text-white mb-3 tracking-tight">Terima Kasih! 🎉</h2>
-          <p className="text-zinc-300 mb-10 leading-relaxed font-medium">
-            Evaluasi Anda telah tersimpan dan sangat berarti untuk membuat acara GESIT ke depannya menjadi lebih spektakuler!
+          <h2 className="text-3xl font-bold text-white mb-3">Terima Kasih!</h2>
+          <p className="text-zinc-400 text-base leading-relaxed mb-10">
+            Evaluasi Anda telah berhasil disimpan. Masukan Anda sangat berarti untuk GESIT ke depannya.
           </p>
-          <button 
+          <button
             onClick={() => router.push("/")}
-            className="w-full py-4 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold transition-all shadow-[0_0_20px_rgba(220,38,38,0.4)] hover:shadow-[0_0_30px_rgba(220,38,38,0.6)] hover:-translate-y-1"
+            className="w-full h-12 bg-white text-zinc-900 rounded-xl font-semibold hover:bg-zinc-100 transition-colors"
           >
             Kembali ke Beranda
           </button>
@@ -113,275 +167,214 @@ export default function FeedbackPage() {
     );
   }
 
-  const QuestionRow = ({ 
-    number, 
-    question, 
-    value, 
-    setValue, 
-    options 
-  }: { 
-    number: string, 
-    question: string, 
-    value: SatisfactionLevel, 
-    setValue: (val: SatisfactionLevel) => void,
-    options: string[]
-  }) => (
-    <div className="mb-6 bg-white p-6 md:p-8 rounded-3xl border border-zinc-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] transition-all hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.1)] group">
-      <div className="flex gap-4 mb-6">
-        <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-red-100 to-red-50 text-red-600 flex items-center justify-center font-black shrink-0 shadow-inner group-hover:scale-110 transition-transform duration-300">
-          {number}
-        </div>
-        <h3 className="text-base md:text-lg font-bold text-zinc-800 leading-relaxed pt-1.5">
-          {question}
-        </h3>
-      </div>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pl-0 md:pl-14">
-        {options.map((opt, idx) => {
-          const val = (idx + 1) as SatisfactionLevel;
-          const isSelected = value === val;
-          const colorStyles = [
-            "hover:border-red-400 hover:bg-red-50 hover:text-red-700",
-            "hover:border-orange-400 hover:bg-orange-50 hover:text-orange-700",
-            "hover:border-emerald-400 hover:bg-emerald-50 hover:text-emerald-700",
-            "hover:border-green-500 hover:bg-green-50 hover:text-green-700"
-          ];
-          const selectedStyles = [
-            "border-red-500 bg-red-50 text-red-700 ring-2 ring-red-500/20 shadow-[0_0_15px_rgba(239,68,68,0.15)]",
-            "border-orange-500 bg-orange-50 text-orange-700 ring-2 ring-orange-500/20 shadow-[0_0_15px_rgba(249,115,22,0.15)]",
-            "border-emerald-500 bg-emerald-50 text-emerald-700 ring-2 ring-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.15)]",
-            "border-green-600 bg-green-50 text-green-700 ring-2 ring-green-600/20 shadow-[0_0_15px_rgba(22,163,74,0.15)]"
-          ];
-
-          return (
-            <button
-              key={val}
-              type="button"
-              onClick={() => setValue(val)}
-              className={`relative py-4 px-3 text-sm md:text-base font-bold rounded-2xl border-2 transition-all duration-300 text-center overflow-hidden ${
-                isSelected 
-                  ? selectedStyles[idx] 
-                  : `border-zinc-100 text-zinc-500 bg-white shadow-sm ${colorStyles[idx]}`
-              }`}
-            >
-              <span className="relative z-10">{opt}</span>
-              {isSelected && <div className="absolute inset-0 bg-white/40 z-0"></div>}
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
-
-  const satisfactionOptions = ["Sangat Tidak Puas", "Tidak Puas", "Puas", "Sangat Puas"];
-  const agreementOptions = ["Sangat Tidak Setuju", "Tidak Setuju", "Setuju", "Sangat Setuju"];
-
   return (
-    <div className="min-h-screen bg-[#F8FAFC] relative pb-32 selection:bg-red-200 selection:text-red-900">
-      {/* Cleaner Header Background */}
-      <div className="absolute top-0 inset-x-0 h-[350px] bg-red-600 z-0">
-        <div className="absolute inset-0 opacity-10 mix-blend-overlay" style={{ backgroundImage: "url('/HUTRI81_FA_Logo__Main%20Logo%20Merah%20Hitam%20Latar%20Putih.png')", backgroundPosition: 'center', backgroundRepeat: 'no-repeat', backgroundSize: 'cover' }} />
-        <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-[#F8FAFC] to-transparent" />
+    <div className="min-h-screen bg-zinc-950 text-white">
+      {/* Fixed Progress Header */}
+      <div className="sticky top-0 z-50 bg-zinc-950/80 backdrop-blur-xl border-b border-zinc-800/60">
+        <div className="max-w-2xl mx-auto px-4 py-4">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
+                <Image src="/gesit_logo.png" alt="GESIT" width={18} height={18} className="object-contain" />
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-zinc-400 uppercase tracking-widest">Evaluasi Acara</p>
+                <p className="text-sm font-bold text-white leading-none">HUT RI 81 · GESIT</p>
+              </div>
+            </div>
+            <div className="text-right">
+              <p className="text-xs text-zinc-500">Progres</p>
+              <p className="text-sm font-bold text-white">{overallProgress}%</p>
+            </div>
+          </div>
+          {/* Progress bar */}
+          <div className="h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-gradient-to-r from-red-600 to-red-400 rounded-full transition-all duration-500"
+              style={{ width: `${overallProgress}%` }}
+            />
+          </div>
+          {/* Step tabs */}
+          <div className="flex gap-1 mt-3">
+            {SECTIONS.map((s, i) => (
+              <button
+                key={s.id}
+                onClick={() => i < step || stepValid[i] ? setStep(i) : null}
+                className={`flex-1 h-1 rounded-full transition-all duration-300 ${
+                  i === step ? "bg-red-500" : i < step ? "bg-zinc-500" : "bg-zinc-800"
+                }`}
+              />
+            ))}
+          </div>
+        </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-12 relative z-10">
-        
-        {/* Header */}
-        <div className="text-center mb-12 animate-in slide-in-from-top-10 fade-in duration-700">
-          <div className="inline-flex items-center justify-center p-3 bg-white rounded-2xl shadow-xl mb-6">
-            <Image src="/gesit_logo.png" alt="GESIT" width={48} height={48} className="object-contain" />
+      {/* Content */}
+      <div className="max-w-2xl mx-auto px-4 py-10 pb-32">
+        {/* Section Header */}
+        <div className="mb-10">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-red-500/10 border border-red-500/20 mb-4">
+            <Flag size={12} className="text-red-400" />
+            <span className="text-xs font-bold text-red-400 uppercase tracking-widest">
+              Langkah {step + 1} dari {SECTIONS.length}
+            </span>
           </div>
-          <h1 className="text-3xl md:text-5xl font-black text-white mb-4 tracking-tight drop-shadow-md">
-            Evaluasi <span className="text-yellow-400">Acara 17 Agustus</span>
-          </h1>
-          <p className="text-red-50 text-sm md:text-base max-w-2xl mx-auto font-medium leading-relaxed drop-shadow-sm">
-            Terima kasih telah berpartisipasi! Mohon luangkan waktu Anda untuk mengisi evaluasi ini demi membuat acara GESIT selanjutnya menjadi lebih spektakuler.
-          </p>
+          <h1 className="text-3xl font-bold text-white mb-1">{SECTIONS[step].title}</h1>
+          <p className="text-zinc-400 text-sm">{SECTIONS[step].desc}</p>
         </div>
 
         {errorMsg && (
-          <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl mb-6 flex items-center gap-3 animate-in fade-in slide-in-from-top-2">
-            <AlertCircle size={20} />
-            <p className="text-sm font-medium">{errorMsg}</p>
+          <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded-xl mb-8 text-sm font-medium">
+            <AlertCircle size={16} /> {errorMsg}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          
-          <div className="bg-white p-6 md:p-8 rounded-3xl border border-zinc-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] mb-12 animate-in slide-in-from-bottom-10 fade-in duration-700 delay-100">
-            <h3 className="text-xl font-black text-zinc-900 mb-6 flex items-center gap-3">
-              <span className="w-10 h-10 rounded-xl bg-red-50 text-red-600 flex items-center justify-center border border-red-100 shadow-inner">
-                <User size={20} strokeWidth={2.5} />
-              </span>
-              Data Diri
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-bold text-zinc-700 mb-2">Nama Lengkap <span className="text-red-500">*</span></label>
-                <input
-                  type="text"
-                  value={participantName}
-                  onChange={(e) => setParticipantName(e.target.value)}
-                  placeholder="Masukkan nama Anda"
-                  className="w-full px-5 py-3 rounded-xl border-2 border-zinc-200 bg-zinc-50 focus:bg-white focus:border-red-500 focus:ring-4 focus:ring-red-500/10 transition-all font-medium text-zinc-900"
-                  required
+        {/* STEP 0: Data Diri */}
+        {step === 0 && (
+          <div className="space-y-6 animate-in slide-in-from-right-4 fade-in duration-300">
+            <div className="space-y-2">
+              <label className="text-sm font-semibold text-zinc-300">Nama Lengkap <span className="text-red-400">*</span></label>
+              <input
+                type="text"
+                value={participantName}
+                onChange={(e) => setParticipantName(e.target.value)}
+                placeholder="Masukkan nama lengkap Anda"
+                className="w-full h-12 px-4 bg-zinc-900 border border-zinc-700 rounded-xl text-white placeholder:text-zinc-600 focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/20 transition-all text-sm"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-semibold text-zinc-300">Lantai <span className="text-red-400">*</span></label>
+              <div className="grid grid-cols-2 gap-3">
+                {["26", "27"].map((floor) => (
+                  <button
+                    key={floor}
+                    type="button"
+                    onClick={() => setParticipantFloor(floor)}
+                    className={`h-14 rounded-xl border text-base font-bold transition-all duration-200 ${
+                      participantFloor === floor
+                        ? "bg-red-500/20 border-red-500 text-red-400 ring-2 ring-red-500/30 shadow-[0_0_12px_rgba(239,68,68,0.2)]"
+                        : "bg-zinc-900 border-zinc-700 text-zinc-400 hover:border-zinc-600 hover:text-zinc-300"
+                    }`}
+                  >
+                    Lantai {floor}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Decorative card */}
+            <div className="mt-8 bg-gradient-to-br from-zinc-900 to-zinc-800/50 border border-zinc-800 rounded-2xl p-6">
+              <div className="flex items-center gap-4 mb-4">
+                <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shrink-0">
+                  <Image src="/gesit_logo.png" alt="GESIT" width={28} height={28} className="object-contain" />
+                </div>
+                <div>
+                  <p className="font-bold text-white text-sm">HUT RI ke-81</p>
+                  <p className="text-zinc-500 text-xs">Evaluasi Acara 17 Agustus · GESIT</p>
+                </div>
+              </div>
+              <p className="text-zinc-400 text-sm leading-relaxed">
+                Jawaban Anda bersifat anonim dan hanya digunakan untuk keperluan pengembangan acara ke depannya. Terima kasih atas partisipasi Anda!
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* STEP 1: Penilaian Acara */}
+        {step === 1 && (
+          <div className="space-y-10 animate-in slide-in-from-right-4 fade-in duration-300">
+            <RatingGroup question="Bagaimana menurut Anda keseluruhan acara 17 Agustus ini?" value={q1} onChange={setQ1} options={satisfactionOptions} />
+            <div className="h-px bg-zinc-800" />
+            <RatingGroup question="Bagaimana variasi dan jenis lomba yang diadakan?" value={q2} onChange={setQ2} options={satisfactionOptions} />
+            <div className="h-px bg-zinc-800" />
+            <RatingGroup question="Bagaimana kualitas konsumsi yang disediakan selama acara?" value={q3} onChange={setQ3} options={satisfactionOptions} />
+            <div className="h-px bg-zinc-800" />
+            <RatingGroup question="Bagaimana kelayakan fasilitas (sound system, area lomba, dll)?" value={q4} onChange={setQ4} options={satisfactionOptions} />
+            <div className="h-px bg-zinc-800" />
+            <RatingGroup question="Bagaimana nilai dan variasi hadiah yang diberikan untuk para pemenang?" value={q5} onChange={setQ5} options={satisfactionOptions} />
+            <div className="h-px bg-zinc-800" />
+            <RatingGroup question="Seberapa besar acara ini menciptakan rasa kebersamaan dan kekompakan?" value={q6} onChange={setQ6} options={satisfactionOptions} />
+          </div>
+        )}
+
+        {/* STEP 2: Dampak Acara */}
+        {step === 2 && (
+          <div className="space-y-10 animate-in slide-in-from-right-4 fade-in duration-300">
+            <RatingGroup question="Acara ini berhasil menyampaikan nilai-nilai perusahaan (IRCP) dengan cara yang menyenangkan." value={q7} onChange={setQ7} options={agreementOptions} />
+            <div className="h-px bg-zinc-800" />
+            <RatingGroup question="Acara ini membuat saya merasa lebih bangga menjadi bagian dari GESIT." value={q8} onChange={setQ8} options={agreementOptions} />
+            <div className="h-px bg-zinc-800" />
+            <RatingGroup question="Acara ini membantu mempererat hubungan saya dengan rekan dari divisi lain." value={q9} onChange={setQ9} options={agreementOptions} />
+            <div className="h-px bg-zinc-800" />
+            <RatingGroup question="Acara seperti ini meningkatkan motivasi saya untuk berkontribusi lebih baik." value={q10} onChange={setQ10} options={agreementOptions} />
+            <div className="h-px bg-zinc-800" />
+            <RatingGroup question="Saya berharap acara dengan konsep serupa terus diadakan di tahun-tahun mendatang." value={q11} onChange={setQ11} options={agreementOptions} />
+          </div>
+        )}
+
+        {/* STEP 3: Masukan Terbuka */}
+        {step === 3 && (
+          <div className="space-y-8 animate-in slide-in-from-right-4 fade-in duration-300">
+            {[
+              { label: "Apa yang paling Anda sukai dari acara ini?", value: liked, onChange: setLiked, placeholder: "Bagikan hal yang membuat Anda terkesan..." },
+              { label: "Apa yang perlu ditingkatkan untuk acara selanjutnya?", value: improve, onChange: setImprove, placeholder: "Berikan saran konstruktif Anda..." },
+              { label: "Kegiatan apa yang bisa meningkatkan kekompakan karyawan?", value: ideas, onChange: setIdeas, placeholder: "Ide kreatif Anda sangat dihargai..." },
+            ].map((item, i) => (
+              <div key={i} className="space-y-2">
+                <label className="text-sm font-semibold text-zinc-300">{item.label} <span className="text-zinc-600 font-normal">(Opsional)</span></label>
+                <textarea
+                  value={item.value}
+                  onChange={(e) => item.onChange(e.target.value)}
+                  placeholder={item.placeholder}
+                  rows={4}
+                  className="w-full px-4 py-3 bg-zinc-900 border border-zinc-700 rounded-xl text-white placeholder:text-zinc-600 focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/20 transition-all text-sm resize-none leading-relaxed"
                 />
               </div>
-              <div>
-                <label className="block text-sm font-bold text-zinc-700 mb-2">Lantai <span className="text-red-500">*</span></label>
-                <select
-                  value={participantFloor}
-                  onChange={(e) => setParticipantFloor(e.target.value)}
-                  className="w-full px-5 py-3 rounded-xl border-2 border-zinc-200 bg-zinc-50 focus:bg-white focus:border-red-500 focus:ring-4 focus:ring-red-500/10 transition-all font-medium text-zinc-900"
-                  required
-                >
-                  <option value="" disabled>Pilih Lantai Asal</option>
-                  <option value="26">Lantai 26</option>
-                  <option value="27">Lantai 27</option>
-                </select>
-              </div>
-            </div>
+            ))}
           </div>
-          
-          <div className="mb-8 mt-16">
-            <h2 className="text-2xl font-black text-zinc-900 px-2 flex items-center gap-3">
-              <span className="text-red-500">I.</span> Penilaian Acara
-            </h2>
-            <p className="text-zinc-500 font-medium px-2 mt-1 mb-6">Seberapa puas Anda dengan aspek-aspek berikut?</p>
-          </div>
-          <QuestionRow 
-            number="01" 
-            question="Bagaimana menurut Anda keseluruhan acara 17 Agustus ini?" 
-            value={q1} setValue={setQ1} options={satisfactionOptions} 
-          />
-          <QuestionRow 
-            number="02" 
-            question="Bagaimana pendapat Anda tentang variasi dan jenis lomba yang diadakan?" 
-            value={q2} setValue={setQ2} options={satisfactionOptions} 
-          />
-          <QuestionRow 
-            number="03" 
-            question="Bagaimana kualitas konsumsi yang disediakan selama acara?" 
-            value={q3} setValue={setQ3} options={satisfactionOptions} 
-          />
-          <QuestionRow 
-            number="04" 
-            question="Bagaimana kelayakan fasilitas (seperti sound system, area lomba)?" 
-            value={q4} setValue={setQ4} options={satisfactionOptions} 
-          />
-          <QuestionRow 
-            number="05" 
-            question="Bagaimana nilai dan variasi hadiah yang diberikan untuk para pemenang?" 
-            value={q5} setValue={setQ5} options={satisfactionOptions} 
-          />
-          <QuestionRow 
-            number="06" 
-            question="Seberapa besar acara ini menciptakan rasa kebersamaan dan kekompakan?" 
-            value={q6} setValue={setQ6} options={satisfactionOptions} 
-          />
+        )}
+      </div>
 
-          <div className="mb-8 mt-16">
-            <h2 className="text-2xl font-black text-zinc-900 px-2 flex items-center gap-3">
-              <span className="text-red-500">II.</span> Dampak Acara
-            </h2>
-            <p className="text-zinc-500 font-medium px-2 mt-1 mb-6">Seberapa setuju Anda dengan pernyataan-pernyataan di bawah ini?</p>
-          </div>
-
-          <QuestionRow 
-            number="07" 
-            question="Acara ini berhasil menyampaikan nilai-nilai perusahaan (Integrity, Respect, Competency, Passion) dengan cara yang menyenangkan." 
-            value={q7} setValue={setQ7} options={agreementOptions} 
-          />
-          <QuestionRow 
-            number="08" 
-            question="Acara ini membuat saya merasa lebih bangga menjadi bagian dari perusahaan." 
-            value={q8} setValue={setQ8} options={agreementOptions} 
-          />
-          <QuestionRow 
-            number="09" 
-            question="Acara ini membantu saya mengenal dan mempererat hubungan dengan rekan kerja dari divisi lain." 
-            value={q9} setValue={setQ9} options={agreementOptions} 
-          />
-          <QuestionRow 
-            number="10" 
-            question="Acara seperti ini meningkatkan motivasi saya untuk berkontribusi lebih baik di tempat kerja." 
-            value={q10} setValue={setQ10} options={agreementOptions} 
-          />
-          <QuestionRow 
-            number="11" 
-            question="Saya berharap acara dengan konsep serupa terus diadakan di tahun-tahun mendatang." 
-            value={q11} setValue={setQ11} options={agreementOptions} 
-          />
-
-          <div className="mb-8 mt-16">
-            <h2 className="text-2xl font-black text-zinc-900 px-2 flex items-center gap-3">
-              <span className="text-red-500">III.</span> Masukan & Saran
-            </h2>
-            <p className="text-zinc-500 font-medium px-2 mt-1 mb-6">Ceritakan pendapat Anda dengan kata-kata sendiri.</p>
-          </div>
-
-          <div className="bg-white p-6 md:p-8 rounded-3xl border border-zinc-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)]">
-            <div className="space-y-8">
-              <div>
-                <label className="block text-base font-bold text-zinc-800 mb-3 flex items-center gap-2">
-                  <Heart className="text-emerald-500" size={20} strokeWidth={2.5} /> Apa hal yang paling Anda sukai dari acara ini?
-                </label>
-                <textarea 
-                  value={liked}
-                  onChange={(e) => setLiked(e.target.value)}
-                  className="w-full p-5 rounded-2xl border-2 border-zinc-100 bg-zinc-50/50 focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all min-h-[120px] text-base font-medium resize-none text-zinc-900"
-                  placeholder="Ketik jawaban Anda di sini..."
-                ></textarea>
-              </div>
-
-              <div>
-                <label className="block text-base font-bold text-zinc-800 mb-3 flex items-center gap-2">
-                  <Wrench className="text-amber-500" size={20} strokeWidth={2.5} /> Menurut Anda, apa yang perlu ditingkatkan atau diperbaiki?
-                </label>
-                <textarea 
-                  value={improve}
-                  onChange={(e) => setImprove(e.target.value)}
-                  className="w-full p-5 rounded-2xl border-2 border-zinc-100 bg-zinc-50/50 focus:bg-white focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10 transition-all min-h-[120px] text-base font-medium resize-none text-zinc-900"
-                  placeholder="Ketik jawaban Anda di sini..."
-                ></textarea>
-              </div>
-
-              <div>
-                <label className="block text-base font-bold text-zinc-800 mb-3 flex items-center gap-2">
-                  <Lightbulb className="text-blue-500" size={20} strokeWidth={2.5} /> Kegiatan seperti apa yang Anda rasa dapat lebih meningkatkan kekompakan karyawan?
-                </label>
-                <textarea 
-                  value={ideas}
-                  onChange={(e) => setIdeas(e.target.value)}
-                  className="w-full p-5 rounded-2xl border-2 border-zinc-100 bg-zinc-50/50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all min-h-[120px] text-base font-medium resize-none text-zinc-900"
-                  placeholder="Ketik jawaban Anda di sini..."
-                ></textarea>
-              </div>
-            </div>
-          </div>
-
-          <div className="pt-10">
-            <button 
-              type="submit" 
-              disabled={isSubmitting || !isComplete}
-              className={`w-full py-5 rounded-2xl font-black text-xl flex items-center justify-center gap-3 transition-all duration-300 shadow-xl ${
-                isComplete && !isSubmitting
-                  ? "bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white shadow-red-600/30 hover:shadow-red-600/50 hover:-translate-y-2 hover:scale-[1.02]"
-                  : "bg-zinc-200 text-zinc-400 cursor-not-allowed border-2 border-zinc-300"
+      {/* Fixed Bottom Navigation */}
+      <div className="fixed bottom-0 inset-x-0 bg-zinc-950/90 backdrop-blur-xl border-t border-zinc-800/60">
+        <div className="max-w-2xl mx-auto px-4 py-4 flex gap-3">
+          {step > 0 && (
+            <button
+              type="button"
+              onClick={() => setStep(s => s - 1)}
+              className="h-12 px-6 rounded-xl border border-zinc-700 text-zinc-400 hover:text-white hover:border-zinc-500 transition-all font-semibold flex items-center gap-2"
+            >
+              <ChevronLeft size={18} /> Kembali
+            </button>
+          )}
+          {step < SECTIONS.length - 1 ? (
+            <button
+              type="button"
+              onClick={() => stepValid[step] && setStep(s => s + 1)}
+              disabled={!stepValid[step]}
+              className={`flex-1 h-12 rounded-xl font-semibold flex items-center justify-center gap-2 transition-all ${
+                stepValid[step]
+                  ? "bg-white text-zinc-900 hover:bg-zinc-100 shadow-[0_4px_20px_rgba(255,255,255,0.1)]"
+                  : "bg-zinc-800 text-zinc-600 cursor-not-allowed"
               }`}
             >
-              {isSubmitting ? (
-                <><Loader2 className="animate-spin" size={28} /> Sedang Mengirim...</>
-              ) : (
-                <><Send size={28} /> Kumpulkan Evaluasi</>
-              )}
+              Selanjutnya <ChevronRight size={18} />
             </button>
-            {!isComplete && (
-              <p className="text-center text-xs text-zinc-500 mt-3">
-                Mohon lengkapi data diri dan semua pertanyaan pilihan ganda untuk mengirim evaluasi.
-              </p>
-            )}
-          </div>
-        </form>
+          ) : (
+            <button
+              type="button"
+              onClick={handleSubmit}
+              disabled={isSubmitting || !stepValid[0] || !stepValid[1] || !stepValid[2]}
+              className={`flex-1 h-12 rounded-xl font-semibold flex items-center justify-center gap-2 transition-all ${
+                !isSubmitting && stepValid[0] && stepValid[1] && stepValid[2]
+                  ? "bg-red-600 hover:bg-red-500 text-white shadow-[0_4px_20px_rgba(220,38,38,0.3)]"
+                  : "bg-zinc-800 text-zinc-600 cursor-not-allowed"
+              }`}
+            >
+              {isSubmitting ? <><Loader2 className="animate-spin" size={18} /> Mengirim...</> : <><Send size={18} /> Kirim Evaluasi</>}
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
