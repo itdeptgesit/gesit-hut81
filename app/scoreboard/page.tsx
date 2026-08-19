@@ -212,15 +212,15 @@ function PreGame({ teams, groupNames }: { teams: Team[]; groupNames: string[] })
           <motion.div key={item.name} initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.04 }}
             className="bg-white/60 backdrop-blur-md border border-white/80 rounded-2xl p-3 shadow-lg flex flex-col gap-2 overflow-hidden">
             <div className="flex items-center justify-between gap-2 shrink-0">
-              <p className="font-black text-slate-800 text-[15px] uppercase leading-tight">{item.name}</p>
-              <span className="text-slate-500 text-[10px] md:text-xs font-bold shrink-0">{item.members.length} org</span>
+              <p className="font-black text-slate-800 text-base md:text-lg uppercase leading-tight">{item.name}</p>
+              <span className="text-slate-500 text-xs md:text-sm font-bold shrink-0">{item.members.length} org</span>
             </div>
             <div className="flex-1 min-h-0 overflow-y-auto hide-scrollbar">
-              <ul className="space-y-0.5">
+              <ul className="space-y-1">
                 {item.members.map((member, mIdx) => {
                   const isAbsent = member.includes("(PERDIN)") || member.includes("(Cuti)") || member.includes("(undur join date)");
                   return (
-                    <li key={mIdx} className={`text-[11px] md:text-xs leading-snug font-medium ${isAbsent ? "text-red-600 font-bold" : "text-slate-700"}`}>
+                    <li key={mIdx} className={`text-sm md:text-base leading-snug font-semibold ${isAbsent ? "text-red-600 font-bold" : "text-slate-700"}`}>
                       {mIdx + 1}. {member}
                     </li>
                   );
