@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { QuizState, Participant, generateQuestions } from "@/lib/quizStore";
 import { supabase } from "@/lib/supabase";
 import clsx from "clsx";
-import { Trophy, Users, Play, ArrowRight, RotateCcw, ShieldAlert, Loader2, QrCode, CheckCircle2, Crown, Sparkles } from "lucide-react";
+import { Trophy, Users, Play, ArrowRight, RotateCcw, ShieldAlert, Loader2, QrCode, CheckCircle2, Crown, Sparkles, X } from "lucide-react";
 import QRCode from "react-qr-code";
 import Link from "next/link";
 import Image from "next/image";
@@ -169,6 +169,23 @@ export default function QuizHostPage() {
       supabase.removeChannel(channel);
     };
   }, [state.pin, broadcastState]);
+
+  const handleKick = (participantId: string) => {
+    if (channelRef.current) {
+      channelRef.current.send({
+        type: 'broadcast',
+        event: 'KICK',
+        payload: { id: participantId }
+      });
+    }
+    
+    updateState(prev => {
+      const next = { ...prev };
+      next.participants = { ...prev.participants };
+      delete next.participants[participantId];
+      return next;
+    });
+  };
 
   const handleStartLobby = async () => {
     const newPin = Math.floor(1000 + Math.random() * 9000).toString();
@@ -467,12 +484,19 @@ export default function QuizHostPage() {
                           <motion.div 
                             key={p.id} 
                             initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
-                            className="bg-zinc-50 hover:bg-zinc-100 border border-zinc-200 text-zinc-800 px-4 py-2.5 rounded-2xl font-bold text-sm flex items-center gap-3 shadow-sm transition-colors"
+                            className="bg-zinc-50 hover:bg-zinc-100 border border-zinc-200 text-zinc-800 py-2 pl-4 pr-2 rounded-2xl font-bold text-sm flex items-center gap-3 shadow-sm transition-colors"
                           >
-                            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center text-xs font-black text-white shadow-inner">
+                            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center text-xs font-black text-white shadow-inner shrink-0">
                               {p.name.charAt(0).toUpperCase()}
                             </div>
-                            {p.name}
+                            <span className="truncate max-w-[120px]">{p.name}</span>
+                            <button 
+                              onClick={() => handleKick(p.id)}
+                              className="ml-auto text-zinc-400 hover:text-red-500 hover:bg-red-50 p-1.5 rounded-xl transition-colors"
+                              title="Keluarkan peserta"
+                            >
+                              <X size={14} strokeWidth={3} />
+                            </button>
                           </motion.div>
                         ))}
                       </AnimatePresence>
@@ -622,17 +646,17 @@ export default function QuizHostPage() {
             className="relative z-10 flex flex-col items-center justify-center h-screen p-6 w-full max-w-5xl mx-auto"
           >
             {(() => {
-              const sorted = [...participants].sort((a, b) => b.score - a.score).slice(0, 5);
+              const sorted = [...participants].sort((a, b) => b.score - a.score).slice(0, 8);
               return (
                 <div className="w-full">
-                  <div className="flex flex-col md:flex-row items-center justify-between mb-10 bg-white/10 backdrop-blur-3xl p-8 rounded-[2.5rem] border border-white/20 shadow-2xl">
+                  <div className="flex flex-col md:flex-row items-center justify-between mb-8 bg-white/10 backdrop-blur-3xl p-6 lg:p-8 rounded-[2.5rem] border border-white/20 shadow-2xl">
                     <div className="flex items-center gap-6">
                       <div className="w-20 h-20 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-2xl flex items-center justify-center shadow-lg shadow-yellow-500/30 border border-yellow-200">
                         <Trophy className="text-white" size={40} />
                       </div>
                       <div>
-                        <h2 className="text-5xl font-black text-white tracking-tight drop-shadow-md">Leaderboard</h2>
-                        <p className="text-white/60 font-bold mt-2 text-xl uppercase tracking-widest">Top 5 Sementara</p>
+                        <h2 className="text-4xl lg:text-5xl font-black text-white tracking-tight drop-shadow-md">Leaderboard</h2>
+                        <p className="text-white/60 font-bold mt-2 text-lg uppercase tracking-widest">Top 8 Sementara</p>
                       </div>
                     </div>
                     <button 
@@ -643,22 +667,22 @@ export default function QuizHostPage() {
                      </button>
                   </div>
                   
-                  <div className="flex flex-col gap-5">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-5">
                     <AnimatePresence>
                       {sorted.map((p, i) => (
                         <motion.div 
                           key={p.id}
                           initial={{ x: 50, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: i * 0.1, type: "spring" }}
                           className={clsx(
-                            "p-6 lg:p-8 rounded-[2rem] flex items-center text-white transform transition-all duration-300 border backdrop-blur-xl shadow-xl",
-                            i === 0 ? "bg-gradient-to-r from-yellow-500/20 to-yellow-700/20 border-yellow-500/40 scale-105 z-10" :
+                            "p-5 lg:p-6 rounded-[2rem] flex items-center text-white transform transition-all duration-300 border backdrop-blur-xl shadow-xl",
+                            i === 0 ? "bg-gradient-to-r from-yellow-500/20 to-yellow-700/20 border-yellow-500/40 md:scale-[1.02] z-10" :
                             i === 1 ? "bg-gradient-to-r from-slate-300/20 to-slate-500/20 border-slate-300/40" :
                             i === 2 ? "bg-gradient-to-r from-amber-600/20 to-amber-800/20 border-amber-600/40" :
                             "bg-white/5 border-white/10"
                           )}
                         >
                           <div className={clsx(
-                            "w-16 h-16 rounded-2xl flex items-center justify-center text-3xl font-black mr-8 shadow-inner border",
+                            "w-14 h-14 rounded-2xl flex items-center justify-center text-2xl font-black mr-6 shadow-inner border shrink-0",
                             i === 0 ? "bg-gradient-to-br from-yellow-300 to-yellow-500 text-yellow-900 border-yellow-200" :
                             i === 1 ? "bg-gradient-to-br from-slate-200 to-slate-400 text-slate-800 border-slate-100" :
                             i === 2 ? "bg-gradient-to-br from-amber-500 to-amber-700 text-amber-100 border-amber-400" :
@@ -666,8 +690,8 @@ export default function QuizHostPage() {
                           )}>
                             {i+1}
                           </div>
-                          <div className="text-3xl md:text-4xl font-bold flex-1 truncate tracking-tight">{p.name}</div>
-                          <div className="text-4xl md:text-5xl font-black tracking-tighter drop-shadow-md">{p.score}</div>
+                          <div className="text-2xl md:text-3xl font-bold flex-1 truncate tracking-tight">{p.name}</div>
+                          <div className="text-3xl md:text-4xl font-black tracking-tighter drop-shadow-md">{p.score}</div>
                         </motion.div>
                       ))}
                     </AnimatePresence>
@@ -714,63 +738,101 @@ export default function QuizHostPage() {
                     </motion.div>
                   )}
 
-                  <div className="flex flex-col md:flex-row items-end justify-center gap-6 mb-16 w-full">
+                  <div className="flex flex-col md:flex-row items-end justify-center gap-6 mb-12 w-full">
                     {/* Juara 2 */}
-                    {rank2 && (
-                      <motion.div 
-                        initial={{ scale: 0.5, opacity: 0, y: 50 }} animate={{ scale: 1, opacity: 1, y: 0 }} transition={{ delay: 0.4, type: "spring", bounce: 0.4 }}
-                        className="relative group w-full md:w-1/3 order-2 md:order-1"
-                      >
-                        <div className="absolute inset-0 bg-slate-300 blur-[80px] opacity-20 group-hover:opacity-40 transition-opacity duration-1000" />
-                        <div className="bg-gradient-to-b from-slate-200 to-slate-400 p-8 rounded-[3rem] text-slate-900 shadow-xl relative z-10 border-[6px] border-slate-100 transform transition-transform hover:scale-105 duration-500 flex flex-col items-center">
-                          <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center text-3xl font-black text-slate-500 shadow-inner mb-4">2</div>
-                          <h3 className="text-xl font-black mb-2 uppercase tracking-[0.2em] text-slate-700">Juara 2</h3>
-                          <div className="text-3xl md:text-4xl font-black mb-6 leading-none tracking-tighter drop-shadow-sm break-words text-center">{rank2.name}</div>
-                          <div className="inline-flex items-center bg-black/10 px-6 py-3 rounded-2xl border border-black/5 shadow-inner">
-                            <span className="text-3xl font-black">{rank2.score}</span>
-                            <span className="text-sm font-black ml-2 opacity-80 tracking-widest uppercase">Poin</span>
-                          </div>
-                        </div>
-                      </motion.div>
-                    )}
+                    <motion.div 
+                      initial={{ scale: 0.5, opacity: 0, y: 50 }} animate={{ scale: 1, opacity: 1, y: 0 }} transition={{ delay: 0.4, type: "spring", bounce: 0.4 }}
+                      className="relative group w-full md:w-1/3 order-2 md:order-1"
+                    >
+                      <div className="absolute inset-0 bg-slate-300 blur-[80px] opacity-20 group-hover:opacity-40 transition-opacity duration-1000" />
+                      <div className="bg-gradient-to-b from-slate-200 to-slate-400 p-8 rounded-[3rem] text-slate-900 shadow-xl relative z-10 border-[6px] border-slate-100 transform transition-transform hover:scale-105 duration-500 flex flex-col items-center">
+                        <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center text-3xl font-black text-slate-500 shadow-inner mb-4">2</div>
+                        <h3 className="text-xl font-black mb-2 uppercase tracking-[0.2em] text-slate-700">Juara 2</h3>
+                        {rank2 ? (
+                          <>
+                            <div className="text-3xl md:text-4xl font-black mb-6 leading-none tracking-tighter drop-shadow-sm break-words text-center">{rank2.name}</div>
+                            <div className="inline-flex items-center bg-black/10 px-6 py-3 rounded-2xl border border-black/5 shadow-inner">
+                              <span className="text-3xl font-black">{rank2.score}</span>
+                              <span className="text-sm font-black ml-2 opacity-80 tracking-widest uppercase">Poin</span>
+                            </div>
+                          </>
+                        ) : (
+                          <div className="py-8 text-xl font-bold italic text-slate-500/50">Kosong</div>
+                        )}
+                      </div>
+                    </motion.div>
 
                     {/* Juara 1 */}
-                    {rank1 && (
-                      <motion.div 
-                        initial={{ scale: 0.5, opacity: 0, y: 50 }} animate={{ scale: 1, opacity: 1, y: 0 }} transition={{ delay: 0.2, type: "spring", bounce: 0.4 }}
-                        className="relative group w-full md:w-[45%] order-1 md:order-2 z-20"
-                      >
-                        <div className="absolute inset-0 bg-yellow-400 blur-[100px] opacity-30 group-hover:opacity-50 transition-opacity duration-1000" />
-                        <div className="bg-gradient-to-b from-yellow-300 to-yellow-500 p-12 md:p-16 rounded-[4rem] text-[#0A1128] shadow-[0_20px_50px_rgba(234,179,8,0.3)] relative border-[10px] border-yellow-200/80 transform transition-transform hover:scale-105 duration-500 flex flex-col items-center">
-                          <Crown size={80} className="absolute -top-12 left-1/2 -translate-x-1/2 text-yellow-100 drop-shadow-2xl" />
-                          <h3 className="text-2xl font-black mb-4 uppercase tracking-[0.3em] text-[#0A1128]/70 mt-6">Juara 1</h3>
-                          <div className="text-5xl md:text-7xl font-black mb-8 leading-none tracking-tighter drop-shadow-md break-words text-center">{rank1.name}</div>
-                          <div className="inline-flex items-center bg-black/10 px-8 py-5 rounded-3xl border border-black/10 shadow-inner">
-                            <span className="text-5xl font-black">{rank1.score}</span>
-                            <span className="text-xl font-black ml-3 opacity-80 tracking-widest uppercase">Poin</span>
-                          </div>
-                        </div>
-                      </motion.div>
-                    )}
+                    <motion.div 
+                      initial={{ scale: 0.5, opacity: 0, y: 50 }} animate={{ scale: 1, opacity: 1, y: 0 }} transition={{ delay: 0.2, type: "spring", bounce: 0.4 }}
+                      className="relative group w-full md:w-[45%] order-1 md:order-2 z-20"
+                    >
+                      <div className="absolute inset-0 bg-yellow-400 blur-[100px] opacity-30 group-hover:opacity-50 transition-opacity duration-1000" />
+                      <div className="bg-gradient-to-b from-yellow-300 to-yellow-500 p-12 md:p-16 rounded-[4rem] text-[#0A1128] shadow-[0_20px_50px_rgba(234,179,8,0.3)] relative border-[10px] border-yellow-200/80 transform transition-transform hover:scale-105 duration-500 flex flex-col items-center">
+                        <Crown size={80} className="absolute -top-12 left-1/2 -translate-x-1/2 text-yellow-100 drop-shadow-2xl" />
+                        <h3 className="text-2xl font-black mb-4 uppercase tracking-[0.3em] text-[#0A1128]/70 mt-6">Juara 1</h3>
+                        {rank1 ? (
+                          <>
+                            <div className="text-5xl md:text-7xl font-black mb-8 leading-none tracking-tighter drop-shadow-md break-words text-center">{rank1.name}</div>
+                            <div className="inline-flex items-center bg-black/10 px-8 py-5 rounded-3xl border border-black/10 shadow-inner">
+                              <span className="text-5xl font-black">{rank1.score}</span>
+                              <span className="text-xl font-black ml-3 opacity-80 tracking-widest uppercase">Poin</span>
+                            </div>
+                          </>
+                        ) : (
+                          <div className="py-12 text-3xl font-black italic text-yellow-700/30">Kosong</div>
+                        )}
+                      </div>
+                    </motion.div>
 
                     {/* Juara 3 */}
-                    {rank3 && (
-                      <motion.div 
-                        initial={{ scale: 0.5, opacity: 0, y: 50 }} animate={{ scale: 1, opacity: 1, y: 0 }} transition={{ delay: 0.6, type: "spring", bounce: 0.4 }}
-                        className="relative group w-full md:w-1/3 order-3 md:order-3"
-                      >
-                        <div className="absolute inset-0 bg-amber-600 blur-[80px] opacity-20 group-hover:opacity-40 transition-opacity duration-1000" />
-                        <div className="bg-gradient-to-b from-amber-500 to-amber-700 p-8 rounded-[3rem] text-amber-50 shadow-xl relative z-10 border-[6px] border-amber-400/80 transform transition-transform hover:scale-105 duration-500 flex flex-col items-center">
-                          <div className="w-16 h-16 bg-amber-400 rounded-full flex items-center justify-center text-3xl font-black text-amber-900 shadow-inner mb-4">3</div>
-                          <h3 className="text-xl font-black mb-2 uppercase tracking-[0.2em] text-amber-200">Juara 3</h3>
-                          <div className="text-3xl md:text-4xl font-black mb-6 leading-none tracking-tighter drop-shadow-sm break-words text-center">{rank3.name}</div>
-                          <div className="inline-flex items-center bg-black/20 px-6 py-3 rounded-2xl border border-black/10 shadow-inner">
-                            <span className="text-3xl font-black">{rank3.score}</span>
-                            <span className="text-sm font-black ml-2 opacity-80 tracking-widest uppercase">Poin</span>
+                    <motion.div 
+                      initial={{ scale: 0.5, opacity: 0, y: 50 }} animate={{ scale: 1, opacity: 1, y: 0 }} transition={{ delay: 0.6, type: "spring", bounce: 0.4 }}
+                      className="relative group w-full md:w-1/3 order-3 md:order-3"
+                    >
+                      <div className="absolute inset-0 bg-amber-600 blur-[80px] opacity-20 group-hover:opacity-40 transition-opacity duration-1000" />
+                      <div className="bg-gradient-to-b from-amber-500 to-amber-700 p-8 rounded-[3rem] text-amber-50 shadow-xl relative z-10 border-[6px] border-amber-400/80 transform transition-transform hover:scale-105 duration-500 flex flex-col items-center">
+                        <div className="w-16 h-16 bg-amber-400 rounded-full flex items-center justify-center text-3xl font-black text-amber-900 shadow-inner mb-4">3</div>
+                        <h3 className="text-xl font-black mb-2 uppercase tracking-[0.2em] text-amber-200">Juara 3</h3>
+                        {rank3 ? (
+                          <>
+                            <div className="text-3xl md:text-4xl font-black mb-6 leading-none tracking-tighter drop-shadow-sm break-words text-center">{rank3.name}</div>
+                            <div className="inline-flex items-center bg-black/20 px-6 py-3 rounded-2xl border border-black/10 shadow-inner">
+                              <span className="text-3xl font-black">{rank3.score}</span>
+                              <span className="text-sm font-black ml-2 opacity-80 tracking-widest uppercase">Poin</span>
+                            </div>
+                          </>
+                        ) : (
+                          <div className="py-8 text-xl font-bold italic text-amber-900/30">Kosong</div>
+                        )}
+                      </div>
+                    </motion.div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full mb-16">
+                    {[3, 4, 5, 6, 7].map((idx) => {
+                      const p = sorted[idx];
+                      const rankNum = idx + 1;
+                      return (
+                        <motion.div 
+                          key={rankNum}
+                          initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ delay: 0.8 + idx * 0.1 }}
+                          className="bg-white/5 border border-white/10 p-5 rounded-2xl flex items-center gap-4 backdrop-blur-md hover:bg-white/10 transition-colors"
+                        >
+                          <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center text-xl font-black text-white shrink-0 shadow-inner border border-white/20">
+                            {rankNum}
                           </div>
-                        </div>
-                      </motion.div>
-                    )}
+                          {p ? (
+                            <>
+                              <div className="flex-1 text-2xl font-bold text-white truncate">{p.name}</div>
+                              <div className="text-3xl font-black text-white">{p.score}</div>
+                            </>
+                          ) : (
+                            <div className="flex-1 text-white/30 italic font-medium">Kosong</div>
+                          )}
+                        </motion.div>
+                      );
+                    })}
                   </div>
 
                   <motion.button 

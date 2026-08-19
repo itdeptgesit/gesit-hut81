@@ -78,6 +78,14 @@ export default function QuizParticipantPage() {
       .on('broadcast', { event: 'SYNC_STATE' }, ({ payload }) => {
         setState(payload);
       })
+      .on('broadcast', { event: 'KICK' }, ({ payload }) => {
+        if (payload.id === playerId) {
+          setIsJoined(false);
+          setActivePin("");
+          setErrorMsg("Anda telah dikeluarkan oleh Host.");
+          setState(null);
+        }
+      })
       .subscribe(async (status) => {
         if (status === 'SUBSCRIBED') {
           setIsConnected(true);
