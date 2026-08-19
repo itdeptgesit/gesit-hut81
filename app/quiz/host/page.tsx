@@ -686,10 +686,12 @@ export default function QuizHostPage() {
           >
             {(() => {
               const sorted = [...participants].sort((a, b) => b.score - a.score);
-              const winner = sorted[0];
+              const rank1 = sorted[0];
+              const rank2 = sorted[1];
+              const rank3 = sorted[2];
 
               return (
-                <div className="w-full max-w-4xl flex flex-col items-center">
+                <div className="w-full max-w-6xl flex flex-col items-center">
                   <motion.div 
                     initial={{ y: -50, opacity: 0 }} animate={{ y: 0, opacity: 1 }}
                     className="inline-flex items-center gap-4 bg-white/10 border border-white/20 px-10 py-4 rounded-full mb-12 shadow-2xl backdrop-blur-xl"
@@ -712,24 +714,64 @@ export default function QuizHostPage() {
                     </motion.div>
                   )}
 
-                  {winner && (
-                    <motion.div 
-                      initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ delay: 0.2, type: "spring", bounce: 0.4 }}
-                      className="relative group mb-16 w-full max-w-2xl"
-                    >
-                      <div className="absolute inset-0 bg-yellow-400 blur-[100px] opacity-30 group-hover:opacity-50 transition-opacity duration-1000" />
-                      
-                      <div className="bg-gradient-to-b from-yellow-300 to-yellow-500 p-16 rounded-[4rem] text-[#0A1128] shadow-[0_20px_50px_rgba(234,179,8,0.3)] relative z-10 border-[10px] border-yellow-200/80 transform transition-transform hover:scale-105 duration-500">
-                        <Crown size={100} className="absolute -top-16 left-1/2 -translate-x-1/2 text-yellow-100 drop-shadow-2xl" />
-                        <h3 className="text-3xl font-black mb-6 uppercase tracking-[0.3em] text-[#0A1128]/70 mt-6">Juara 1</h3>
-                        <div className="text-7xl md:text-8xl font-black mb-10 leading-none tracking-tighter drop-shadow-md break-words">{winner.name}</div>
-                        <div className="inline-flex items-center bg-black/10 px-10 py-6 rounded-3xl border border-black/10 shadow-inner">
-                          <span className="text-6xl font-black">{winner.score}</span>
-                          <span className="text-2xl font-black ml-4 opacity-80 tracking-widest uppercase">Poin</span>
+                  <div className="flex flex-col md:flex-row items-end justify-center gap-6 mb-16 w-full">
+                    {/* Juara 2 */}
+                    {rank2 && (
+                      <motion.div 
+                        initial={{ scale: 0.5, opacity: 0, y: 50 }} animate={{ scale: 1, opacity: 1, y: 0 }} transition={{ delay: 0.4, type: "spring", bounce: 0.4 }}
+                        className="relative group w-full md:w-1/3 order-2 md:order-1"
+                      >
+                        <div className="absolute inset-0 bg-slate-300 blur-[80px] opacity-20 group-hover:opacity-40 transition-opacity duration-1000" />
+                        <div className="bg-gradient-to-b from-slate-200 to-slate-400 p-8 rounded-[3rem] text-slate-900 shadow-xl relative z-10 border-[6px] border-slate-100 transform transition-transform hover:scale-105 duration-500 flex flex-col items-center">
+                          <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center text-3xl font-black text-slate-500 shadow-inner mb-4">2</div>
+                          <h3 className="text-xl font-black mb-2 uppercase tracking-[0.2em] text-slate-700">Juara 2</h3>
+                          <div className="text-3xl md:text-4xl font-black mb-6 leading-none tracking-tighter drop-shadow-sm break-words text-center">{rank2.name}</div>
+                          <div className="inline-flex items-center bg-black/10 px-6 py-3 rounded-2xl border border-black/5 shadow-inner">
+                            <span className="text-3xl font-black">{rank2.score}</span>
+                            <span className="text-sm font-black ml-2 opacity-80 tracking-widest uppercase">Poin</span>
+                          </div>
                         </div>
-                      </div>
-                    </motion.div>
-                  )}
+                      </motion.div>
+                    )}
+
+                    {/* Juara 1 */}
+                    {rank1 && (
+                      <motion.div 
+                        initial={{ scale: 0.5, opacity: 0, y: 50 }} animate={{ scale: 1, opacity: 1, y: 0 }} transition={{ delay: 0.2, type: "spring", bounce: 0.4 }}
+                        className="relative group w-full md:w-[45%] order-1 md:order-2 z-20"
+                      >
+                        <div className="absolute inset-0 bg-yellow-400 blur-[100px] opacity-30 group-hover:opacity-50 transition-opacity duration-1000" />
+                        <div className="bg-gradient-to-b from-yellow-300 to-yellow-500 p-12 md:p-16 rounded-[4rem] text-[#0A1128] shadow-[0_20px_50px_rgba(234,179,8,0.3)] relative border-[10px] border-yellow-200/80 transform transition-transform hover:scale-105 duration-500 flex flex-col items-center">
+                          <Crown size={80} className="absolute -top-12 left-1/2 -translate-x-1/2 text-yellow-100 drop-shadow-2xl" />
+                          <h3 className="text-2xl font-black mb-4 uppercase tracking-[0.3em] text-[#0A1128]/70 mt-6">Juara 1</h3>
+                          <div className="text-5xl md:text-7xl font-black mb-8 leading-none tracking-tighter drop-shadow-md break-words text-center">{rank1.name}</div>
+                          <div className="inline-flex items-center bg-black/10 px-8 py-5 rounded-3xl border border-black/10 shadow-inner">
+                            <span className="text-5xl font-black">{rank1.score}</span>
+                            <span className="text-xl font-black ml-3 opacity-80 tracking-widest uppercase">Poin</span>
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+
+                    {/* Juara 3 */}
+                    {rank3 && (
+                      <motion.div 
+                        initial={{ scale: 0.5, opacity: 0, y: 50 }} animate={{ scale: 1, opacity: 1, y: 0 }} transition={{ delay: 0.6, type: "spring", bounce: 0.4 }}
+                        className="relative group w-full md:w-1/3 order-3 md:order-3"
+                      >
+                        <div className="absolute inset-0 bg-amber-600 blur-[80px] opacity-20 group-hover:opacity-40 transition-opacity duration-1000" />
+                        <div className="bg-gradient-to-b from-amber-500 to-amber-700 p-8 rounded-[3rem] text-amber-50 shadow-xl relative z-10 border-[6px] border-amber-400/80 transform transition-transform hover:scale-105 duration-500 flex flex-col items-center">
+                          <div className="w-16 h-16 bg-amber-400 rounded-full flex items-center justify-center text-3xl font-black text-amber-900 shadow-inner mb-4">3</div>
+                          <h3 className="text-xl font-black mb-2 uppercase tracking-[0.2em] text-amber-200">Juara 3</h3>
+                          <div className="text-3xl md:text-4xl font-black mb-6 leading-none tracking-tighter drop-shadow-sm break-words text-center">{rank3.name}</div>
+                          <div className="inline-flex items-center bg-black/20 px-6 py-3 rounded-2xl border border-black/10 shadow-inner">
+                            <span className="text-3xl font-black">{rank3.score}</span>
+                            <span className="text-sm font-black ml-2 opacity-80 tracking-widest uppercase">Poin</span>
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+                  </div>
 
                   <motion.button 
                     initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1 }}

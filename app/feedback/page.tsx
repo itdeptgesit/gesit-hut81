@@ -98,19 +98,19 @@ export default function FeedbackPage() {
 
   const stepValid = [
     participantName.trim() !== "" && participantFloor !== "",
-    q1 && q2 && q3 && q4 && q5 && q6,
-    q7 && q8 && q9 && q10 && q11,
+    q1 && q2 && q3 && q6,
+    q7 && q8 && q9 && q11,
     true,
   ];
 
   const totalAnswered = [
     participantName.trim() !== "" && participantFloor !== "" ? 1 : 0,
-    [q1, q2, q3, q4, q5, q6].filter(Boolean).length,
-    [q7, q8, q9, q10, q11].filter(Boolean).length,
+    [q1, q2, q3, q6].filter(Boolean).length,
+    [q7, q8, q9, q11].filter(Boolean).length,
     1,
   ];
 
-  const totalRequired = [1, 6, 5, 1];
+  const totalRequired = [1, 4, 4, 1];
   const overallProgress = Math.round(
     ((totalAnswered[0] + totalAnswered[1] + totalAnswered[2]) / (totalRequired[0] + totalRequired[1] + totalRequired[2])) * 100
   );
@@ -274,7 +274,9 @@ export default function FeedbackPage() {
                 </div>
               </div>
               <p className="text-zinc-400 text-sm leading-relaxed">
-                Jawaban Anda bersifat anonim dan hanya digunakan untuk keperluan pengembangan acara ke depannya. Terima kasih atas partisipasi Anda!
+                Terima kasih telah berpartisipasi dalam acara 17 Agustus di perusahaan kita. Mohon luangkan waktu untuk mengisi evaluasi ini agar acara ke depan semakin baik.
+                <br /><br />
+                <strong>Catatan:</strong> Jawaban Anda bersifat rahasia.
               </p>
             </div>
           </div>
@@ -285,13 +287,9 @@ export default function FeedbackPage() {
           <div className="space-y-10 animate-in slide-in-from-right-4 fade-in duration-300">
             <RatingGroup question="Bagaimana menurut Anda keseluruhan acara 17 Agustus ini?" value={q1} onChange={setQ1} options={satisfactionOptions} />
             <div className="h-px bg-zinc-800" />
-            <RatingGroup question="Bagaimana variasi dan jenis lomba yang diadakan?" value={q2} onChange={setQ2} options={satisfactionOptions} />
+            <RatingGroup question="Bagaimana pendapat Anda tentang variasi dan jenis lomba yang diadakan?" value={q2} onChange={setQ2} options={satisfactionOptions} />
             <div className="h-px bg-zinc-800" />
-            <RatingGroup question="Bagaimana kualitas konsumsi yang disediakan selama acara?" value={q3} onChange={setQ3} options={satisfactionOptions} />
-            <div className="h-px bg-zinc-800" />
-            <RatingGroup question="Bagaimana kelayakan fasilitas (sound system, area lomba, dll)?" value={q4} onChange={setQ4} options={satisfactionOptions} />
-            <div className="h-px bg-zinc-800" />
-            <RatingGroup question="Bagaimana nilai dan variasi hadiah yang diberikan untuk para pemenang?" value={q5} onChange={setQ5} options={satisfactionOptions} />
+            <RatingGroup question="Kegiatan yang diselenggarakan mendorong saya untuk berpartisipasi secara aktif" value={q3} onChange={setQ3} options={satisfactionOptions} />
             <div className="h-px bg-zinc-800" />
             <RatingGroup question="Seberapa besar acara ini menciptakan rasa kebersamaan dan kekompakan?" value={q6} onChange={setQ6} options={satisfactionOptions} />
           </div>
@@ -300,13 +298,11 @@ export default function FeedbackPage() {
         {/* STEP 2: Dampak Acara */}
         {step === 2 && (
           <div className="space-y-10 animate-in slide-in-from-right-4 fade-in duration-300">
-            <RatingGroup question="Acara ini berhasil menyampaikan nilai-nilai perusahaan (IRCP) dengan cara yang menyenangkan." value={q7} onChange={setQ7} options={agreementOptions} />
+            <RatingGroup question="Acara ini berhasil menyampaikan nilai-nilai perusahaan ( Integrity, Respect, Competency, Passion) dengan cara yang menyenangkan." value={q7} onChange={setQ7} options={agreementOptions} />
             <div className="h-px bg-zinc-800" />
-            <RatingGroup question="Acara ini membuat saya merasa lebih bangga menjadi bagian dari GESIT." value={q8} onChange={setQ8} options={agreementOptions} />
+            <RatingGroup question="Acara ini membuat saya merasa lebih bangga menjadi bagian dari perusahaan." value={q8} onChange={setQ8} options={agreementOptions} />
             <div className="h-px bg-zinc-800" />
-            <RatingGroup question="Acara ini membantu mempererat hubungan saya dengan rekan dari divisi lain." value={q9} onChange={setQ9} options={agreementOptions} />
-            <div className="h-px bg-zinc-800" />
-            <RatingGroup question="Acara seperti ini meningkatkan motivasi saya untuk berkontribusi lebih baik." value={q10} onChange={setQ10} options={agreementOptions} />
+            <RatingGroup question="Acara ini membantu saya mengenal dan mempererat hubungan dengan rekan kerja dari divisi lain." value={q9} onChange={setQ9} options={agreementOptions} />
             <div className="h-px bg-zinc-800" />
             <RatingGroup question="Saya berharap acara dengan konsep serupa terus diadakan di tahun-tahun mendatang." value={q11} onChange={setQ11} options={agreementOptions} />
           </div>
@@ -316,9 +312,9 @@ export default function FeedbackPage() {
         {step === 3 && (
           <div className="space-y-8 animate-in slide-in-from-right-4 fade-in duration-300">
             {[
-              { label: "Apa yang paling Anda sukai dari acara ini?", value: liked, onChange: setLiked, placeholder: "Bagikan hal yang membuat Anda terkesan..." },
-              { label: "Apa yang perlu ditingkatkan untuk acara selanjutnya?", value: improve, onChange: setImprove, placeholder: "Berikan saran konstruktif Anda..." },
-              { label: "Kegiatan apa yang bisa meningkatkan kekompakan karyawan?", value: ideas, onChange: setIdeas, placeholder: "Ide kreatif Anda sangat dihargai..." },
+              { label: "Apa hal yang paling Anda sukai dari acara ini?", value: liked, onChange: setLiked, placeholder: "Bagikan hal yang membuat Anda terkesan..." },
+              { label: "Kegiatan apa yang paling membuat Anda terlibat selama acara berlangsung?", value: improve, onChange: setImprove, placeholder: "Ceritakan kegiatan tersebut..." },
+              { label: "Apa saran Anda agar kegiatan berikutnya menjadi lebih menarik?", value: ideas, onChange: setIdeas, placeholder: "Ide kreatif Anda sangat dihargai..." },
             ].map((item, i) => (
               <div key={i} className="space-y-2">
                 <label className="text-sm font-semibold text-zinc-300">{item.label} <span className="text-zinc-600 font-normal">(Opsional)</span></label>
