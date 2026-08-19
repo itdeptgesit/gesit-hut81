@@ -6,7 +6,7 @@ import { supabase } from "@/lib/supabase";
 import {
   LogOut, Users, Trophy, Monitor, RefreshCw,
   ExternalLink, Loader2, LayoutDashboard, Gamepad2,
-  TrendingUp, Circle, Edit2, Plus, Trash2, X, Award, Download, Calendar, BookOpen, CheckCircle2, BarChart2, ClipboardList, Save
+  TrendingUp, Circle, Edit2, Plus, Trash2, X, Award, Download, Calendar, BookOpen, CheckCircle2, BarChart2, ClipboardList, Save, MessageSquare, QrCode
 } from "lucide-react";
 import { toPng } from "html-to-image";
 import { QRCodeSVG } from "qrcode.react";
@@ -265,6 +265,9 @@ export default function AdminDashboard() {
   const [scoreLogs, setScoreLogs] = useState<any[]>([]);
   const [scoreLogsLoading, setScoreLogsLoading] = useState(true);
   
+  const [feedbacks, setFeedbacks] = useState<any[]>([]);
+  const [feedbacksLoading, setFeedbacksLoading] = useState(true);
+  
   // UI States
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("Dashboard");
@@ -413,6 +416,15 @@ export default function AdminDashboard() {
     }
   }, []);
 
+  const fetchFeedbacks = useCallback(async () => {
+    setFeedbacksLoading(true);
+    const res = await fetch("/api/feedback");
+    if (res.ok) {
+      setFeedbacks(await res.json());
+    }
+    setFeedbacksLoading(false);
+  }, []);
+
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (user) setAdminEmail(user.email || "");
@@ -427,7 +439,8 @@ export default function AdminDashboard() {
     fetchSettings();
     fetchScoreLogs();
     fetchQrOverrides();
-  }, [fetchParticipants, fetchScores, fetchWinners, fetchSchedules, fetchQuestions, fetchGroupScores, fetchJudges, fetchSettings, fetchScoreLogs, fetchQrOverrides]);
+    fetchFeedbacks();
+  }, [fetchParticipants, fetchScores, fetchWinners, fetchSchedules, fetchQuestions, fetchGroupScores, fetchJudges, fetchSettings, fetchScoreLogs, fetchQrOverrides, fetchFeedbacks]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -745,6 +758,7 @@ export default function AdminDashboard() {
     { icon: <BarChart2 size={16} />, label: "Scoreboard Kelompok" },
     { icon: <BookOpen size={16} />, label: "Manajemen Soal Quiz" },
     { icon: <Award size={16} />, label: "E-Sertifikat" },
+    { icon: <MessageSquare size={16} />, label: "Evaluasi Acara" },
   ];
 
   return (
@@ -2359,6 +2373,225 @@ export default function AdminDashboard() {
           </>
           );
         })()}
+
+          {activeTab === "Evaluasi Acara" && (() => {
+            const ratingKeys = [
+              { key: "q1_overall", label: "Penilaian Keseluruhan Acara" },
+              { key: "q2_variety", label: "Keragaman & Relevansi Lomba" },
+              { key: "q3_food", label: "Makanan & Minuman (Konsumsi)" },
+              { key: "q4_facility", label: "Fasilitas & Venue" },
+              { key: "q5_prizes", label: "Hadiah & Apresiasi" },
+              { key: "q6_togetherness", label: "Kebersamaan & Suasana Tim" },
+              { key: "q7_values", label: "Representasi Nilai Perusahaan" },
+              { key: "q8_pride", label: "Rasa Bangga Berpartisipasi" },
+              { key: "q9_networking", label: "Kesempatan Networking" },
+              { key: "q10_motivation", label: "Motivasi Kerja Setelah Acara" },
+              { key: "q11_future", label: "Kemungkinan Hadir di Acara Berikutnya" },
+            ];
+
+            const totalFeedbacks = feedbacks.length;
+            const avgScores = ratingKeys.map(({ key, label }) => {
+              const vals = feedbacks.map((f: any) => Number(f[key])).filter(v => !isNaN(v) && v > 0);
+              const avg = vals.length > 0 ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
+              return { key, label, avg };
+            });
+            const overallAvg = avgScores.length > 0
+              ? avgScores.reduce((a, b) => a + b.avg, 0) / avgScores.filter(s => s.avg > 0).length
+              : 0;
+
+            const StarRating = ({ value }: { value: number }) => {
+              const rounded = Math.round(value * 2) / 2;
+              return (
+                <span className="flex items-center gap-0.5">
+                  {[1,2,3,4,5].map(i => (
+                    <span key={i} className={`text-sm ${rounded >= i ? "text-yellow-400" : rounded >= i - 0.5 ? "text-yellow-300" : "text-zinc-200"}`}>★</span>
+                  ))}
+                  <span className="ml-1 text-xs font-bold text-zinc-600">{value > 0 ? value.toFixed(2) : "—"}</span>
+                </span>
+              );
+            };
+
+            return (
+              <div className="space-y-8">
+                {/* Header & Refresh */}
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="text-lg font-bold text-zinc-900">Hasil Evaluasi Acara</h2>
+                    <p className="text-sm text-zinc-500 mt-0.5">Rekap feedback yang dikirimkan oleh peserta acara.</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Link
+                      href="/feedback/qr"
+                      target="_blank"
+                      className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-white bg-zinc-900 rounded-lg hover:bg-zinc-800 transition-colors shadow-sm"
+                    >
+                      <QrCode size={16} />
+                      Tampilkan QR Code
+                    </Link>
+                    <button
+                      onClick={fetchFeedbacks}
+                      className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-zinc-600 bg-white border border-zinc-200 rounded-lg hover:bg-zinc-50 transition-colors shadow-sm"
+                    >
+                      <RefreshCw size={14} className={feedbacksLoading ? "animate-spin" : ""} />
+                      Refresh
+                    </button>
+                  </div>
+                </div>
+
+                {feedbacksLoading ? (
+                  <div className="flex justify-center py-20"><Loader2 size={32} className="animate-spin text-zinc-300" /></div>
+                ) : feedbacks.length === 0 ? (
+                  <Card className="p-16 text-center">
+                    <MessageSquare size={48} className="text-zinc-200 mx-auto mb-4" />
+                    <p className="text-zinc-500 font-medium">Belum ada feedback yang masuk.</p>
+                    <p className="text-sm text-zinc-400 mt-1">Bagikan link <strong>/feedback</strong> ke peserta untuk mulai mengumpulkan evaluasi.</p>
+                  </Card>
+                ) : (
+                  <>
+                    {/* Summary Stats */}
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                      <StatCard icon={<MessageSquare size={18} />} label="Total Responden" value={totalFeedbacks} />
+                      <StatCard icon={<TrendingUp size={18} />} label="Rata-rata Keseluruhan" value={overallAvg > 0 ? `${overallAvg.toFixed(2)} / 5` : "—"} />
+                      <StatCard
+                        icon={<Trophy size={18} />}
+                        label="Skor Tertinggi"
+                        value={avgScores.reduce((best, s) => s.avg > best.avg ? s : best, { key: "", label: "", avg: 0 }).avg > 0
+                          ? `${Math.max(...avgScores.map(s => s.avg)).toFixed(2)} / 5`
+                          : "—"}
+                      />
+                      <StatCard
+                        icon={<BarChart2 size={18} />}
+                        label="Perlu Perhatian"
+                        value={avgScores.filter(s => s.avg > 0 && s.avg < 3.5).length > 0
+                          ? `${avgScores.filter(s => s.avg > 0 && s.avg < 3.5).length} aspek`
+                          : "Semua OK"}
+                      />
+                    </div>
+
+                    {/* Average Score per Question */}
+                    <Card>
+                      <CardHeader title="Rata-rata Skor per Pertanyaan" description="Skor 1 (Sangat Buruk) hingga 5 (Sangat Baik)" />
+                      <div className="p-4 space-y-3">
+                        {avgScores.map(({ key, label, avg }) => (
+                          <div key={key} className="flex items-center gap-4">
+                            <div className="w-2/5 min-w-0">
+                              <p className="text-xs font-semibold text-zinc-700 truncate">{label}</p>
+                            </div>
+                            <div className="flex-1 bg-zinc-100 rounded-full h-2 overflow-hidden">
+                              <div
+                                className={`h-2 rounded-full transition-all ${avg >= 4 ? "bg-emerald-500" : avg >= 3 ? "bg-yellow-400" : avg > 0 ? "bg-red-400" : "bg-zinc-200"}`}
+                                style={{ width: `${(avg / 5) * 100}%` }}
+                              />
+                            </div>
+                            <div className="w-32 shrink-0">
+                              <StarRating value={avg} />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </Card>
+
+                    {/* Individual Responses Table */}
+                    <Card>
+                      <CardHeader
+                        title={`Respons Individual (${totalFeedbacks})`}
+                        description="Klik baris untuk melihat komentar lengkap"
+                      />
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-sm">
+                          <thead className="bg-zinc-50 border-y border-zinc-100">
+                            <tr className="text-[11px] uppercase tracking-wider text-zinc-500">
+                              <th className="px-4 py-3 text-left font-semibold">#</th>
+                              <th className="px-4 py-3 text-left font-semibold">Nama</th>
+                              <th className="px-4 py-3 text-left font-semibold">Lantai</th>
+                              <th className="px-4 py-3 text-left font-semibold">Waktu</th>
+                              {ratingKeys.map(({ key, label }) => (
+                                <th key={key} className="px-3 py-3 text-center font-semibold whitespace-nowrap" title={label}>
+                                  Q{key.match(/\d+/)?.[0]}
+                                </th>
+                              ))}
+                              <th className="px-4 py-3 text-left font-semibold">Suka</th>
+                              <th className="px-4 py-3 text-left font-semibold">Saran</th>
+                              <th className="px-4 py-3 text-left font-semibold">Ide</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-zinc-50">
+                            {feedbacks.map((fb: any, i: number) => {
+                              const rowAvg = ratingKeys.map(({ key }) => Number(fb[key])).filter(v => !isNaN(v) && v > 0);
+                              const avg = rowAvg.length > 0 ? rowAvg.reduce((a, b) => a + b, 0) / rowAvg.length : 0;
+                              return (
+                                <tr key={fb.id} className="hover:bg-zinc-50 transition-colors group">
+                                  <td className="px-4 py-3 text-zinc-500 font-medium">{i + 1}</td>
+                                  <td className="px-4 py-3 text-zinc-900 font-medium whitespace-nowrap text-xs">
+                                    {fb.participant_name || <span className="text-zinc-400 italic">Anonim</span>}
+                                  </td>
+                                  <td className="px-4 py-3 text-zinc-600 whitespace-nowrap text-xs">
+                                    {fb.participant_floor ? `Lt. ${fb.participant_floor}` : <span className="text-zinc-400 italic">—</span>}
+                                  </td>
+                                  <td className="px-4 py-3 text-zinc-500 whitespace-nowrap text-xs">
+                                    {new Date(fb.created_at).toLocaleString("id-ID", { dateStyle: "short", timeStyle: "short" })}
+                                  </td>
+                                  {ratingKeys.map(({ key }) => {
+                                    const val = Number(fb[key]);
+                                    return (
+                                      <td key={key} className="px-3 py-3 text-center">
+                                        <span className={`inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold ${
+                                          val >= 4 ? "bg-emerald-100 text-emerald-700" :
+                                          val === 3 ? "bg-yellow-100 text-yellow-700" :
+                                          val > 0 ? "bg-red-100 text-red-600" : "bg-zinc-100 text-zinc-400"
+                                        }`}>
+                                          {val > 0 ? val : "—"}
+                                        </span>
+                                      </td>
+                                    );
+                                  })}
+                                  <td className="px-4 py-3 text-xs text-zinc-600 max-w-[180px]">
+                                    <p className="line-clamp-2 group-hover:line-clamp-none transition-all">{fb.feedback_liked || <span className="text-zinc-300 italic">—</span>}</p>
+                                  </td>
+                                  <td className="px-4 py-3 text-xs text-zinc-600 max-w-[180px]">
+                                    <p className="line-clamp-2 group-hover:line-clamp-none transition-all">{fb.feedback_improve || <span className="text-zinc-300 italic">—</span>}</p>
+                                  </td>
+                                  <td className="px-4 py-3 text-xs text-zinc-600 max-w-[180px]">
+                                    <p className="line-clamp-2 group-hover:line-clamp-none transition-all">{fb.feedback_ideas || <span className="text-zinc-300 italic">—</span>}</p>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    </Card>
+
+                    {/* Open-ended Feedback Section */}
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                      {[
+                        { field: "feedback_liked", title: "💚 Yang Disukai", color: "emerald" },
+                        { field: "feedback_improve", title: "🔧 Perlu Ditingkatkan", color: "amber" },
+                        { field: "feedback_ideas", title: "💡 Ide & Saran Baru", color: "blue" },
+                      ].map(({ field, title, color }) => {
+                        const items = feedbacks.map((f: any) => f[field]).filter(Boolean);
+                        return (
+                          <Card key={field}>
+                            <CardHeader title={title} description={`${items.length} respons`} />
+                            <div className="p-4 space-y-2 max-h-64 overflow-y-auto">
+                              {items.length === 0 ? (
+                                <p className="text-sm text-zinc-400 text-center py-4 italic">Belum ada respons</p>
+                              ) : items.map((text: string, idx: number) => (
+                                <div key={idx} className={`text-xs text-zinc-700 bg-${color}-50 border border-${color}-100 rounded-lg px-3 py-2 leading-relaxed`}>
+                                  {text}
+                                </div>
+                              ))}
+                            </div>
+                          </Card>
+                        );
+                      })}
+                    </div>
+                  </>
+                )}
+              </div>
+            );
+          })()}
+
         </div>
       </main>
 

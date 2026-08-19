@@ -116,7 +116,8 @@ const podiumPositions = [
 
 function Podium({ scores, accent, catKey }: { scores: GroupScore[]; accent: string; catKey: string }) {
   const maxPodium = catKey === "fun" ? 3 : 1;
-  const topN = scores.slice(0, maxPodium);
+  const validScores = scores.filter(s => s.score > 0);
+  const topN = validScores.slice(0, maxPodium);
   let podiumOrder;
   if (maxPodium === 3) {
     podiumOrder = [topN[1], topN[0], topN[2]].filter(Boolean);
@@ -157,7 +158,9 @@ function Podium({ scores, accent, catKey }: { scores: GroupScore[]; accent: stri
 
 function RankList({ scores, accent, catKey }: { scores: GroupScore[]; accent: string; catKey: string }) {
   const maxPodium = catKey === "fun" ? 3 : 1;
-  const rest = scores.slice(maxPodium);
+  const validScores = scores.filter(s => s.score > 0);
+  const topNCount = validScores.slice(0, maxPodium).length;
+  const rest = scores.slice(topNCount);
   if (!rest.length) return null;
   return (
     <div className="flex-1 min-h-0 flex flex-col justify-end">
@@ -167,7 +170,9 @@ function RankList({ scores, accent, catKey }: { scores: GroupScore[]; accent: st
             <motion.div key={group.group_name} layout initial={{ opacity: 0, x: -15 }} animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0 }} transition={{ delay: idx * 0.03 }}
               className="flex items-center gap-3 px-4 py-2 hover:bg-white/60 transition-colors">
-              <div className="w-7 h-7 rounded-lg bg-white/80 shadow-sm flex items-center justify-center font-black text-slate-800 text-sm shrink-0">{idx + maxPodium + 1}</div>
+              <div className="w-7 h-7 rounded-lg bg-white/80 shadow-sm flex items-center justify-center font-black text-slate-800 text-sm shrink-0">
+                {getActualRank(scores, group) + 1}
+              </div>
               <p className="flex-1 font-black uppercase text-slate-800 text-sm md:text-base tracking-tight truncate">{group.group_name}</p>
               <div className="hidden sm:flex flex-1 max-w-[180px] h-2 rounded-full bg-black/10 overflow-hidden">
                 <motion.div className="h-full rounded-full" style={{ background: accent }}
