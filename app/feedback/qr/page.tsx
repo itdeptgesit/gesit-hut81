@@ -58,7 +58,7 @@ export default function FeedbackQRPage() {
             </div>
             <div className="text-left">
               <p className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-0.5">Diselenggarakan Oleh</p>
-              <p className="text-sm font-bold text-white">GESIT - IT Department</p>
+              <p className="text-sm font-bold text-white">Team Event GESIT</p>
             </div>
           </div>
         </div>
