@@ -372,7 +372,7 @@ export default function AdminDashboard() {
 
   const fetchGroupScores = useCallback(async () => {
     setGroupScoresLoading(true);
-    const { data } = await supabase.from("group_scores").select("*").order("group_name", { ascending: true });
+    const { data } = await supabase.from("group_scores").select("*").order("score", { ascending: false });
     setGroupScores(data || []);
     setGroupScoresLoading(false);
   }, []);
