@@ -3374,8 +3374,13 @@ export default function AdminDashboard() {
 
                   {galleryImages.length > 0 && (
                     <div className="px-4 pb-4 flex items-center justify-between">
-                      <p className="text-xs text-zinc-400">{galleryImages.length} foto tersimpan</p>
-                      <a href="/gallery" target="_blank" className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline">
+                      <div className="flex items-center gap-4">
+                        <p className="text-xs text-zinc-400">{galleryImages.length} foto tersimpan</p>
+                        <button onClick={handleClearAll} className="text-xs font-medium text-red-600 hover:text-red-700 hover:underline flex items-center gap-1">
+                          <Trash2 size={12} /> Hapus Semua Foto
+                        </button>
+                      </div>
+                      <a href="/gallery" target="_blank" className="inline-flex items-center gap-1.5 text-xs font-semibold text-zinc-600 hover:text-zinc-900 transition-colors">
                         <Link2 size={12} /> Lihat halaman galeri publik
                       </a>
                     </div>
