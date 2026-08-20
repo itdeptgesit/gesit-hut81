@@ -276,6 +276,7 @@ export default function AdminDashboard() {
   const [gallerySaving, setGallerySaving] = useState(false);
   const [galleryFolderInput, setGalleryFolderInput] = useState("");
   const [galleryFolderImporting, setGalleryFolderImporting] = useState(false);
+  const [galleryPage, setGalleryPage] = useState(1);
 
   // UI States
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -3274,6 +3275,7 @@ export default function AdminDashboard() {
                             if (!saveRes.ok) throw new Error("Gagal menyimpan");
                             setGalleryImages(merged);
                             setGalleryFolderInput("");
+                            setGalleryPage(1);
                             showToast(`Berhasil mengimpor ${newImgs.length} foto dari folder!`, "success");
                           } catch (e: any) {
                             showToast(e.message || "Gagal mengimpor folder", "error");
@@ -3343,33 +3345,85 @@ export default function AdminDashboard() {
                         <ImageIcon size={36} className="text-zinc-200 mx-auto mb-3" />
                         <p className="text-zinc-400 text-sm">Belum ada foto. Tambahkan foto pertama di atas.</p>
                       </div>
-                    ) : (
-                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                        {galleryImages.map((img) => (
-                          <div key={img.id} className="group relative rounded-xl overflow-hidden border border-zinc-100 bg-zinc-50 aspect-square">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
-                              src={`/api/drive-image?id=${img.driveId}&sz=w400`}
-                              alt={img.caption || "Foto"}
-                              className="w-full h-full object-cover"
-                            />
-                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-all flex items-center justify-center gap-2">
+                    ) : (() => {
+                      const perPage = 20;
+                      const totalPages = Math.ceil(galleryImages.length / perPage);
+                      const currentImages = galleryImages.slice((galleryPage - 1) * perPage, galleryPage * perPage);
+                      
+                      return (
+                        <div className="space-y-6">
+                          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                            {currentImages.map((img: any) => (
+                              <div key={img.id} className="group relative rounded-xl overflow-hidden border border-zinc-200 bg-zinc-50 aspect-square shadow-sm">
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img
+                                  src={`/api/drive-image?id=${img.driveId}&sz=w400`}
+                                  alt={img.caption || "Foto"}
+                                  className="w-full h-full object-cover"
+                                  loading="lazy"
+                                />
+                                {img.folderName && (
+                                  <div className="absolute top-2 left-2 z-10">
+                                    <span className="bg-black/60 backdrop-blur-md text-white text-[9px] font-bold px-2 py-1 rounded-md uppercase tracking-wider drop-shadow-sm border border-white/20">
+                                      {img.folderName}
+                                    </span>
+                                  </div>
+                                )}
+                                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-all flex items-center justify-center gap-2">
+                                  <button
+                                    onClick={() => handleDeleteImage(img.id)}
+                                    className="opacity-0 group-hover:opacity-100 transition-opacity w-8 h-8 rounded-full bg-red-600 text-white flex items-center justify-center hover:bg-red-700 shadow-md"
+                                  >
+                                    <Trash2 size={14} />
+                                  </button>
+                                </div>
+                                {img.caption && (
+                                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent px-3 py-3">
+                                    <p className="text-white text-xs font-medium truncate">{img.caption}</p>
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+
+                          {totalPages > 1 && (
+                            <div className="flex items-center justify-center gap-2 pt-4">
                               <button
-                                onClick={() => handleDeleteImage(img.id)}
-                                className="opacity-0 group-hover:opacity-100 transition-opacity w-8 h-8 rounded-full bg-red-600 text-white flex items-center justify-center hover:bg-red-700"
+                                onClick={() => setGalleryPage(p => Math.max(1, p - 1))}
+                                disabled={galleryPage === 1}
+                                className="w-8 h-8 rounded-lg border border-zinc-200 bg-white flex items-center justify-center text-zinc-500 hover:bg-zinc-50 hover:text-zinc-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
                               >
-                                <Trash2 size={14} />
+                                &lt;
+                              </button>
+                              
+                              <div className="flex items-center gap-1.5 overflow-x-auto max-w-[200px] sm:max-w-md px-1 hide-scrollbar">
+                                {Array.from({ length: totalPages }).map((_, i) => (
+                                  <button
+                                    key={i + 1}
+                                    onClick={() => setGalleryPage(i + 1)}
+                                    className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-semibold transition-colors shrink-0 shadow-sm ${
+                                      galleryPage === i + 1 
+                                        ? "bg-zinc-900 text-white" 
+                                        : "bg-white border border-zinc-200 text-zinc-600 hover:bg-zinc-50"
+                                    }`}
+                                  >
+                                    {i + 1}
+                                  </button>
+                                ))}
+                              </div>
+
+                              <button
+                                onClick={() => setGalleryPage(p => Math.min(totalPages, p + 1))}
+                                disabled={galleryPage === totalPages}
+                                className="w-8 h-8 rounded-lg border border-zinc-200 bg-white flex items-center justify-center text-zinc-500 hover:bg-zinc-50 hover:text-zinc-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+                              >
+                                &gt;
                               </button>
                             </div>
-                            {img.caption && (
-                              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent px-2 py-2">
-                                <p className="text-white text-xs truncate">{img.caption}</p>
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                          )}
+                        </div>
+                      );
+                    })()}
                   </div>
 
                   {galleryImages.length > 0 && (
