@@ -6,7 +6,7 @@ import { supabase } from "@/lib/supabase";
 import {
   LogOut, Users, Trophy, Monitor, RefreshCw,
   ExternalLink, Loader2, LayoutDashboard, Gamepad2,
-  TrendingUp, Circle, Edit2, Plus, Trash2, X, Award, Download, Calendar, BookOpen, CheckCircle2, BarChart2, ClipboardList, Save, MessageSquare, QrCode
+  TrendingUp, Circle, Edit2, Plus, Trash2, X, Award, Download, Calendar, BookOpen, CheckCircle2, BarChart2, ClipboardList, Save, MessageSquare, QrCode, FileDown
 } from "lucide-react";
 import { toPng } from "html-to-image";
 import { QRCodeSVG } from "qrcode.react";
@@ -2411,6 +2411,58 @@ export default function AdminDashboard() {
               );
             };
 
+            const exportFeedbackCSV = () => {
+              const labels: Record<string, string> = {
+                q1_overall: "Q1 - Keseluruhan Acara",
+                q2_variety: "Q2 - Keragaman Lomba",
+                q3_food: "Q3 - Makanan & Minuman",
+                q4_facility: "Q4 - Fasilitas & Venue",
+                q5_prizes: "Q5 - Hadiah & Apresiasi",
+                q6_togetherness: "Q6 - Kebersamaan",
+                q7_values: "Q7 - Nilai Perusahaan",
+                q8_pride: "Q8 - Rasa Bangga",
+                q9_networking: "Q9 - Networking",
+                q10_motivation: "Q10 - Motivasi Kerja",
+                q11_future: "Q11 - Hadir Acara Berikutnya",
+              };
+              const escape = (v: any) => {
+                if (v == null || v === "") return "";
+                const s = String(v);
+                return s.includes(",") || s.includes("\"") || s.includes("\n")
+                  ? `"${s.replace(/"/g, '""')}"`
+                  : s;
+              };
+              const headers = [
+                "No", "Nama", "Lantai", "Waktu",
+                ...Object.values(labels),
+                "Rata-rata",
+                "Yang Disukai", "Kegiatan Favorit", "Ide & Saran",
+              ];
+              const rows = feedbacks.map((fb: any, i: number) => {
+                const vals = Object.keys(labels).map(k => Number(fb[k])).filter(v => !isNaN(v) && v > 0);
+                const avg = vals.length > 0 ? (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(2) : "";
+                return [
+                  i + 1,
+                  escape(fb.participant_name),
+                  fb.participant_floor ? `Lt. ${fb.participant_floor}` : "",
+                  new Date(fb.created_at).toLocaleString("id-ID"),
+                  ...Object.keys(labels).map(k => fb[k] ?? ""),
+                  avg,
+                  escape(fb.feedback_liked),
+                  escape(fb.feedback_improve),
+                  escape(fb.feedback_ideas),
+                ].join(",");
+              });
+              const csv = [headers.join(","), ...rows].join("\n");
+              const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement("a");
+              a.href = url;
+              a.download = `evaluasi-acara-hut81-${new Date().toISOString().slice(0,10)}.csv`;
+              a.click();
+              URL.revokeObjectURL(url);
+            };
+
             return (
               <div className="space-y-8">
                 {/* Header & Refresh */}
@@ -2428,6 +2480,15 @@ export default function AdminDashboard() {
                       <QrCode size={16} />
                       Tampilkan QR Code
                     </Link>
+                    {feedbacks.length > 0 && (
+                      <button
+                        onClick={exportFeedbackCSV}
+                        className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg hover:bg-emerald-100 transition-colors shadow-sm"
+                      >
+                        <FileDown size={14} />
+                        Export CSV
+                      </button>
+                    )}
                     <button
                       onClick={fetchFeedbacks}
                       className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-zinc-600 bg-white border border-zinc-200 rounded-lg hover:bg-zinc-50 transition-colors shadow-sm"
