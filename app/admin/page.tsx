@@ -6,7 +6,7 @@ import { supabase } from "@/lib/supabase";
 import {
   LogOut, Users, Trophy, Monitor, RefreshCw,
   ExternalLink, Loader2, LayoutDashboard, Gamepad2,
-  TrendingUp, Circle, Edit2, Plus, Trash2, X, Award, Download, Calendar, BookOpen, CheckCircle2, BarChart2, ClipboardList, Save, MessageSquare, QrCode, FileDown
+  TrendingUp, Circle, Edit2, Plus, Trash2, X, Award, Download, Calendar, BookOpen, CheckCircle2, BarChart2, ClipboardList, Save, MessageSquare, QrCode, FileDown, Camera, Link2, ImageIcon, AlertCircle
 } from "lucide-react";
 import { toPng } from "html-to-image";
 import { QRCodeSVG } from "qrcode.react";
@@ -267,7 +267,16 @@ export default function AdminDashboard() {
   
   const [feedbacks, setFeedbacks] = useState<any[]>([]);
   const [feedbacksLoading, setFeedbacksLoading] = useState(true);
-  
+
+  // Gallery State
+  const [galleryImages, setGalleryImages] = useState<{id: string; caption: string; driveId: string}[]>([]);
+  const [galleryLoading, setGalleryLoading] = useState(true);
+  const [galleryDriveInput, setGalleryDriveInput] = useState("");
+  const [galleryCaptionInput, setGalleryCaptionInput] = useState("");
+  const [gallerySaving, setGallerySaving] = useState(false);
+  const [galleryFolderInput, setGalleryFolderInput] = useState("");
+  const [galleryFolderImporting, setGalleryFolderImporting] = useState(false);
+
   // UI States
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("Dashboard");
@@ -425,6 +434,16 @@ export default function AdminDashboard() {
     setFeedbacksLoading(false);
   }, []);
 
+  const fetchGallery = useCallback(async () => {
+    setGalleryLoading(true);
+    try {
+      const res = await fetch("/api/gallery");
+      const data = await res.json();
+      if (data.images) setGalleryImages(data.images);
+    } catch (e) { console.error(e); }
+    finally { setGalleryLoading(false); }
+  }, []);
+
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (user) setAdminEmail(user.email || "");
@@ -440,7 +459,8 @@ export default function AdminDashboard() {
     fetchScoreLogs();
     fetchQrOverrides();
     fetchFeedbacks();
-  }, [fetchParticipants, fetchScores, fetchWinners, fetchSchedules, fetchQuestions, fetchGroupScores, fetchJudges, fetchSettings, fetchScoreLogs, fetchQrOverrides, fetchFeedbacks]);
+    fetchGallery();
+  }, [fetchParticipants, fetchScores, fetchWinners, fetchSchedules, fetchQuestions, fetchGroupScores, fetchJudges, fetchSettings, fetchScoreLogs, fetchQrOverrides, fetchFeedbacks, fetchGallery]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -758,6 +778,7 @@ export default function AdminDashboard() {
     { icon: <BarChart2 size={16} />, label: "Scoreboard Kelompok" },
     { icon: <BookOpen size={16} />, label: "Manajemen Soal Quiz" },
     { icon: <Award size={16} />, label: "E-Sertifikat" },
+    { icon: <Camera size={16} />, label: "Galeri Foto" },
     { icon: <MessageSquare size={16} />, label: "Evaluasi Acara" },
   ];
 
@@ -2411,56 +2432,162 @@ export default function AdminDashboard() {
               );
             };
 
-            const exportFeedbackCSV = () => {
-              const labels: Record<string, string> = {
-                q1_overall: "Q1 - Keseluruhan Acara",
-                q2_variety: "Q2 - Keragaman Lomba",
-                q3_food: "Q3 - Makanan & Minuman",
-                q4_facility: "Q4 - Fasilitas & Venue",
-                q5_prizes: "Q5 - Hadiah & Apresiasi",
-                q6_togetherness: "Q6 - Kebersamaan",
-                q7_values: "Q7 - Nilai Perusahaan",
-                q8_pride: "Q8 - Rasa Bangga",
-                q9_networking: "Q9 - Networking",
-                q10_motivation: "Q10 - Motivasi Kerja",
-                q11_future: "Q11 - Hadir Acara Berikutnya",
+            const exportFeedbackExcel = async () => {
+              const fullQuestions: Record<string, string> = {
+                q1_overall: "Bagaimana menurut Anda keseluruhan acara 17 Agustus ini?",
+                q2_variety: "Bagaimana pendapat Anda tentang variasi dan jenis lomba yang diadakan?",
+                q3_food: "Kegiatan yang diselenggarakan mendorong saya untuk berpartisipasi secara aktif",
+                q4_facility: "Fasilitas & Venue",
+                q5_prizes: "Hadiah & Apresiasi",
+                q6_togetherness: "Seberapa besar acara ini menciptakan rasa kebersamaan dan kekompakan?",
+                q7_values: "Acara ini berhasil menyampaikan nilai-nilai perusahaan (Integrity, Respect, Competency, Passion) dengan cara yang menyenangkan.",
+                q8_pride: "Acara ini membuat saya merasa lebih bangga menjadi bagian dari perusahaan.",
+                q9_networking: "Acara ini membantu saya mengenal dan mempererat hubungan dengan rekan kerja dari divisi lain.",
+                q10_motivation: "Motivasi Kerja Setelah Acara",
+                q11_future: "Saya berharap acara dengan konsep serupa terus diadakan di tahun-tahun mendatang.",
               };
-              const escape = (v: any) => {
-                if (v == null || v === "") return "";
-                const s = String(v);
-                return s.includes(",") || s.includes("\"") || s.includes("\n")
-                  ? `"${s.replace(/"/g, '""')}"`
-                  : s;
-              };
+              
               const headers = [
                 "No", "Nama", "Lantai", "Waktu",
-                ...Object.values(labels),
+                ...Object.values(fullQuestions),
                 "Rata-rata",
-                "Yang Disukai", "Kegiatan Favorit", "Ide & Saran",
+                "Hal yang disukai", "Kegiatan yang paling melibatkan", "Saran & Ide",
               ];
+              
               const rows = feedbacks.map((fb: any, i: number) => {
-                const vals = Object.keys(labels).map(k => Number(fb[k])).filter(v => !isNaN(v) && v > 0);
-                const avg = vals.length > 0 ? (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(2) : "";
+                const vals = Object.keys(fullQuestions).map(k => Number(fb[k])).filter(v => !isNaN(v) && v > 0);
+                const avg = vals.length > 0 ? Number((vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(2)) : "";
                 return [
                   i + 1,
-                  escape(fb.participant_name),
+                  fb.participant_name || "",
                   fb.participant_floor ? `Lt. ${fb.participant_floor}` : "",
                   new Date(fb.created_at).toLocaleString("id-ID"),
-                  ...Object.keys(labels).map(k => fb[k] ?? ""),
+                  ...Object.keys(fullQuestions).map(k => fb[k] ?? ""),
                   avg,
-                  escape(fb.feedback_liked),
-                  escape(fb.feedback_improve),
-                  escape(fb.feedback_ideas),
-                ].join(",");
+                  fb.feedback_liked || "",
+                  fb.feedback_improve || "",
+                  fb.feedback_ideas || "",
+                ];
               });
-              const csv = [headers.join(","), ...rows].join("\n");
-              const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
-              const url = URL.createObjectURL(blob);
-              const a = document.createElement("a");
-              a.href = url;
-              a.download = `evaluasi-acara-hut81-${new Date().toISOString().slice(0,10)}.csv`;
-              a.click();
-              URL.revokeObjectURL(url);
+
+              const { utils, writeFile } = await import("xlsx");
+              const ws = utils.aoa_to_sheet([headers, ...rows]);
+              const wb = utils.book_new();
+              utils.book_append_sheet(wb, ws, "Evaluasi");
+              writeFile(wb, `evaluasi-acara-hut81-${new Date().toISOString().slice(0,10)}.xlsx`);
+            };
+
+            const exportFeedbackPDF = () => {
+              import("jspdf").then(({ default: jsPDF }) => {
+                import("jspdf-autotable").then(({ default: autoTable }) => {
+                  const doc = new jsPDF("landscape");
+                  doc.setFontSize(14);
+                  doc.text("Hasil Evaluasi Acara HUT RI 81 GESIT", 14, 15);
+                  doc.setFontSize(10);
+                  doc.text(`Dicetak pada: ${new Date().toLocaleString("id-ID")}`, 14, 22);
+
+                  const shortQuestions: Record<string, string> = {
+                    q1_overall: "Keseluruhan acara",
+                    q2_variety: "Variasi lomba",
+                    q3_food: "Partisipasi aktif",
+                    q4_facility: "Fasilitas & Venue",
+                    q5_prizes: "Hadiah & Apresiasi",
+                    q6_togetherness: "Rasa kebersamaan",
+                    q7_values: "Nilai perusahaan",
+                    q8_pride: "Rasa bangga",
+                    q9_networking: "Networking",
+                    q10_motivation: "Motivasi Kerja",
+                    q11_future: "Acara serupa ke depan",
+                  };
+                  
+                  const head = [[
+                    "No", "Nama", ...Object.values(shortQuestions), "Rata", "Disukai", "Melibatkan", "Saran"
+                  ]];
+                  
+                  const body = feedbacks.map((fb: any, i: number) => {
+                    const vals = Object.keys(shortQuestions).map(k => Number(fb[k])).filter(v => !isNaN(v) && v > 0);
+                    const avg = vals.length > 0 ? (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(2) : "";
+                    
+                    const truncate = (str: string, len: number) => {
+                      if (!str) return "";
+                      return str.length > len ? str.substring(0, len) + "..." : str;
+                    };
+
+                    return [
+                      i + 1,
+                      fb.participant_name,
+                      ...Object.keys(shortQuestions).map(k => fb[k] ?? "-"),
+                      avg,
+                      truncate(fb.feedback_liked, 30),
+                      truncate(fb.feedback_improve, 30),
+                      truncate(fb.feedback_ideas, 30),
+                    ];
+                  });
+
+                  autoTable(doc, {
+                    head: head,
+                    body: body,
+                    startY: 28,
+                    styles: { fontSize: 7, cellPadding: 2 },
+                    headStyles: { fillColor: [220, 38, 38] },
+                    columnStyles: {
+                      1: { cellWidth: 20 },
+                    }
+                  });
+
+                  doc.addPage();
+                  doc.setFontSize(12);
+                  doc.text("Keterangan Pertanyaan Evaluasi:", 14, 15);
+                  doc.setFontSize(10);
+                  
+                  const qMap = [
+                    ["Keseluruhan acara", "Bagaimana menurut Anda keseluruhan acara 17 Agustus ini?"],
+                    ["Variasi lomba", "Bagaimana pendapat Anda tentang variasi dan jenis lomba yang diadakan?"],
+                    ["Partisipasi aktif", "Kegiatan yang diselenggarakan mendorong saya untuk berpartisipasi secara aktif"],
+                    ["Fasilitas & Venue", "Fasilitas & Venue"],
+                    ["Hadiah & Apresiasi", "Hadiah & Apresiasi"],
+                    ["Rasa kebersamaan", "Seberapa besar acara ini menciptakan rasa kebersamaan dan kekompakan?"],
+                    ["Nilai perusahaan", "Acara ini berhasil menyampaikan nilai-nilai perusahaan (Integrity, Respect, Competency, Passion) dengan cara yang menyenangkan."],
+                    ["Rasa bangga", "Acara ini membuat saya merasa lebih bangga menjadi bagian dari perusahaan."],
+                    ["Networking", "Acara ini membantu saya mengenal dan mempererat hubungan dengan rekan kerja dari divisi lain."],
+                    ["Motivasi Kerja", "Motivasi Kerja Setelah Acara"],
+                    ["Acara serupa ke depan", "Saya berharap acara dengan konsep serupa terus diadakan di tahun-tahun mendatang."]
+                  ];
+                  
+                  autoTable(doc, {
+                    head: [["Singkatan", "Pertanyaan Lengkap"]],
+                    body: qMap,
+                    startY: 22,
+                    styles: { fontSize: 9 },
+                    headStyles: { fillColor: [50, 50, 50] }
+                  });
+
+                  const finalY = (doc as any).lastAutoTable.finalY || 100;
+
+                  doc.setFontSize(12);
+                  doc.text("Rata-rata Skor per Pertanyaan", 14, finalY + 15);
+                  doc.setFontSize(10);
+                  doc.text("Skor 1 (Sangat Buruk) hingga 5 (Sangat Baik)", 14, finalY + 21);
+
+                  const avgData = avgScores.map((s: any) => [
+                    s.label,
+                    s.avg > 0 ? s.avg.toFixed(2) : "-"
+                  ]);
+
+                  autoTable(doc, {
+                    head: [["Aspek Penilaian", "Rata-rata Skor"]],
+                    body: avgData,
+                    startY: finalY + 26,
+                    styles: { fontSize: 9 },
+                    headStyles: { fillColor: [220, 38, 38] },
+                    columnStyles: {
+                      1: { cellWidth: 40, halign: 'center' }
+                    }
+                  });
+
+                  doc.save(`evaluasi-acara-hut81-${new Date().toISOString().slice(0,10)}.pdf`);
+                });
+              });
             };
 
             return (
@@ -2481,13 +2608,22 @@ export default function AdminDashboard() {
                       Tampilkan QR Code
                     </Link>
                     {feedbacks.length > 0 && (
-                      <button
-                        onClick={exportFeedbackCSV}
-                        className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg hover:bg-emerald-100 transition-colors shadow-sm"
-                      >
-                        <FileDown size={14} />
-                        Export CSV
-                      </button>
+                      <>
+                        <button
+                          onClick={exportFeedbackExcel}
+                          className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg hover:bg-emerald-100 transition-colors shadow-sm"
+                        >
+                          <FileDown size={14} />
+                          Export Excel
+                        </button>
+                        <button
+                          onClick={exportFeedbackPDF}
+                          className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-red-700 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-colors shadow-sm"
+                        >
+                          <FileDown size={14} />
+                          Export PDF
+                        </button>
+                      </>
                     )}
                     <button
                       onClick={fetchFeedbacks}
@@ -3040,6 +3176,214 @@ export default function AdminDashboard() {
           </div>
         </div>
       )}
+
+          {/* ─── Galeri Foto Tab ─── */}
+          {activeTab === "Galeri Foto" && (() => {
+            const extractDriveId = (input: string): string => {
+              // Handle full URL: https://drive.google.com/file/d/ID/view?...
+              const match = input.match(/\/d\/([a-zA-Z0-9_-]+)/);
+              if (match) return match[1];
+              // Handle thumbnail URL: https://drive.google.com/thumbnail?id=ID
+              const match2 = input.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+              if (match2) return match2[1];
+              // Assume it's already a raw ID
+              return input.trim();
+            };
+
+            const handleAddImage = async () => {
+              if (!galleryDriveInput.trim()) return;
+              const driveId = extractDriveId(galleryDriveInput);
+              const newImg = { id: Date.now().toString(), driveId, caption: galleryCaptionInput.trim() };
+              const updated = [...galleryImages, newImg];
+              setGallerySaving(true);
+              try {
+                const res = await fetch("/api/gallery", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ images: updated }) });
+                if (!res.ok) throw new Error();
+                setGalleryImages(updated);
+                setGalleryDriveInput("");
+                setGalleryCaptionInput("");
+                showToast("Foto berhasil ditambahkan!", "success");
+              } catch { showToast("Gagal menambahkan foto", "error"); }
+              finally { setGallerySaving(false); }
+            };
+
+            const handleDeleteImage = async (id: string) => {
+              const updated = galleryImages.filter(img => img.id !== id);
+              try {
+                const res = await fetch("/api/gallery", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ images: updated }) });
+                if (!res.ok) throw new Error();
+                setGalleryImages(updated);
+                showToast("Foto dihapus.", "success");
+              } catch { showToast("Gagal menghapus foto", "error"); }
+            };
+
+            const handleClearAll = async () => {
+              if (!confirm(`Hapus semua ${galleryImages.length} foto dari galeri? Tindakan ini tidak bisa dibatalkan.`)) return;
+              try {
+                const res = await fetch("/api/gallery", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ images: [] }) });
+                if (!res.ok) throw new Error();
+                setGalleryImages([]);
+                showToast("Semua foto berhasil dihapus.", "success");
+              } catch { showToast("Gagal menghapus semua foto", "error"); }
+            };
+
+            // Remove duplicates by driveId from current state
+            const dedupedImages = galleryImages.filter((img, idx, arr) => arr.findIndex(x => x.driveId === img.driveId) === idx);
+
+            return (
+              <div className="space-y-6">
+                <Card>
+                  <CardHeader title="Galeri Foto Event" description="Import seluruh foto dari folder Google Drive, atau tambahkan satu per satu. Foto ditampilkan di halaman publik /gallery." />
+
+                  {/* === IMPORT FOLDER SECTION === */}
+                  <div className="p-4 border-b border-zinc-100 bg-emerald-50/50">
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="w-5 h-5 rounded-full bg-emerald-100 flex items-center justify-center">
+                        <Camera size={11} className="text-emerald-600" />
+                      </div>
+                      <p className="text-xs font-bold text-emerald-800 uppercase tracking-widest">Import dari Folder Google Drive</p>
+                      <span className="ml-1 text-[10px] bg-emerald-600 text-white px-1.5 py-0.5 rounded-full font-bold">BARU</span>
+                    </div>
+                    <div className="flex flex-col md:flex-row gap-3">
+                      <div className="flex-1">
+                        <input
+                          type="text"
+                          placeholder="https://drive.google.com/drive/folders/xxxx"
+                          value={galleryFolderInput}
+                          onChange={(e) => setGalleryFolderInput(e.target.value)}
+                          className="w-full border border-emerald-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-emerald-500 bg-white"
+                        />
+                      </div>
+                      <button
+                        onClick={async () => {
+                          if (!galleryFolderInput.trim()) return;
+                          setGalleryFolderImporting(true);
+                          try {
+                            const res = await fetch("/api/gallery/import-folder", {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({ folderUrl: galleryFolderInput.trim() })
+                            });
+                            const data = await res.json();
+                            if (!res.ok) throw new Error(data.error || "Gagal mengimpor folder");
+                            // Merge new images, avoid duplicates by driveId
+                            const existingIds = new Set(galleryImages.map(i => i.driveId));
+                            const newImgs = data.images.filter((i: any) => !existingIds.has(i.driveId));
+                            const merged = [...galleryImages, ...newImgs];
+                            const saveRes = await fetch("/api/gallery", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ images: merged }) });
+                            if (!saveRes.ok) throw new Error("Gagal menyimpan");
+                            setGalleryImages(merged);
+                            setGalleryFolderInput("");
+                            showToast(`Berhasil mengimpor ${newImgs.length} foto dari folder!`, "success");
+                          } catch (e: any) {
+                            showToast(e.message || "Gagal mengimpor folder", "error");
+                          } finally {
+                            setGalleryFolderImporting(false);
+                          }
+                        }}
+                        disabled={galleryFolderImporting || !galleryFolderInput.trim()}
+                        className="flex items-center gap-2 px-5 py-2 bg-emerald-600 text-white rounded-lg text-sm font-semibold hover:bg-emerald-700 transition-colors disabled:opacity-50 whitespace-nowrap"
+                      >
+                        {galleryFolderImporting ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
+                        {galleryFolderImporting ? "Mengimpor..." : "Import Folder"}
+                      </button>
+                    </div>
+                    <p className="mt-2 text-xs text-emerald-700">
+                      Paste link folder Google Drive. Semua foto di dalam folder akan diimpor sekaligus. Folder harus diatur ke <strong>"Anyone with the link can view"</strong>.
+                    </p>
+                  </div>
+
+                  {/* === TAMBAH 1 FOTO === */}
+                  <div className="p-4 border-b border-zinc-100">
+                    <p className="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-3">Tambah Foto Baru</p>
+                    <div className="flex flex-col md:flex-row gap-3">
+                      <div className="flex-1">
+                        <label className="block text-xs text-zinc-500 mb-1">Link Google Drive <span className="text-red-500">*</span></label>
+                        <input
+                          type="text"
+                          placeholder="https://drive.google.com/file/d/xxxx/view"
+                          value={galleryDriveInput}
+                          onChange={(e) => setGalleryDriveInput(e.target.value)}
+                          className="w-full border border-zinc-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-zinc-900"
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <label className="block text-xs text-zinc-500 mb-1">Keterangan (opsional)</label>
+                        <input
+                          type="text"
+                          placeholder="Contoh: Lomba Estafet Sedotan"
+                          value={galleryCaptionInput}
+                          onChange={(e) => setGalleryCaptionInput(e.target.value)}
+                          className="w-full border border-zinc-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-zinc-900"
+                        />
+                      </div>
+                      <div className="flex items-end">
+                        <button
+                          onClick={handleAddImage}
+                          disabled={gallerySaving || !galleryDriveInput.trim()}
+                          className="flex items-center gap-2 px-4 py-2 bg-zinc-900 text-white rounded-lg text-sm font-semibold hover:bg-zinc-800 transition-colors disabled:opacity-50"
+                        >
+                          {gallerySaving ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
+                          Tambah
+                        </button>
+                      </div>
+                    </div>
+                    <div className="mt-2 flex items-start gap-2 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                      <AlertCircle size={14} className="shrink-0 mt-0.5" />
+                      <span>Pastikan akses file Google Drive Anda diatur ke <strong>"Anyone with the link"</strong> agar foto bisa tampil di website.</span>
+                    </div>
+                  </div>
+
+                  {/* Gallery Grid */}
+                  <div className="p-4">
+                    {galleryLoading ? (
+                      <div className="flex justify-center py-10"><Loader2 size={24} className="animate-spin text-zinc-300" /></div>
+                    ) : galleryImages.length === 0 ? (
+                      <div className="text-center py-16">
+                        <ImageIcon size={36} className="text-zinc-200 mx-auto mb-3" />
+                        <p className="text-zinc-400 text-sm">Belum ada foto. Tambahkan foto pertama di atas.</p>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                        {galleryImages.map((img) => (
+                          <div key={img.id} className="group relative rounded-xl overflow-hidden border border-zinc-100 bg-zinc-50 aspect-square">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={`/api/drive-image?id=${img.driveId}&sz=w400`}
+                              alt={img.caption || "Foto"}
+                              className="w-full h-full object-cover"
+                            />
+                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-all flex items-center justify-center gap-2">
+                              <button
+                                onClick={() => handleDeleteImage(img.id)}
+                                className="opacity-0 group-hover:opacity-100 transition-opacity w-8 h-8 rounded-full bg-red-600 text-white flex items-center justify-center hover:bg-red-700"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
+                            {img.caption && (
+                              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent px-2 py-2">
+                                <p className="text-white text-xs truncate">{img.caption}</p>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {galleryImages.length > 0 && (
+                    <div className="px-4 pb-4 flex items-center justify-between">
+                      <p className="text-xs text-zinc-400">{galleryImages.length} foto tersimpan</p>
+                      <a href="/gallery" target="_blank" className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline">
+                        <Link2 size={12} /> Lihat halaman galeri publik
+                      </a>
+                    </div>
+                  )}
+                </Card>
+              </div>
+            );
+          })()}
 
       {/* Global Toast Notification */}
       {toast && (
